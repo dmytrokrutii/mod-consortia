@@ -1,0 +1,26 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+  <changeSet id="MODFISTO-400@@create-user-tenant-table" author="azizbekxm">
+    <createTable tableName="user_tenant">
+
+      <column name="user_id" type="uuid">
+        <constraints primaryKey="true" unique="true" foreignKeyName="fk_user_id" referencedTableName="user" nullable="false"/>
+      </column>
+      <column name="username" type="varchar(50)">
+        <constraints unique="false" nullable="false"/>
+      </column>
+      <column name="tenant_id" type="varchar(50)">
+        <constraints unique="false" foreignKeyName="fk_tenant_id" referencedTableName="tenant" nullable="false"/>
+      </column>
+      <column name="is_primary" type="boolean" defaultValueBoolean="false">
+        <constraints unique="false" nullable="false"/>
+      </column>
+
+    </createTable>
+  </changeSet>
+
+</databaseChangeLog>
