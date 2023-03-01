@@ -1,0 +1,16 @@
+openapi: 3.0.0
+info:
+  title: Consortia integration API
+  description: "Consortia integration API"
+  version: 0.0.1
+servers:
+  - url: /consortia/
+paths:
+  /health-check:
+    description: Module  health check
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+

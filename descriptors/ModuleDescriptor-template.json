@@ -1,0 +1,110 @@
+{
+  "id": "@artifactId@-@version@",
+  "name": "Consortia integration business logic module",
+  "provides": [
+    {
+      "id": "consortia",
+      "version": "1.0",
+      "handlers": [
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/consortia/health-check",
+          "permissionsRequired": [],
+          "modulePermissions": []
+        }
+      ]
+    },
+    {
+      "id": "_tenant",
+      "version": "1.2",
+      "interfaceType": "system",
+      "handlers": [
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/_/tenant"
+        },
+        {
+          "methods": [
+            "DELETE"
+          ],
+          "pathPattern": "/_/tenant"
+        }
+      ]
+    }
+  ],
+  "permissionSets": [
+    {
+      "permissionName": "consortia.all",
+      "displayName": "Consortia API module - all permissions",
+      "description": "All permissions for consortia module",
+      "subPermissions": []
+    }
+  ],
+  "requires": [],
+  "launchDescriptor": {
+    "dockerImage": "@artifactId@:@version@",
+    "dockerPull": false,
+    "dockerArgs": {
+      "HostConfig": {
+        "Memory": 357913941,
+        "PortBindings": {
+          "8081/tcp": [
+            {
+              "HostPort": "%p"
+            }
+          ]
+        }
+      }
+    },
+    "env": [
+      {
+        "name": "JAVA_OPTIONS",
+        "value": "-XX:MaxRAMPercentage=66.0"
+      },
+      {
+        "name": "DB_HOST",
+        "value": "postgres"
+      },
+      {
+        "name": "DB_PORT",
+        "value": "5432"
+      },
+      {
+        "name": "DB_USERNAME",
+        "value": "folio_admin"
+      },
+      {
+        "name": "DB_PASSWORD",
+        "value": "folio_admin"
+      },
+      {
+        "name": "DB_DATABASE",
+        "value": "okapi_modules"
+      },
+      {
+        "name": "DB_QUERYTIMEOUT",
+        "value": "60000"
+      },
+      {
+        "name": "DB_CHARSET",
+        "value": "UTF-8"
+      },
+      {
+        "name": "DB_MAXPOOLSIZE",
+        "value": "5"
+      },
+      {
+        "name": "OKAPI_URL",
+        "value": "http://okapi:9130"
+      },
+      {
+        "name": "ENV",
+        "value": "folio"
+      }
+    ]
+  }
+}

@@ -1,0 +1,50 @@
+server:
+  port: 8081
+spring:
+  application:
+    name: mod-consortia
+  datasource:
+    username: ${DB_USERNAME:folio_admin}
+    password: ${DB_PASSWORD:folio_admin}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_DATABASE:okapi_modules}
+  sql:
+    init:
+      continue-on-error: true
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate.format_sql: true
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/changelog-master.xml
+  jackson:
+    default-property-inclusion: non_null
+  cloud:
+    openfeign:
+      okhttp:
+        enabled: true
+folio:
+  tenant:
+    validation:
+      enabled: true
+feign:
+  client:
+    config:
+      default:
+        loggerLevel: basic
+management:
+  endpoints:
+    web:
+      base-path: /admin
+      exposure:
+        include: health, loggers
+logging:
+  level:
+    liquibase: debug
+    org.folio.des.client.*: debug
