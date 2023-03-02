@@ -1,6 +1,6 @@
 buildMvn {
-  publishModDescriptor = true
-  mvnDeploy = true
+  publishModDescriptor = 'yes'
+  mvnDeploy = 'yes'
   doKubeDeploy = true
   buildNode = 'jenkins-agent-java17'
 
@@ -11,9 +11,7 @@ buildMvn {
 
   doDocker = {
     buildJavaDocker {
-      publishMaster = true
-      healthChk = true
-      healthChkCmd = 'wget --no-verbose --tries=1 --spider http://localhost:8081/admin/health || exit 1'
+      publishMaster = 'yes'
     }
   }
 }
