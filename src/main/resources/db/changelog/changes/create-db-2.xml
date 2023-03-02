@@ -8,13 +8,14 @@
     <createTable tableName="user_tenant">
 
       <column name="user_id" type="uuid">
-        <constraints primaryKey="true" unique="true" foreignKeyName="fk_user_id" referencedTableName="user" nullable="false"/>
+        <constraints primaryKey="true" unique="true" nullable="false"/>
       </column>
-      <column name="username" type="varchar(50)">
+      <column name="username" type="text">
         <constraints unique="false" nullable="false"/>
       </column>
-      <column name="tenant_id" type="varchar(50)">
-        <constraints unique="false" foreignKeyName="fk_tenant_id" referencedTableName="tenant" nullable="false"/>
+      <column name="tenant_id" type="text">
+        <constraints unique="false" nullable="false"
+                     foreignKeyName="fk_tenant_id" referencedTableName="tenant" referencedColumnNames="tenant_id" />
       </column>
       <column name="is_primary" type="boolean" defaultValueBoolean="false">
         <constraints unique="false" nullable="false"/>

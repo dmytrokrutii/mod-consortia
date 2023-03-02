@@ -5,5 +5,5 @@
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
   <include file="changes/initial_schema.xml" relativeToChangelogFile="true"/>
-  <include file="changes/create_user_tenant_associations_table.xml" relativeToChangelogFile="true"/>
+  <include file="changes/create-db-2.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
