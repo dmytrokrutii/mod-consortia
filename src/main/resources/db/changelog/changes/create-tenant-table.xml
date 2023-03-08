@@ -5,16 +5,14 @@
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
   <changeSet id="MODFISTO-394@@create-tenant-table" author="singhadesh">
+
     <createTable tableName="tenant">
-
-      <column name="tenant_id" type="text">
-        <constraints primaryKey="true" primaryKeyName="pk_tenant_id" nullable="false"/>
+      <column name="id" type="text">
+        <constraints primaryKey="true" primaryKeyName="pk_tenant_id"/>
       </column>
-
-      <column name="tenant_name" type="text">
+      <column name="name" type="text">
         <constraints unique="true" nullable="false"/>
       </column>
-
     </createTable>
   </changeSet>
 

@@ -5,23 +5,33 @@
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
   <changeSet id="MODFISTO-400@@create-user-tenant-table" author="azizbekxm">
-    <createTable tableName="user_tenant">
 
+    <createTable tableName="user_tenant">
+      <column name="id" type="uuid">
+        <constraints primaryKey="true" primaryKeyName="pk_id"/>
+      </column>
       <column name="user_id" type="uuid">
-        <constraints primaryKey="true" unique="true" nullable="false"/>
+        <constraints unique="false" nullable="false"/>
       </column>
       <column name="username" type="text">
         <constraints unique="false" nullable="false"/>
       </column>
       <column name="tenant_id" type="text">
         <constraints unique="false" nullable="false"
-                     foreignKeyName="fk_tenant_id" referencedTableName="tenant" referencedColumnNames="tenant_id" />
+                     foreignKeyName="fk_tenant_id" referencedTableName="tenant" referencedColumnNames="id" />
       </column>
       <column name="is_primary" type="boolean" defaultValueBoolean="false">
         <constraints unique="false" nullable="false"/>
       </column>
-
     </createTable>
+
+    <createIndex indexName="user_id_idx" tableName="user_tenant">
+      <column name="user_id"/>
+    </createIndex>
+    <createIndex indexName="user_name_idx" tableName="user_tenant">
+      <column name="username"/>
+    </createIndex>
+
   </changeSet>
 
 </databaseChangeLog>
