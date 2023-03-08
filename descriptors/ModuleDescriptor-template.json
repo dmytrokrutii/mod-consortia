@@ -10,10 +10,13 @@
           "methods": [
             "GET"
           ],
-          "pathPattern": "/consortia/health-check",
-          "permissionsRequired": [],
+          "pathPattern": "/consortia/tenants",
+          "permissionsRequired": [
+            "consortia.tenants.collection.get"
+          ],
           "modulePermissions": []
         }
+
       ]
     },
     {
@@ -25,6 +28,7 @@
           "methods": [
             "POST"
           ],
+          "modulePermissions": [],
           "pathPattern": "/_/tenant"
         },
         {
@@ -41,7 +45,14 @@
       "permissionName": "consortia.all",
       "displayName": "Consortia API module - all permissions",
       "description": "All permissions for consortia module",
-      "subPermissions": []
+      "subPermissions": [
+        "consortia.tenants.collection.get"
+      ]
+    },
+    {
+      "permissionName": "consortia.tenants.collection.get",
+      "displayName": "get tenants",
+      "description": "Get list of tenants"
     }
   ],
   "requires": [],

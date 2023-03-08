@@ -6,11 +6,62 @@ info:
 servers:
   - url: /consortia/
 paths:
-  /health-check:
-    description: Module  health check
+  /tenants:
     get:
-      summary: Health check
+      description: Get a list of tenants
+      operationId: getTenants
+      parameters:
+        - $ref: "#/components/parameters/trait_pageable_offset"
+        - $ref: "#/components/parameters/trait_pageable_limit"
       responses:
-        '200':
-          description: OK
-
+        "200":
+          description: 'Tenants successfully retrieved'
+          content:
+            application/json:
+              schema:
+                 $ref: "#/components/schemas/tenantCollection"
+        "400":
+          description:
+            Bad request, e.g. malformed request body or query parameter.
+            Details of the errors (e.g. name of the parameter or line/character number
+            with malformed data) provided in the response.
+          content:
+            application/json:
+              schema:
+                 $ref: "#/components/schemas/errors"
+        "500":
+          description: Internal server errors, e.g. due to misconfiguration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/errors"
+components:
+  schemas:
+    tenant:
+      $ref: 'schemas/tenants/tenant.json#/Tenant'
+    tenantCollection:
+      $ref: 'schemas/tenants/tenantCollection.json#/TenantCollection'
+    error:
+      $ref: 'schemas/error/error.json#/Error'
+    errors:
+      $ref: 'schemas/error/errors.json#/Errors'
+  parameters:
+    trait_pageable_offset:
+      name: offset
+      in: query
+      description: Skip over a number of elements by specifying an offset value for
+        the query
+      schema:
+        default: 0
+        minimum: 0
+        maximum: 2147483647
+        type: integer
+    trait_pageable_limit:
+      name: limit
+      in: query
+      description: Limit the number of elements returned in the response
+      schema:
+        default: 10
+        minimum: 0
+        maximum: 2147483647
+        type: integer
