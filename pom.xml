@@ -248,8 +248,8 @@
               <inputSpec>${consortia.yaml.file}</inputSpec>
               <output>${project.build.directory}/generated-sources</output>
               <generatorName>spring</generatorName>
-              <modelPackage>${project.groupId}.pv.domain.dto</modelPackage>
-              <apiPackage>${project.groupId}.pv.rest.resource</apiPackage>
+              <modelPackage>${project.groupId}.consortia.domain.dto</modelPackage>
+              <apiPackage>${project.groupId}.consortia.rest.resource</apiPackage>
               <generateApis>true</generateApis>
               <generateApiTests>true</generateApiTests>
               <generateApiDocumentation>true</generateApiDocumentation>

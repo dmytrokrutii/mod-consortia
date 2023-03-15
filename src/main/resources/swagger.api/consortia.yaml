@@ -19,7 +19,7 @@ paths:
           content:
             application/json:
               schema:
-                 $ref: "#/components/schemas/tenantCollection"
+                $ref: "#/components/schemas/tenantCollection"
         "400":
           description:
             Bad request, e.g. malformed request body or query parameter.
@@ -28,24 +28,117 @@ paths:
           content:
             application/json:
               schema:
-                 $ref: "#/components/schemas/errors"
+                $ref: "#/components/schemas/error"
         "500":
           description: Internal server errors, e.g. due to misconfiguration
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/errors"
+                $ref: "#/components/schemas/error"
+  /user-tenants:
+    get:
+      description: User Tenant Associations
+      summary: Get a list of user tenant associations
+      operationId: getUserTenants
+      parameters:
+        - in: query
+          name: userId
+          schema:
+            type: string
+            format: uuid
+          description: The UUID of the user
+        - in: query
+          name: username
+          schema:
+            type: string
+            description: The username of the user
+        - in: query
+          name: tenantId
+          schema:
+              type: string
+          description: The ID of the tenant
+        - $ref: "#/components/parameters/trait_pageable_offset"
+        - $ref: "#/components/parameters/trait_pageable_limit"
+      responses:
+        "200":
+          description: "User Tenant Associations successfully retrieved"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/userTenantCollection"
+        "400":
+          description:
+            Bad request, e.g. malformed request body or query parameter.
+            Details of the errors (e.g. name of the parameter or line/character number
+            with malformed data) provided in the response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+        "500":
+          description: Internal server errors, e.g. due to misconfiguration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+  /user-tenants/{associationId}:
+    description: User Tenant Associations
+    get:
+      summary: Get a list of user tenant associations
+      operationId: getUserTenantByAssociationId
+      parameters:
+        - $ref: "#/components/parameters/trait_path_association_id"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/userTenant"
+        "400":
+          description:
+            Bad request, e.g. malformed request body or query parameter.
+            Details of the errors (e.g. name of the parameter or line/character number
+            with malformed data) provided in the response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+        "404":
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+        "500":
+          description: Internal server errors, e.g. due to misconfiguration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
 components:
   schemas:
     tenant:
-      $ref: 'schemas/tenants/tenant.json#/Tenant'
+      $ref: 'schemas/dto/tenant.json#/Tenant'
     tenantCollection:
-      $ref: 'schemas/tenants/tenantCollection.json#/TenantCollection'
+      $ref: 'schemas/dto/tenantCollection.json#/TenantCollection'
+    userTenant:
+      $ref: 'schemas/dto/userTenant.json#/UserTenant'
+    userTenantCollection:
+      $ref: 'schemas/dto/userTenantCollection.json#/UserTenantCollection'
     error:
       $ref: 'schemas/error/error.json#/Error'
     errors:
       $ref: 'schemas/error/errors.json#/Errors'
   parameters:
+    trait_path_association_id:
+      in: path
+      name: associationId
+      schema:
+        type: string
+        format: uuid
+      required: true
+      description: UUID of the user to get and associated tenants.
     trait_pageable_offset:
       name: offset
       in: query

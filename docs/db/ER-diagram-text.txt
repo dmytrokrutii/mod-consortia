@@ -1,0 +1,18 @@
+Table "tenant" {
+  "id" uuid [pk, not null]
+  "name" "text" [not null]
+}
+
+Table "user_tenant" {
+  "id" uuid [pk, not null]
+  "user_id" uuid [not null] unique
+  "username" "text" [not null]
+  "tenant_id" "text" [not null]
+  "is_primary" bool [not null]
+  Indexes {
+    (user_id, username)
+  }
+}
+
+
+Ref:"user_tenant"."id" < "tenant"."id"

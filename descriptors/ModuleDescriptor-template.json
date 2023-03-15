@@ -15,8 +15,28 @@
             "consortia.tenants.collection.get"
           ],
           "modulePermissions": []
-        }
 
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/consortia/user-tenants",
+          "permissionsRequired": [
+            "consortia.user-tenants.collection.get"
+          ],
+          "modulePermissions": []
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/consortia/user-tenants/{associationId}",
+          "permissionsRequired": [
+            "consortia.user-tenants.item.get"
+          ],
+          "modulePermissions": []
+        }
       ]
     },
     {
@@ -46,13 +66,25 @@
       "displayName": "Consortia API module - all permissions",
       "description": "All permissions for consortia module",
       "subPermissions": [
-        "consortia.tenants.collection.get"
+        "consortia.tenants.collection.get",
+        "consortia.user-tenants.collection.get",
+        "consortia.user-tenants.item.get"
       ]
     },
     {
       "permissionName": "consortia.tenants.collection.get",
       "displayName": "get tenants",
       "description": "Get list of tenants"
+    },
+    {
+      "permissionName": "consortia.user-tenants.collection.get",
+      "displayName": "get user tenants",
+      "description": "Get List of user tenants"
+    },
+    {
+      "permissionName": "consortia.user-tenants.item.get",
+      "displayName": "get user tenant",
+      "description": "Get user and tenant association"
     }
   ],
   "requires": [],
