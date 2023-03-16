@@ -28,8 +28,9 @@
     <createIndex indexName="user_id_idx" tableName="user_tenant">
       <column name="user_id"/>
     </createIndex>
-    <createIndex indexName="user_name_idx" tableName="user_tenant">
+    <createIndex indexName="username_tenant_id_idx" tableName="user_tenant" unique="true">
       <column name="username"/>
+      <column name="tenant_id"/>
     </createIndex>
 
   </changeSet>
