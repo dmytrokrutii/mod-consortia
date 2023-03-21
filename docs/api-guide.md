@@ -6,7 +6,9 @@
 
 | METHOD | URL      | DESCRIPTION                                       |
 |--------|----------|---------------------------------------------------|
+| POST   | /tenants | Return saved tenant                               |
 | GET    | /tenants | Return list of tenants based on `limit`, `offset` |
+
 
 ## User Tenants Associations API
 

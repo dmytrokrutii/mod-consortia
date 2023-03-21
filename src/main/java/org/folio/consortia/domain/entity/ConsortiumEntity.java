@@ -16,23 +16,22 @@ import java.util.UUID;
 @ToString
 @RequiredArgsConstructor
 @Entity
-@Table(name = "tenant")
-public class TenantEntity {
+@Table(name = "consortium")
+public class ConsortiumEntity {
   @Id
-  private String id;
+  private UUID id;
   private String name;
-  private UUID consortiumId;
 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    TenantEntity that = (TenantEntity) o;
-    return Objects.equals(id, that.id) && Objects.equals(name, that.name) && Objects.equals(consortiumId, that.consortiumId);
+    ConsortiumEntity that = (ConsortiumEntity) o;
+    return Objects.equals(id, that.id) && Objects.equals(name, that.name);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, name, consortiumId);
+    return Objects.hash(id, name);
   }
 }

@@ -6,11 +6,17 @@ info:
 servers:
   - url: /consortia/
 paths:
-  /tenants:
+  /{consortiumId}/tenants:
     get:
-      description: Get a list of tenants
+      description: Get a list of tenants based on consortiumId
       operationId: getTenants
       parameters:
+        - in: path
+          name: consortiumId
+          required: true
+          description: Consortium Id
+          schema:
+            $ref: "#/components/schemas/UUID"
         - $ref: "#/components/parameters/trait_pageable_offset"
         - $ref: "#/components/parameters/trait_pageable_limit"
       responses:
@@ -35,6 +41,44 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/error"
+    post:
+      description: Save tenant
+      operationId: saveTenant
+      parameters:
+        - in: path
+          name: consortiumId
+          required: true
+          description: Consortium Id
+          schema:
+            $ref: "#/components/schemas/UUID"
+      responses:
+        "201":
+          description: 'Tenant successfully saved'
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/tenant"
+        "400":
+          description:
+            Bad request, e.g. malformed request body or query parameter.
+            Details of the errors (e.g. name of the parameter or line/character number
+            with malformed data) provided in the response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/errors"
+        "500":
+          description: Internal server errors, e.g. due to misconfiguration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/errors"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/tenant"
+        required: true
   /user-tenants:
     get:
       description: User Tenant Associations
@@ -130,6 +174,9 @@ components:
       $ref: 'schemas/error/error.json#/Error'
     errors:
       $ref: 'schemas/error/errors.json#/Errors'
+    UUID:
+      type: string
+      format: uuid
   parameters:
     trait_path_association_id:
       in: path

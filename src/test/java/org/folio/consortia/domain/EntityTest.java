@@ -1,5 +1,6 @@
 package org.folio.consortia.domain;
 
+import org.folio.consortia.domain.entity.ConsortiumEntity;
 import org.folio.consortia.domain.entity.TenantEntity;
 import org.folio.consortia.domain.entity.UserTenantEntity;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,27 @@ class EntityTest {
     assertEquals(tenant1.hashCode(), tenant2.hashCode());
     assertNotEquals(tenant1.hashCode(), tenant3.hashCode());
   }
+
+  @Test
+  void testEqualsAndHashCodeForConsortiumEntity() {
+    ConsortiumEntity consortiumEntity = new ConsortiumEntity();
+    consortiumEntity.setName("TestCon");
+    consortiumEntity.setId(UUID.fromString("07698e46-c3e3-11ed-afa1-0242ac120002"));
+
+    ConsortiumEntity consortiumEntity1 = new ConsortiumEntity();
+    consortiumEntity1.setName("TestCon");
+    consortiumEntity1.setId(UUID.fromString("07698e46-c3e3-11ed-afa1-0242ac120002"));
+
+    ConsortiumEntity consortiumEntity2 = new ConsortiumEntity();
+    consortiumEntity2.setName("TestCon1");
+    consortiumEntity2.setId(UUID.fromString("17698e46-c3e3-11ed-afa1-0242ac120002"));
+
+    assertEquals(consortiumEntity1, consortiumEntity);
+    assertNotEquals(consortiumEntity, consortiumEntity2);
+    assertEquals(consortiumEntity.hashCode(), consortiumEntity1.hashCode());
+    assertNotEquals(consortiumEntity.hashCode(), consortiumEntity2.hashCode());
+  }
+
 
 
   @Test

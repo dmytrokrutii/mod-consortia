@@ -32,6 +32,7 @@
     <sonar.exclusions>
       <!-- define sonar exclusions here -->
       src/main/java/org/folio/template/FolioSpringTemplateApplication.java
+      src/main/java/org/folio/consortia/domain
     </sonar.exclusions>
     <argLine/>
 
