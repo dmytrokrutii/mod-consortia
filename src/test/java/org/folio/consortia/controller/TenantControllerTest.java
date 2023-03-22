@@ -88,7 +88,7 @@ class TenantControllerTest extends BaseTest {
       .andExpectAll(
         status().is4xxClientError(),
         content().contentType(MediaType.APPLICATION_JSON_VALUE),
-        jsonPath("$.errors[0].message", is("Object with id [07698e46-c3e3-11ed-afa1-0242ac120002] was not found")));
+        jsonPath("$.errors[0].message", is("Object with consortiumId [07698e46-c3e3-11ed-afa1-0242ac120002] was not found")));
   }
 
   @ParameterizedTest

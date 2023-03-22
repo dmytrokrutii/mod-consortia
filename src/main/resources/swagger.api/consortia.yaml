@@ -4,9 +4,9 @@ info:
   description: "Consortia integration API"
   version: 0.0.1
 servers:
-  - url: /consortia/
+  - url: /consortia/{consortiumId}/
 paths:
-  /{consortiumId}/tenants:
+  /tenants:
     get:
       description: Get a list of tenants based on consortiumId
       operationId: getTenants
@@ -85,6 +85,12 @@ paths:
       summary: Get a list of user tenant associations
       operationId: getUserTenants
       parameters:
+        - in: path
+          name: consortiumId
+          required: true
+          description: Consortium Id
+          schema:
+            $ref: "#/components/schemas/UUID"
         - in: query
           name: userId
           schema:
@@ -131,7 +137,18 @@ paths:
       summary: Get a list of user tenant associations
       operationId: getUserTenantByAssociationId
       parameters:
-        - $ref: "#/components/parameters/trait_path_association_id"
+        - in: path
+          name: consortiumId
+          required: true
+          description: Consortium Id
+          schema:
+            $ref: "#/components/schemas/UUID"
+        - in: path
+          name: associationId
+          required: true
+          description: Association Id
+          schema:
+            $ref: "#/components/schemas/UUID"
       responses:
         "200":
           description: OK
@@ -178,14 +195,6 @@ components:
       type: string
       format: uuid
   parameters:
-    trait_path_association_id:
-      in: path
-      name: associationId
-      schema:
-        type: string
-        format: uuid
-      required: true
-      description: UUID of the user to get and associated tenants.
     trait_pageable_offset:
       name: offset
       in: query
