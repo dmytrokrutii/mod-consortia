@@ -28,6 +28,16 @@
         },
         {
           "methods": [
+            "PUT"
+          ],
+          "pathPattern": "/consortia/{consortiumId}/tenants/{tenantId}",
+          "permissionsRequired": [
+            "consortia.tenants.item.put"
+          ],
+          "modulePermissions": []
+        },
+        {
+          "methods": [
             "GET"
           ],
           "pathPattern": "/consortia/{consortiumId}/user-tenants",
@@ -77,6 +87,7 @@
       "subPermissions": [
         "consortia.tenants.collection.get",
         "consortia.tenants.item.post",
+        "consortia.tenants.item.put",
         "consortia.user-tenants.collection.get",
         "consortia.user-tenants.item.get"
       ]
@@ -90,6 +101,11 @@
       "permissionName": "consortia.tenants.item.post",
       "displayName": "create tenant",
       "description": "Create tenant"
+    },
+    {
+      "permissionName": "consortia.tenants.item.put",
+      "displayName": "update tenant",
+      "description": "Update tenant"
     },
     {
       "permissionName": "consortia.user-tenants.collection.get",

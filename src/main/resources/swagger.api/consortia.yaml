@@ -79,6 +79,50 @@ paths:
             schema:
               $ref: "#/components/schemas/tenant"
         required: true
+    put:
+      description: Update tenant name
+      operationId: updateTenant
+      parameters:
+        - in: path
+          name: consortiumId
+          required: true
+          description: Consortium Id
+          schema:
+            $ref: "#/components/schemas/UUID"
+        - in: path
+          name: tenantId
+          required: true
+          schema:
+            type: string
+          description: The ID of the tenant
+      responses:
+        "204":
+          description: 'Tenant name successfully updated'
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/tenant"
+        "400":
+          description:
+            Bad request, e.g. malformed request body or query parameter.
+            Details of the errors (e.g. name of the parameter or line/character number
+            with malformed data) provided in the response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/errors"
+        "500":
+          description: Internal server errors, e.g. due to misconfiguration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/errors"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/tenant"
+        required: true
   /user-tenants:
     get:
       description: User Tenant Associations
