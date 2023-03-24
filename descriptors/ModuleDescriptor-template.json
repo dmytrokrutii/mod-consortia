@@ -20,6 +20,46 @@
           "methods": [
             "POST"
           ],
+          "pathPattern": "/consortia",
+          "permissionsRequired": [
+            "consortia.consortium.item.post"
+          ],
+          "modulePermissions": []
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/consortia",
+          "permissionsRequired": [
+            "consortia.consortium.collection.get"
+          ],
+          "modulePermissions": []
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/consortia/{consortiumId}",
+          "permissionsRequired": [
+            "consortia.consortium.item.get"
+          ],
+          "modulePermissions": []
+        },
+        {
+          "methods": [
+            "PUT"
+          ],
+          "pathPattern": "/consortia/{consortiumId}",
+          "permissionsRequired": [
+            "consortia.consortium.item.put"
+          ],
+          "modulePermissions": []
+        },
+        {
+          "methods": [
+            "POST"
+          ],
           "pathPattern": "/consortia/{consortiumId}/tenants",
           "permissionsRequired": [
             "consortia.tenants.item.post"
@@ -89,7 +129,11 @@
         "consortia.tenants.item.post",
         "consortia.tenants.item.put",
         "consortia.user-tenants.collection.get",
-        "consortia.user-tenants.item.get"
+        "consortia.user-tenants.item.get",
+        "consortia.consortium.item.post",
+        "consortia.consortium.item.put",
+        "consortia.consortium.item.get",
+        "consortia.consortium.collection.get"
       ]
     },
     {
@@ -116,6 +160,26 @@
       "permissionName": "consortia.user-tenants.item.get",
       "displayName": "get user tenant",
       "description": "Get user and tenant association"
+    },
+    {
+      "permissionName": "consortia.consortium.item.post",
+      "displayName": "create consortium",
+      "description": "Create consortium"
+    },
+    {
+      "permissionName": "consortia.consortium.item.get",
+      "displayName": "get consortium",
+      "description": "Get consortium"
+    },
+    {
+      "permissionName": "consortia.consortium.item.put",
+      "displayName": "update consortium",
+      "description": "Update consortium"
+    },
+    {
+      "permissionName": "consortia.consortium.collection.get",
+      "displayName": "get consortiums",
+      "description": "Get consortiums"
     }
   ],
   "requires": [],

@@ -6,4 +6,8 @@ public class ResourceAlreadyExistException extends RuntimeException{
   public ResourceAlreadyExistException(String attribute, String value) {
     super(String.format(RESOURCE_EXIST_MSG_TEMPLATE, attribute, value));
   }
+
+  public ResourceAlreadyExistException(String errorMsg) {
+    super(String.format(errorMsg));
+  }
 }

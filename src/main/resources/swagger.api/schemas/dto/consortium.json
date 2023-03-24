@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Consortium",
+  "Consortium": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "name": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "id",
+      "name"
+    ]
+  }
+}

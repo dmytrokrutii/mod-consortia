@@ -37,6 +37,8 @@
     <argLine/>
 
     <consortia.yaml.file>${project.basedir}/src/main/resources/swagger.api/consortia.yaml</consortia.yaml.file>
+    <tenants.yaml.file>${project.basedir}/src/main/resources/swagger.api/tenants.yaml</tenants.yaml.file>
+    <user_tenants.yaml.file>${project.basedir}/src/main/resources/swagger.api/user_tenants.yaml</user_tenants.yaml.file>
     <!-- runtime dependencies -->
     <folio-spring-base.version>6.0.2</folio-spring-base.version>
     <openapi-generator.version>6.2.1</openapi-generator.version>
@@ -247,6 +249,58 @@
             </goals>
             <configuration>
               <inputSpec>${consortia.yaml.file}</inputSpec>
+              <output>${project.build.directory}/generated-sources</output>
+              <generatorName>spring</generatorName>
+              <modelPackage>${project.groupId}.consortia.domain.dto</modelPackage>
+              <apiPackage>${project.groupId}.consortia.rest.resource</apiPackage>
+              <generateApis>true</generateApis>
+              <generateApiTests>true</generateApiTests>
+              <generateApiDocumentation>true</generateApiDocumentation>
+              <generateModels>true</generateModels>
+              <generateModelTests>false</generateModelTests>
+              <generateSupportingFiles>true</generateSupportingFiles>
+              <supportingFilesToGenerate>ApiUtil.java</supportingFilesToGenerate>
+              <generateModelDocumentation>true</generateModelDocumentation>
+              <configOptions>
+                <dateLibrary>java</dateLibrary>
+                <interfaceOnly>true</interfaceOnly>
+                <useSpringBoot3>true</useSpringBoot3>
+              </configOptions>
+            </configuration>
+          </execution>
+          <execution>
+            <id>tenants</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <inputSpec>${tenants.yaml.file}</inputSpec>
+              <output>${project.build.directory}/generated-sources</output>
+              <generatorName>spring</generatorName>
+              <modelPackage>${project.groupId}.consortia.domain.dto</modelPackage>
+              <apiPackage>${project.groupId}.consortia.rest.resource</apiPackage>
+              <generateApis>true</generateApis>
+              <generateApiTests>true</generateApiTests>
+              <generateApiDocumentation>true</generateApiDocumentation>
+              <generateModels>true</generateModels>
+              <generateModelTests>false</generateModelTests>
+              <generateSupportingFiles>true</generateSupportingFiles>
+              <supportingFilesToGenerate>ApiUtil.java</supportingFilesToGenerate>
+              <generateModelDocumentation>true</generateModelDocumentation>
+              <configOptions>
+                <dateLibrary>java</dateLibrary>
+                <interfaceOnly>true</interfaceOnly>
+                <useSpringBoot3>true</useSpringBoot3>
+              </configOptions>
+            </configuration>
+          </execution>
+          <execution>
+            <id>user_tenants</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <inputSpec>${user_tenants.yaml.file}</inputSpec>
               <output>${project.build.directory}/generated-sources</output>
               <generatorName>spring</generatorName>
               <modelPackage>${project.groupId}.consortia.domain.dto</modelPackage>

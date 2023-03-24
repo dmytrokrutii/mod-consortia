@@ -4,12 +4,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.consortia.domain.dto.Tenant;
 import org.folio.consortia.domain.dto.TenantCollection;
-import org.folio.consortia.domain.entity.ConsortiumEntity;
 import org.folio.consortia.domain.entity.TenantEntity;
-import org.folio.consortia.domain.repository.ConsortiumRepository;
 import org.folio.consortia.domain.repository.TenantRepository;
 import org.folio.consortia.exception.ResourceAlreadyExistException;
 import org.folio.consortia.exception.ResourceNotFoundException;
+import org.folio.consortia.service.ConsortiumService;
 import org.folio.consortia.service.TenantService;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.data.domain.Page;
@@ -27,13 +26,13 @@ public class TenantServiceImpl implements TenantService {
   private static final String TENANTS_IDS_NOT_MATCHED_ERROR_MSG = "Request body tenantId and path param tenantId should be identical";
 
   private final TenantRepository repository;
-  private final ConsortiumRepository consortiumRepository;
   private final ConversionService converter;
+  private final ConsortiumService consortiumService;
 
   @Override
   public TenantCollection get(UUID consortiumId, Integer offset, Integer limit) {
     TenantCollection result = new TenantCollection();
-    checkConsortiumExistsOrThrow(consortiumId);
+    consortiumService.checkConsortiumExistsOrThrow(consortiumId);
     Page<TenantEntity> page = repository.findByConsortiumId(consortiumId, PageRequest.of(offset, limit));
     result.setTenants(page.map(o -> converter.convert(o, Tenant.class)).getContent());
     result.setTotalRecords((int) page.getTotalElements());
@@ -42,7 +41,7 @@ public class TenantServiceImpl implements TenantService {
 
   @Override
   public Tenant save(UUID consortiumId, Tenant tenantDto) {
-    checkConsortiumExistsOrThrow(consortiumId);
+    consortiumService.checkConsortiumExistsOrThrow(consortiumId);
     checkTenantNotExistsOrThrow(tenantDto.getId());
     TenantEntity entity = toEntity(consortiumId, tenantDto);
     TenantEntity tenantEntity = repository.save(entity);
@@ -51,16 +50,12 @@ public class TenantServiceImpl implements TenantService {
 
   @Override
   public Tenant update(UUID consortiumId, String tenantId, Tenant tenantDto) {
-    checkConsortiumExistsOrThrow(consortiumId);
+    consortiumService.checkConsortiumExistsOrThrow(consortiumId);
     checkTenantExistsOrThrow(tenantId);
     checkIdenticalOrThrow(tenantId, tenantDto.getId(), TENANTS_IDS_NOT_MATCHED_ERROR_MSG);
     TenantEntity entity = toEntity(consortiumId, tenantDto);
     TenantEntity tenantEntity = repository.save(entity);
     return converter.convert(tenantEntity, Tenant.class);
-  }
-
-  private ConsortiumEntity checkConsortiumExistsOrThrow(UUID consortiumId) {
-    return consortiumRepository.findById(consortiumId).orElseThrow(() -> new ResourceNotFoundException("consortiumId", String.valueOf(consortiumId)));
   }
 
   private void checkTenantNotExistsOrThrow(String tenantId) {

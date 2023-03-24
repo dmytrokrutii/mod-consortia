@@ -45,6 +45,8 @@ class UserTenantServiceTest {
   private ConversionService conversionService;
   @Mock
   private ConsortiumRepository consortiumRepository;
+  @Mock
+  private ConsortiumService consortiumService;
 
   @Test
   void shouldGetUserTenantList() {
@@ -136,9 +138,10 @@ class UserTenantServiceTest {
 
   @Test
   void shouldThrowIllegalArgumentException() {
-        when(consortiumRepository.findById(UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002")))
+    when(consortiumRepository.findById(UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002")))
       .thenReturn(Optional.of(createConsortiumEntity()));
-    Assertions.assertThrows(IllegalArgumentException.class, () -> userTenantService.get(UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002"), 0, 0));
+    UUID id = UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002");
+    Assertions.assertThrows(IllegalArgumentException.class, () -> userTenantService.get(id, 0, 0));
   }
 
   @Test
@@ -151,8 +154,9 @@ class UserTenantServiceTest {
     when(userTenantRepository.findByUserId(userId, PageRequest.of(0, 10)))
       .thenReturn(new PageImpl<>(new ArrayList<>()));
 
+    UUID id = UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002");
     // throw exception
-    assertThrows(ResourceNotFoundException.class, () -> userTenantService.getByUserId(UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002"), userId, 0, 10));
+    assertThrows(ResourceNotFoundException.class, () -> userTenantService.getByUserId(id, userId, 0, 10));
   }
 
   @Test
@@ -165,10 +169,11 @@ class UserTenantServiceTest {
       .thenReturn(Optional.of(createConsortiumEntity()));
     when(userTenantRepository.findByUsernameAndTenantId(username, tenantId))
       .thenReturn(Optional.empty());
+    UUID id = UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002");
 
     // throw exception
     assertThrows(ResourceNotFoundException.class,
-      () -> userTenantService.getByUsernameAndTenantId(UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002"), "testusername", tenantId));
+      () -> userTenantService.getByUsernameAndTenantId(id, "testusername", tenantId));
   }
 
   private UserTenantEntity createUserTenantEntity(UUID associationId, UUID userId, String username, String tenantId) {

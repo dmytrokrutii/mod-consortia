@@ -44,6 +44,9 @@ class TenantServiceTest {
   @Mock
   private ConsortiumRepository consortiumRepository;
 
+  @Mock
+  private ConsortiumService service;
+
   @Test
   void shouldGetTenantList() {
     int offset = 0;
@@ -65,7 +68,9 @@ class TenantServiceTest {
 
   @Test
   void shouldGetError() {
-    Assertions.assertThrows(org.folio.consortia.exception.ResourceNotFoundException.class, () -> tenantService.get(null,0, 0));
+    when(service.checkConsortiumExistsOrThrow(any())).thenThrow(ResourceNotFoundException.class);
+    Assertions.assertThrows(org.folio.consortia.exception.ResourceNotFoundException.class,
+      () -> tenantService.get(UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002"),0, 1));
   }
 
   @Test
