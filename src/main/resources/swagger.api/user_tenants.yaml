@@ -12,112 +12,112 @@ paths:
       summary: Get a list of user tenant associations
       operationId: getUserTenants
       parameters:
-        - in: path
-          name: consortiumId
-          required: true
-          description: Consortium Id
-          schema:
-            $ref: "#/components/schemas/UUID"
-        - in: query
-          name: userId
-          schema:
-            type: string
-            format: uuid
-          description: The UUID of the user
-        - in: query
-          name: username
-          schema:
-            type: string
-            description: The username of the user
-        - in: query
-          name: tenantId
-          schema:
-              type: string
-          description: The ID of the tenant
+        - $ref: "#/components/parameters/consortiumId"
+        - $ref: "#/components/parameters/userId"
+        - $ref: "#/components/parameters/username"
+        - $ref: "#/components/parameters/tenantId"
         - $ref: "#/components/parameters/trait_pageable_offset"
         - $ref: "#/components/parameters/trait_pageable_limit"
       responses:
         "200":
-          description: "User Tenant Associations successfully retrieved"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/userTenantCollection"
+          $ref: "#/components/responses/UserTenantCollection"
         "400":
-          description:
-            Bad request, e.g. malformed request body or query parameter.
-            Details of the errors (e.g. name of the parameter or line/character number
-            with malformed data) provided in the response.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/BadRequest"
         "500":
-          description: Internal server errors, e.g. due to misconfiguration
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/InternalServerError"
   /user-tenants/{associationId}:
     description: User Tenant Associations
     get:
-      summary: Get a list of user tenant associations by associationId
+      summary: Get a list of user tenant associations
       operationId: getUserTenantByAssociationId
       parameters:
-        - in: path
-          name: consortiumId
-          required: true
-          description: Consortium Id
-          schema:
-            $ref: "#/components/schemas/UUID"
-        - in: path
-          name: associationId
-          required: true
-          description: Association Id
-          schema:
-            $ref: "#/components/schemas/UUID"
+        - $ref: "#/components/parameters/consortiumId"
+        - $ref: "#/components/parameters/associationId"
       responses:
         "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/userTenant"
+          $ref: "#/components/responses/UserTenant"
         "400":
-          description:
-            Bad request, e.g. malformed request body or query parameter.
-            Details of the errors (e.g. name of the parameter or line/character number
-            with malformed data) provided in the response.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/BadRequest"
         "404":
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/NotFound"
         "500":
-          description: Internal server errors, e.g. due to misconfiguration
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/InternalServerError"
 components:
-  schemas:
-    userTenant:
-      $ref: 'schemas/dto/userTenant.json#/UserTenant'
-    userTenantCollection:
-      $ref: 'schemas/dto/userTenantCollection.json#/UserTenantCollection'
-    error:
-      $ref: 'schemas/error/error.json#/Error'
-    errors:
-      $ref: 'schemas/error/errors.json#/Errors'
-    UUID:
-      type: string
-      format: uuid
+  responses:
+    UserTenant:
+      description: Returns a user tenant association object
+      content:
+        application/json:
+          schema:
+            $ref: "schemas/userTenant.yaml#/UserTenant"
+    UserTenantCollection:
+      description: Returns a user tenant association collection object
+      content:
+        application/json:
+          schema:
+            $ref: "schemas/userTenant.yaml#/UserTenantCollection"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "schemas/common.yaml#/Error"
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "schemas/common.yaml#/Error"
+    Unauthorized:
+      description: Not authorized to perform requested action
+      content:
+        text/plain:
+          example: unable to perform action -- unauthorized
+    UnprocessableEntity:
+      description: Validation errors
+      content:
+        application/json:
+          schema:
+            $ref: 'schemas/common.yaml#/Errors'
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "schemas/common.yaml#/Error"
   parameters:
+    consortiumId:
+      in: path
+      name: consortiumId
+      schema:
+        $ref: "schemas/common.yaml#/uuid"
+      required: true
+      description: The ID of consortium
+    tenantId:
+      in: query
+      name: tenantId
+      schema:
+        type: string
+      description: The ID of the tenant
+    associationId:
+      in: path
+      name: associationId
+      schema:
+        $ref: "schemas/common.yaml#/uuid"
+      required: true
+      description: UUID of the user to get and associated tenants.
+    userId:
+      in: query
+      name: userId
+      schema:
+        $ref: "schemas/common.yaml#/uuid"
+      description: The UUID of the user
+    username:
+      in: query
+      name: username
+      schema:
+        type: string
+        description: The username of the user
     trait_pageable_offset:
       name: offset
       in: query

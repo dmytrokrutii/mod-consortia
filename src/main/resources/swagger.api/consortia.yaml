@@ -6,142 +6,110 @@ info:
 paths:
   /consortia:
     get:
-      description: Get consortium collection
+      summary: Get consortium collection
       operationId: getConsortiumCollection
       responses:
-        "200":
-          description: 'Consortia successfully retrieved'
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/consortiumCollection"
-        "400":
-          description:
-            Bad request, e.g. malformed request body or query parameter.
-            Details of the errors (e.g. name of the parameter or line/character number
-            with malformed data) provided in the response.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
-        "500":
-          description: Internal server errors, e.g. due to misconfiguration
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+        '200':
+          $ref: '#/components/responses/ConsortiumCollection'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     post:
-      description: Save consortium
+      summary: Save consortium
       operationId: saveConsortium
       responses:
-        "201":
-          description: 'Consortium successfully saved'
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/consortium"
-        "400":
-          description:
-            Bad request, e.g. malformed request body or query parameter.
-            Details of the errors (e.g. name of the parameter or line/character number
-            with malformed data) provided in the response.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/errors"
-        "500":
-          description: Internal server errors, e.g. due to misconfiguration
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/errors"
+        '201':
+          $ref: '#/components/responses/Consortium'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
       requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/consortium"
-        required: true
+        $ref: '#/components/requestBodies/ConsortiumBody'
   /consortia/{consortiumId}:
     get:
-      description: Get consortium record based on consortiumId
+      summary: Get consortium record based on consortiumId
       operationId: getConsortium
       parameters:
-        - in: path
-          name: consortiumId
-          required: true
-          description: Consortium Id
-          schema:
-            $ref: "#/components/schemas/UUID"
+        - $ref: '#/components/parameters/consortiumId'
       responses:
-        "200":
-          description: 'Consortium successfully retrieved'
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/consortium"
-        "400":
-          description:
-            Bad request, e.g. malformed request body or query parameter.
-            Details of the errors (e.g. name of the parameter or line/character number
-            with malformed data) provided in the response.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
-        "500":
-          description: Internal server errors, e.g. due to misconfiguration
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+        '200':
+          $ref: '#/components/responses/Consortium'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     put:
-      description: Update consortium name
+      summary: Update consortium name
       operationId: updateConsortium
       parameters:
-        - in: path
-          name: consortiumId
-          required: true
-          description: Consortium Id
-          schema:
-            $ref: "#/components/schemas/UUID"
+        - $ref: '#/components/parameters/consortiumId'
       responses:
-        "204":
-          description: 'Consortia name successfully updated'
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/consortium"
-        "400":
-          description:
-            Bad request, e.g. malformed request body or query parameter.
-            Details of the errors (e.g. name of the parameter or line/character number
-            with malformed data) provided in the response.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/errors"
-        "500":
-          description: Internal server errors, e.g. due to misconfiguration
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/errors"
+        '204':
+          $ref: '#/components/responses/Consortium'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
       requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/consortium"
-        required: true
+        $ref: '#/components/requestBodies/ConsortiumBody'
 components:
-  schemas:
-    consortiumCollection:
-      $ref: 'schemas/dto/consortiumCollection.json#/ConsortiumCollection'
-    consortium:
-      $ref: 'schemas/dto/consortium.json#/Consortium'
-    error:
-      $ref: 'schemas/error/error.json#/Error'
-    errors:
-      $ref: 'schemas/error/errors.json#/Errors'
-    UUID:
-      type: string
-      format: uuid
+  requestBodies:
+    ConsortiumBody:
+      description: Consortium object
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "schemas/consortium.yaml#/Consortium"
+  responses:
+    Consortium:
+      description: Consortium Object
+      content:
+        application/json:
+          schema:
+            $ref: "schemas/consortium.yaml#/Consortium"
+    ConsortiumCollection:
+      description: Collection of Consortium Object
+      content:
+        application/json:
+          schema:
+            $ref: "schemas/consortium.yaml#/ConsortiumCollection"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "schemas/common.yaml#/Error"
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "schemas/common.yaml#/Error"
+    Unauthorized:
+      description: Not authorized to perform requested action
+      content:
+        text/plain:
+          example: unable to perform action -- unauthorized
+    UnprocessableEntity:
+      description: Validation errors
+      content:
+        application/json:
+          schema:
+            $ref: 'schemas/common.yaml#/Errors'
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "schemas/common.yaml#/Error"
+  parameters:
+    consortiumId:
+      in: path
+      name: consortiumId
+      schema:
+        $ref: "schemas/common.yaml#/uuid"
+      required: true
+      description: The ID of consortium

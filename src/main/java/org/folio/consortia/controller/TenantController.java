@@ -7,7 +7,6 @@ import org.folio.consortia.service.TenantService;
 import org.folio.consortia.domain.dto.TenantCollection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -31,7 +30,6 @@ public class TenantController implements TenantsApi {
   }
 
   @Override
-  @PutMapping("/tenants/{tenantId}")
   public ResponseEntity<Tenant> updateTenant(UUID consortiumId, String tenantId, Tenant tenant) {
     return ResponseEntity.ok(service.update(consortiumId, tenantId, tenant));
   }
