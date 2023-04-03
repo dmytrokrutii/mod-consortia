@@ -55,7 +55,21 @@ paths:
           $ref: "#/components/responses/NotFound"
         "500":
           $ref: "#/components/responses/InternalServerError"
-
+    delete:
+      description: Delete tenant
+      operationId: deleteTenantById
+      parameters:
+        - $ref: "#/components/parameters/consortiumId"
+        - $ref: "#/components/parameters/tenantId"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 components:
   requestBodies:
     TenantBody:
@@ -78,6 +92,8 @@ components:
         application/json:
           schema:
             $ref: "schemas/tenant.yaml#/TenantCollection"
+    NoContent:
+      description: No content
     NotFound:
       description: Resource not found
       content:

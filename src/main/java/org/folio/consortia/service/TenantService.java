@@ -35,4 +35,11 @@ public interface TenantService {
    * @return tenantDto
    */
   Tenant update(UUID consortiumId, String tenantId, Tenant tenantDto);
+
+  /**
+   * Deletes single tenant based on consortiumId.
+   * @param consortiumId the consortiumId
+   * @param tenantId the tenantId
+   */
+  void delete(UUID consortiumId, String tenantId);
 }

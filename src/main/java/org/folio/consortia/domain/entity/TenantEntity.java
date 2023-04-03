@@ -3,10 +3,13 @@ package org.folio.consortia.domain.entity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.apache.logging.log4j.core.config.plugins.validation.constraints.NotBlank;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -20,6 +23,9 @@ import java.util.UUID;
 public class TenantEntity {
   @Id
   private String id;
+  @NotBlank(message = "Invalid Name: Empty name")
+  @NotNull(message = "Invalid Name: Name is NULL")
+  @Size(min = 2, max = 150, message = "Invalid Name: Must be of 2 - 150 characters")
   private String name;
   private UUID consortiumId;
 

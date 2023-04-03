@@ -5,7 +5,7 @@ import lombok.extern.log4j.Log4j2;
 import org.folio.consortia.domain.dto.Consortium;
 import org.folio.consortia.domain.dto.ConsortiumCollection;
 import org.folio.consortia.domain.entity.ConsortiumEntity;
-import org.folio.consortia.domain.repository.ConsortiumRepository;
+import org.folio.consortia.repository.ConsortiumRepository;
 import org.folio.consortia.exception.ResourceAlreadyExistException;
 import org.folio.consortia.exception.ResourceNotFoundException;
 import org.folio.consortia.service.ConsortiumService;
@@ -30,7 +30,7 @@ public class ConsortiumServiceImpl implements ConsortiumService {
 
   @Override
   public Consortium save(Consortium consortiumDto) {
-    checkConsortiumNotExistsOrThrow();
+    checkAnyConsortiumNotExistsOrThrow();
     ConsortiumEntity entity = new ConsortiumEntity();
     entity.setId(consortiumDto.getId());
     entity.setName(consortiumDto.getName());
@@ -65,11 +65,13 @@ public class ConsortiumServiceImpl implements ConsortiumService {
   }
 
   @Override
-  public ConsortiumEntity checkConsortiumExistsOrThrow(UUID consortiumId) {
-    return repository.findById(consortiumId).orElseThrow(() -> new ResourceNotFoundException("consortiumId", String.valueOf(consortiumId)));
+  public void checkConsortiumExistsOrThrow(UUID consortiumId) {
+    if (!repository.existsById(consortiumId)) {
+      throw new ResourceNotFoundException("consortiumId", String.valueOf(consortiumId));
+    }
   }
 
-  private void checkConsortiumNotExistsOrThrow() {
+  private void checkAnyConsortiumNotExistsOrThrow() {
     if (repository.count() > 0) {
       throw new ResourceAlreadyExistException(CONSORTIUM_RESOURCE_EXIST_MSG_TEMPLATE);
     }

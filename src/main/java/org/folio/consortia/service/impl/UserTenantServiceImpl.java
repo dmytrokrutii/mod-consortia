@@ -5,7 +5,7 @@ import lombok.extern.log4j.Log4j2;
 import org.folio.consortia.domain.dto.UserTenant;
 import org.folio.consortia.domain.dto.UserTenantCollection;
 import org.folio.consortia.domain.entity.UserTenantEntity;
-import org.folio.consortia.domain.repository.UserTenantRepository;
+import org.folio.consortia.repository.UserTenantRepository;
 import org.folio.consortia.exception.ResourceNotFoundException;
 import org.folio.consortia.service.ConsortiumService;
 import org.folio.consortia.service.UserTenantService;

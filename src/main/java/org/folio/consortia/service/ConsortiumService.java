@@ -2,7 +2,6 @@ package org.folio.consortia.service;
 
 import org.folio.consortia.domain.dto.Consortium;
 import org.folio.consortia.domain.dto.ConsortiumCollection;
-import org.folio.consortia.domain.entity.ConsortiumEntity;
 
 import java.util.UUID;
 
@@ -18,7 +17,7 @@ public interface ConsortiumService {
   Consortium save(Consortium consortiumDto);
 
   /**
-   * Gets consortium based on consortiumId.
+   * Gets single consortium based on consortiumId.
    *
    * @param consortiumId  the consortiumId
    * @return consortiumDto
@@ -35,12 +34,17 @@ public interface ConsortiumService {
   Consortium update(UUID consortiumId, Consortium consortiumDto);
 
   /**
-   * Gets consortiums. Will returns only single record, because consortium table can persist only 1 consortium.
+   * Gets consortiums. Will return only a single record, because the consortium table can persist only 1 consortium.
    * All new consortia will be created in separate new consortia tenants and so in separate DB schemas.
    *
    * @return consortiums collection
    */
   ConsortiumCollection getAll();
 
-  ConsortiumEntity checkConsortiumExistsOrThrow(UUID consortiumId);
+
+  /**
+   * Checks if a consortium exists.
+   * @param consortiumId the consortiumId
+   */
+  void checkConsortiumExistsOrThrow(UUID consortiumId);
 }

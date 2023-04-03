@@ -10,26 +10,6 @@
           "methods": [
             "GET"
           ],
-          "pathPattern": "/consortia/{consortiumId}/tenants",
-          "permissionsRequired": [
-            "consortia.tenants.collection.get"
-          ],
-          "modulePermissions": []
-        },
-        {
-          "methods": [
-            "POST"
-          ],
-          "pathPattern": "/consortia",
-          "permissionsRequired": [
-            "consortia.consortium.item.post"
-          ],
-          "modulePermissions": []
-        },
-        {
-          "methods": [
-            "GET"
-          ],
           "pathPattern": "/consortia",
           "permissionsRequired": [
             "consortia.consortium.collection.get"
@@ -48,11 +28,31 @@
         },
         {
           "methods": [
+            "POST"
+          ],
+          "pathPattern": "/consortia",
+          "permissionsRequired": [
+            "consortia.consortium.item.post"
+          ],
+          "modulePermissions": []
+        },
+        {
+          "methods": [
             "PUT"
           ],
           "pathPattern": "/consortia/{consortiumId}",
           "permissionsRequired": [
             "consortia.consortium.item.put"
+          ],
+          "modulePermissions": []
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/consortia/{consortiumId}/tenants",
+          "permissionsRequired": [
+            "consortia.tenants.collection.get"
           ],
           "modulePermissions": []
         },
@@ -73,6 +73,16 @@
           "pathPattern": "/consortia/{consortiumId}/tenants/{tenantId}",
           "permissionsRequired": [
             "consortia.tenants.item.put"
+          ],
+          "modulePermissions": []
+        },
+        {
+          "methods": [
+            "DELETE"
+          ],
+          "pathPattern": "/consortia/{consortiumId}/tenants/{tenantId}",
+          "permissionsRequired": [
+            "consortia.tenants.item.delete"
           ],
           "modulePermissions": []
         },
@@ -100,21 +110,16 @@
     },
     {
       "id": "_tenant",
-      "version": "1.2",
+      "version": "2.0",
       "interfaceType": "system",
       "handlers": [
         {
-          "methods": [
-            "POST"
-          ],
-          "modulePermissions": [],
+          "methods": ["POST"],
           "pathPattern": "/_/tenant"
         },
         {
-          "methods": [
-            "DELETE"
-          ],
-          "pathPattern": "/_/tenant"
+          "methods": ["GET", "DELETE"],
+          "pathPattern": "/_/tenant/{id}"
         }
       ]
     }
@@ -128,6 +133,7 @@
         "consortia.tenants.collection.get",
         "consortia.tenants.item.post",
         "consortia.tenants.item.put",
+        "consortia.tenants.item.delete",
         "consortia.user-tenants.collection.get",
         "consortia.user-tenants.item.get",
         "consortia.consortium.item.post",
@@ -150,6 +156,11 @@
       "permissionName": "consortia.tenants.item.put",
       "displayName": "update tenant",
       "description": "Update tenant"
+    },
+    {
+      "permissionName": "consortia.tenants.item.delete",
+      "displayName": "delete tenant",
+      "description": "Delete tenant"
     },
     {
       "permissionName": "consortia.user-tenants.collection.get",

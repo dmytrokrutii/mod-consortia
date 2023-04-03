@@ -4,7 +4,7 @@ import org.folio.consortia.domain.dto.UserTenant;
 import org.folio.consortia.domain.dto.UserTenantCollection;
 import org.folio.consortia.domain.entity.ConsortiumEntity;
 import org.folio.consortia.domain.entity.UserTenantEntity;
-import org.folio.consortia.domain.repository.ConsortiumRepository;
+import org.folio.consortia.repository.ConsortiumRepository;
 import org.folio.consortia.service.UserTenantService;
 import org.folio.consortia.support.BaseTest;
 import org.junit.jupiter.api.Assertions;
@@ -18,7 +18,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.is;
@@ -42,15 +41,14 @@ class UserTenantControllerTest extends BaseTest {
   @Test
   void shouldGetUserTenantsByUserId() {
     // given
+    UUID consortiumId = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
     List<UserTenant> userTenantDtos = List.of(new UserTenant(), new UserTenant());
     UserTenantCollection userTenantCollection = new UserTenantCollection();
     userTenantCollection.setUserTenants(userTenantDtos);
     userTenantCollection.setTotalRecords(userTenantDtos.size());
 
-    when(consortiumRepository.findById(UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002")))
-      .thenReturn(Optional.of(createConsortiumEntity()));
-
+    when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
     when(userTenantService.getByUserId(UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002"), userId, 0, 10))
       .thenReturn(userTenantCollection);
 
@@ -69,35 +67,27 @@ class UserTenantControllerTest extends BaseTest {
   void shouldGetUserTenantByAssociationId() {
     // given
     UUID associationId = UUID.randomUUID();
-    UserTenant userTenant = new UserTenant();
-    userTenant.setId(associationId);
-    userTenant.setUserId(UUID.randomUUID());
-    userTenant.setUsername("username");
-    userTenant.setTenantId(String.valueOf(UUID.randomUUID()));
-    userTenant.setIsPrimary(true);
+    UUID consortiumId = UUID.randomUUID();
+    UserTenant userTenant = createUserTenant(associationId);
 
-    when(consortiumRepository.findById(UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002")))
-      .thenReturn(Optional.of(createConsortiumEntity()));
-
-    when(userTenantService.getById(UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002"), associationId))
-      .thenReturn(userTenant);
+    when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
+    when(userTenantService.getById(consortiumId, associationId)).thenReturn(userTenant);
 
     // when
-    ResponseEntity<UserTenant> response = userTenantController.getUserTenantByAssociationId(UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002"), associationId);
+    ResponseEntity<UserTenant> response = userTenantController.getUserTenantByAssociationId(consortiumId, associationId);
 
     // then
     Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
     Assertions.assertEquals(userTenant, response.getBody());
 
-    verify(userTenantService).getById(UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002"), associationId);
+    verify(userTenantService).getById(consortiumId, associationId);
   }
 
   @Test
   void shouldGetUserTenantList() throws Exception {
     var headers = defaultHeaders();
-
-    when(consortiumRepository.findById(UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002")))
-      .thenReturn(Optional.of(createConsortiumEntity()));
+    UUID consortiumId = UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002");
+    when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
     this.mockMvc.perform(get("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/user-tenants?limit=2&offset=1").headers(headers))
       .andExpectAll(
         status().isOk(),
@@ -107,9 +97,9 @@ class UserTenantControllerTest extends BaseTest {
   @Test
   void return404UserTenantNotFoundByAssociationId() throws Exception {
     var headers = defaultHeaders();
+    UUID consortiumId = UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002");
+    when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
 
-    when(consortiumRepository.findById(UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002")))
-      .thenReturn(Optional.of(createConsortiumEntity()));
     this.mockMvc.perform(get("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/user-tenants/cb28f43c-bf45-11ed-afa1-0242ac120002").headers(headers))
       .andExpectAll(
         status().is4xxClientError(),
@@ -119,25 +109,25 @@ class UserTenantControllerTest extends BaseTest {
   }
 
   @Test
-  void return400BadRequest() throws Exception {
+  void return404NotFound() throws Exception {
     var headers = defaultHeaders();
+    UUID consortiumId = UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120001");
+    when(consortiumRepository.existsById(consortiumId)).thenReturn(false);
 
-    when(consortiumRepository.findById(UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002")))
-      .thenReturn(Optional.of(createConsortiumEntity()));
     this.mockMvc.perform(get("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/user-tenants?limit=0&offset=0").headers(headers))
       .andExpectAll(
         status().is4xxClientError(),
         content().contentType(MediaType.APPLICATION_JSON_VALUE),
         jsonPath("$.errors[0].code",
-          is("VALIDATION_ERROR")));
+          is("NOT_FOUND_ERROR")));
   }
 
   @Test
   void return404UserTenantNotFoundWithUserId() throws Exception {
     var headers = defaultHeaders();
+    UUID consortiumId = UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002");
+    when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
 
-    when(consortiumRepository.findById(UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002")))
-      .thenReturn(Optional.of(createConsortiumEntity()));
     this.mockMvc.perform(get("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/user-tenants?userId=8ad4c4b4-4d4c-4bf9-a8a0-7a30c1edf34b").headers(headers))
       .andExpectAll(
         status().is4xxClientError(),
@@ -149,9 +139,9 @@ class UserTenantControllerTest extends BaseTest {
   @Test
   void getValidationError() throws Exception {
     var headers = defaultHeaders();
+    UUID consortiumId = UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002");
+    when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
 
-    when(consortiumRepository.findById(UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002")))
-      .thenReturn(Optional.of(createConsortiumEntity()));
     this.mockMvc.perform(get("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/user-tenants?userId=90unnn").headers(headers))
       .andExpectAll(
         status().is4xxClientError(),
@@ -165,5 +155,15 @@ class UserTenantControllerTest extends BaseTest {
     consortiumEntity.setId(UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002"));
     consortiumEntity.setName("TestConsortium");
     return consortiumEntity;
+  }
+
+  private UserTenant createUserTenant(UUID associationId) {
+    UserTenant userTenant = new UserTenant();
+    userTenant.setId(associationId);
+    userTenant.setUserId(UUID.randomUUID());
+    userTenant.setUsername("username");
+    userTenant.setTenantId(String.valueOf(UUID.randomUUID()));
+    userTenant.setIsPrimary(true);
+    return userTenant;
   }
 }

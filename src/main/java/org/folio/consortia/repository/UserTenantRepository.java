@@ -1,4 +1,4 @@
-package org.folio.consortia.domain.repository;
+package org.folio.consortia.repository;
 
 import org.folio.consortia.domain.entity.UserTenantEntity;
 import org.springframework.data.domain.Page;
@@ -16,4 +16,6 @@ public interface UserTenantRepository extends JpaRepository<UserTenantEntity, UU
 
   @Query("SELECT ut FROM UserTenantEntity ut WHERE ut.username= ?1 AND ut.tenant.id= ?2")
   Optional<UserTenantEntity> findByUsernameAndTenantId(String username, String tenantId);
+
+  boolean existsByTenantId(String tenantId);
 }

@@ -5,7 +5,8 @@ import lombok.extern.log4j.Log4j2;
 import org.folio.consortia.domain.dto.Tenant;
 import org.folio.consortia.domain.dto.TenantCollection;
 import org.folio.consortia.domain.entity.TenantEntity;
-import org.folio.consortia.domain.repository.TenantRepository;
+import org.folio.consortia.repository.TenantRepository;
+import org.folio.consortia.repository.UserTenantRepository;
 import org.folio.consortia.exception.ResourceAlreadyExistException;
 import org.folio.consortia.exception.ResourceNotFoundException;
 import org.folio.consortia.service.ConsortiumService;
@@ -23,9 +24,12 @@ import static org.folio.consortia.utils.HelperUtils.checkIdenticalOrThrow;
 @Log4j2
 @RequiredArgsConstructor
 public class TenantServiceImpl implements TenantService {
-  private static final String TENANTS_IDS_NOT_MATCHED_ERROR_MSG = "Request body tenantId and path param tenantId should be identical";
 
-  private final TenantRepository repository;
+  private static final String TENANTS_IDS_NOT_MATCHED_ERROR_MSG = "Request body tenantId and path param tenantId should be identical";
+  private static final String TENANT_HAS_ACTIVE_USER_ASSOCIATIONS_ERROR_MSG = "Cannot delete tenant with ID {tenantId} because it has an association with a user. " +
+    "Please remove the user association before attempting to delete the tenant.";
+  private final TenantRepository tenantRepository;
+  private final UserTenantRepository userTenantRepository;
   private final ConversionService converter;
   private final ConsortiumService consortiumService;
 
@@ -33,7 +37,7 @@ public class TenantServiceImpl implements TenantService {
   public TenantCollection get(UUID consortiumId, Integer offset, Integer limit) {
     TenantCollection result = new TenantCollection();
     consortiumService.checkConsortiumExistsOrThrow(consortiumId);
-    Page<TenantEntity> page = repository.findByConsortiumId(consortiumId, PageRequest.of(offset, limit));
+    Page<TenantEntity> page = tenantRepository.findByConsortiumId(consortiumId, PageRequest.of(offset, limit));
     result.setTenants(page.map(o -> converter.convert(o, Tenant.class)).getContent());
     result.setTotalRecords((int) page.getTotalElements());
     return result;
@@ -44,7 +48,7 @@ public class TenantServiceImpl implements TenantService {
     consortiumService.checkConsortiumExistsOrThrow(consortiumId);
     checkTenantNotExistsOrThrow(tenantDto.getId());
     TenantEntity entity = toEntity(consortiumId, tenantDto);
-    TenantEntity tenantEntity = repository.save(entity);
+    TenantEntity tenantEntity = tenantRepository.save(entity);
     return converter.convert(tenantEntity, Tenant.class);
   }
 
@@ -54,16 +58,30 @@ public class TenantServiceImpl implements TenantService {
     checkTenantExistsOrThrow(tenantId);
     checkIdenticalOrThrow(tenantId, tenantDto.getId(), TENANTS_IDS_NOT_MATCHED_ERROR_MSG);
     TenantEntity entity = toEntity(consortiumId, tenantDto);
-    TenantEntity tenantEntity = repository.save(entity);
+    TenantEntity tenantEntity = tenantRepository.save(entity);
     return converter.convert(tenantEntity, Tenant.class);
   }
 
-  private void checkTenantNotExistsOrThrow(String tenantId) {
-    repository.findById(tenantId).ifPresent(s -> { throw new ResourceAlreadyExistException("id", tenantId); });
+  @Override
+  public void delete(UUID consortiumId, String tenantId) {
+    consortiumService.checkConsortiumExistsOrThrow(consortiumId);
+    checkTenantExistsOrThrow(tenantId);
+    if (userTenantRepository.existsByTenantId(tenantId)) {
+      throw new IllegalStateException(TENANT_HAS_ACTIVE_USER_ASSOCIATIONS_ERROR_MSG);
+    }
+    tenantRepository.deleteById(tenantId);
   }
 
-  private TenantEntity checkTenantExistsOrThrow(String tenantId) {
-    return repository.findById(tenantId).orElseThrow(() ->  new ResourceNotFoundException("tenantId", tenantId));
+  private void checkTenantNotExistsOrThrow(String tenantId) {
+    if (tenantRepository.existsById(tenantId)) {
+      throw new ResourceAlreadyExistException("id", tenantId);
+    }
+  }
+
+  private void checkTenantExistsOrThrow(String tenantId) {
+    if (!tenantRepository.existsById(tenantId)) {
+      throw new ResourceNotFoundException("id", tenantId);
+    }
   }
 
   private TenantEntity toEntity(UUID consortiumId, Tenant tenantDto) {
