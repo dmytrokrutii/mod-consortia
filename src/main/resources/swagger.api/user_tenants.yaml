@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
-  title: Consortia integration API
-  description: "Consortia integration API"
+  title: User Tenant Association integration API
+  description: "User Tenant Association integration API"
   version: 0.0.1
 servers:
   - url: /consortia/{consortiumId}/
@@ -23,12 +23,14 @@ paths:
           $ref: "#/components/responses/UserTenantCollection"
         "400":
           $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
         "500":
           $ref: "#/components/responses/InternalServerError"
   /user-tenants/{associationId}:
     description: User Tenant Associations
     get:
-      summary: Get a list of user tenant associations
+      summary: Get a list of user tenant associations by association id
       operationId: getUserTenantByAssociationId
       parameters:
         - $ref: "#/components/parameters/consortiumId"

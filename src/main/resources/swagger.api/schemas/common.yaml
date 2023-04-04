@@ -36,6 +36,27 @@ Metadata:
   required:
     - createdDate
 
+userInfo:
+  type: object
+  description: User Display Information
+  properties:
+    lastName:
+      type: string
+      readOnly: true
+      description: Last name of the user
+    firstName:
+      type: string
+      readOnly: true
+      description: First name of the user
+    middleName:
+      type: string
+      readOnly: true
+      description: Middle name or initial of the user
+  example:
+    lastName: Doe
+    firstName: John
+    middleName: X.
+
 Error:
   description: "An error"
   type: object
