@@ -7,7 +7,6 @@ import org.folio.consortia.domain.entity.TenantEntity;
 import org.folio.consortia.repository.ConsortiumRepository;
 import org.folio.consortia.repository.TenantRepository;
 import org.folio.consortia.support.BaseTest;
-import org.hibernate.validator.internal.engine.ConstraintViolationImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -18,7 +17,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 
-import javax.validation.ConstraintValidatorContext;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -207,13 +205,6 @@ class TenantControllerTest extends BaseTest {
     when(tenantRepository.save(tenantEntity1)).thenReturn(tenantEntity1);
 
     this.mockMvc.perform(put("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/tenants/diku1234").headers(headers).content(contentString)).andExpectAll(status().isOk());
-  }
-
-  private ConsortiumEntity createConsortiumEntity() {
-    ConsortiumEntity consortiumEntity = new ConsortiumEntity();
-    consortiumEntity.setId(UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002"));
-    consortiumEntity.setName("TestConsortium");
-    return consortiumEntity;
   }
 
   private TenantEntity createTenantEntity(String id, String name) {

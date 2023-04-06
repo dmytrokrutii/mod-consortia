@@ -18,11 +18,8 @@ UserTenant:
       type: boolean
   additionalProperties: false
   required:
-    - id
     - userId
-    - username
     - tenantId
-    - isPrimary
 
 UserTenantCollection:
   description: "A JSON schema for the User Tenants Collection"

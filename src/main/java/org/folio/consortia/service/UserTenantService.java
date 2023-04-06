@@ -53,4 +53,12 @@ public interface UserTenantService {
    */
   UserTenant getById(UUID consortiumId, UUID id);
 
+  /**
+   * Inserts single user_tenant based on consortiumId.
+   *
+   * @param consortiumId  the consortiumId
+   * @param userTenantDto  the tenantDto
+   * @return userTenantDto
+   */
+  UserTenant save(UUID consortiumId, UserTenant userTenantDto);
 }

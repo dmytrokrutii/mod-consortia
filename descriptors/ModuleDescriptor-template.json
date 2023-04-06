@@ -1,6 +1,12 @@
 {
   "id": "@artifactId@-@version@",
   "name": "Consortia integration business logic module",
+  "requires": [
+    {
+      "id": "users",
+      "version": "16.0"
+    }
+  ],
   "provides": [
     {
       "id": "consortia",
@@ -98,6 +104,20 @@
         },
         {
           "methods": [
+            "POST"
+          ],
+          "pathPattern": "/consortia/{consortiumId}/user-tenants",
+          "permissionsRequired": [
+            "consortia.user-tenants.item.post"
+          ],
+          "modulePermissions": [
+            "users.collection.get",
+            "users.item.put",
+            "users.item.post"
+          ]
+        },
+        {
+          "methods": [
             "GET"
           ],
           "pathPattern": "/consortia/{consortiumId}/user-tenants/{associationId}",
@@ -139,13 +159,19 @@
         "consortia.consortium.item.post",
         "consortia.consortium.item.put",
         "consortia.consortium.item.get",
-        "consortia.consortium.collection.get"
+        "consortia.consortium.collection.get",
+        "consortia.user-tenants.item.post"
       ]
     },
     {
       "permissionName": "consortia.tenants.collection.get",
       "displayName": "get tenants",
       "description": "Get list of tenants"
+    },
+    {
+      "permissionName": "consortia.user-tenants.item.post",
+      "displayName": "post user_tenant",
+      "description": "Create user_tenant"
     },
     {
       "permissionName": "consortia.tenants.item.post",
@@ -193,7 +219,6 @@
       "description": "Get consortiums"
     }
   ],
-  "requires": [],
   "launchDescriptor": {
     "dockerImage": "@artifactId@:@version@",
     "dockerPull": false,

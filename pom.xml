@@ -40,7 +40,7 @@
     <tenants.yaml.file>${project.basedir}/src/main/resources/swagger.api/tenants.yaml</tenants.yaml.file>
     <user_tenants.yaml.file>${project.basedir}/src/main/resources/swagger.api/user_tenants.yaml</user_tenants.yaml.file>
     <!-- runtime dependencies -->
-    <folio-spring-base.version>6.0.2</folio-spring-base.version>
+    <folio-spring-base.version>6.2.0-SNAPSHOT</folio-spring-base.version>
     <openapi-generator.version>6.2.1</openapi-generator.version>
     <mapstruct.version>1.5.3.Final</mapstruct.version>
 

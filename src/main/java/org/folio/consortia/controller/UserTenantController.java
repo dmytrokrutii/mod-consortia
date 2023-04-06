@@ -41,4 +41,9 @@ public class UserTenantController implements UserTenantsApi {
   public ResponseEntity<UserTenant> getUserTenantByAssociationId(UUID consortiumId, UUID associationId) {
     return ResponseEntity.ok(userTenantService.getById(consortiumId, associationId));
   }
+
+  @Override
+  public ResponseEntity<UserTenant> postUserTenants(UUID consortiumId, UserTenant userTenant) {
+    return ResponseEntity.ok(userTenantService.save(consortiumId, userTenant));
+  }
 }

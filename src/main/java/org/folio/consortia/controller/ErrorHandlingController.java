@@ -3,6 +3,7 @@ package org.folio.consortia.controller;
 import jakarta.validation.ConstraintViolationException;
 import org.folio.consortia.domain.dto.Error;
 import org.folio.consortia.domain.dto.Errors;
+import org.folio.consortia.exception.ConsortiumClientException;
 import org.folio.consortia.exception.ResourceAlreadyExistException;
 import org.folio.consortia.exception.ResourceNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -61,7 +62,8 @@ public class ErrorHandlingController {
     MissingServletRequestParameterException.class,
     MethodArgumentTypeMismatchException.class,
     HttpMessageNotReadableException.class,
-    IllegalArgumentException.class
+    IllegalArgumentException.class,
+    ConsortiumClientException.class
   })
   public Errors handleIllegalArgumentException(Exception e) {
     return createInternalError(e.getMessage(), VALIDATION_ERROR);
