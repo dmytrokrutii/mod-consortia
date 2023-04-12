@@ -4,6 +4,7 @@ import org.folio.consortia.domain.entity.UserTenantEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -17,8 +18,16 @@ public interface UserTenantRepository extends JpaRepository<UserTenantEntity, UU
   @Query("SELECT ut FROM UserTenantEntity ut WHERE ut.username= ?1 AND ut.tenant.id= ?2")
   Optional<UserTenantEntity> findByUsernameAndTenantId(String username, String tenantId);
 
+  @Query("SELECT ut FROM UserTenantEntity ut WHERE ut.userId= ?1 AND ut.tenant.id= ?2")
+  Optional<UserTenantEntity> findByUserIdAndTenantId(UUID userId, String tenantId);
+
   boolean existsByTenantId(String tenantId);
 
   @Query("SELECT ut FROM UserTenantEntity ut WHERE ut.userId= ?1 AND ut.isPrimary= ?2")
   Optional<UserTenantEntity> findByUserIdAndIsPrimary(UUID userId, Boolean isPrimary);
+
+  @Modifying
+  @Query("DELETE FROM UserTenantEntity ut WHERE ut.userId= ?1 AND ut.tenant.id= ?2")
+  void deleteByUserIdAndTenantId(UUID userId, String tenantId);
+
 }

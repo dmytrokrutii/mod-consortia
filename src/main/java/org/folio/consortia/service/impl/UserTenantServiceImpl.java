@@ -12,6 +12,7 @@ import org.folio.consortia.domain.dto.UserTenantCollection;
 import org.folio.consortia.domain.entity.TenantEntity;
 import org.folio.consortia.domain.entity.UserTenantEntity;
 import org.folio.consortia.exception.ConsortiumClientException;
+import org.folio.consortia.exception.PrimaryAffiliationException;
 import org.folio.consortia.exception.ResourceNotFoundException;
 import org.folio.consortia.repository.UserTenantRepository;
 import org.folio.consortia.service.ConsortiumService;
@@ -34,12 +35,11 @@ import java.util.UUID;
 
 /**
  * Implementation of {@link UserTenantService}.
- *
+ * <p>
  * Consortium table will contain only a single record and it will be prohibited to add another record in this table.
  * If another consortium will be created - a new separate DB schema for it will be created that also stores only a
  * single record in the consortium table. So to simplify logic and source code it was decided that we will not store
  * consortiumId in user_tenant table.
- *
  */
 @Service
 @Log4j2
@@ -47,6 +47,7 @@ import java.util.UUID;
 public class UserTenantServiceImpl implements UserTenantService {
 
   private static final String USER_ID = "userId";
+  private static final String TENANT_ID = "tenantId";
   private static final Boolean IS_PRIMARY_TRUE = true;
   private static final Boolean IS_PRIMARY_FALSE = false;
   private static final Integer RANDOM_STRING_COUNT = 5;
@@ -78,6 +79,34 @@ public class UserTenantServiceImpl implements UserTenantService {
   }
 
   @Override
+  public UserTenantCollection getByUsernameAndTenantId(UUID consortiumId, String username, String tenantId) {
+    consortiumService.checkConsortiumExistsOrThrow(consortiumId);
+    var result = new UserTenantCollection();
+    UserTenantEntity userTenantEntity = userTenantRepository.findByUsernameAndTenantId(username, tenantId)
+      .orElseThrow(() -> new ResourceNotFoundException("username", username));
+    UserTenant userTenant = converter.convert(userTenantEntity, UserTenant.class);
+
+    result.setUserTenants(List.of(userTenant));
+    result.setTotalRecords(1);
+    return result;
+  }
+
+  @Override
+  public UserTenantCollection getByUserId(UUID consortiumId, UUID userId, Integer offset, Integer limit) {
+    consortiumService.checkConsortiumExistsOrThrow(consortiumId);
+    var result = new UserTenantCollection();
+    Page<UserTenantEntity> userTenantPage = userTenantRepository.findByUserId(userId, PageRequest.of(offset, limit));
+
+    if (userTenantPage.getContent().isEmpty()) {
+      throw new ResourceNotFoundException(USER_ID, String.valueOf(userId));
+    }
+
+    result.setUserTenants(userTenantPage.stream().map(o -> converter.convert(o, UserTenant.class)).toList());
+    result.setTotalRecords((int) userTenantPage.getTotalElements());
+    return result;
+  }
+
+  @Override
   @Transactional
   public UserTenant save(UUID consortiumId, UserTenant userTenantDto) {
     FolioExecutionContext currentTenantContext = (FolioExecutionContext) folioExecutionContext.getInstance();
@@ -100,32 +129,24 @@ public class UserTenantServiceImpl implements UserTenantService {
     }
   }
 
+  @Transactional
   @Override
-  public UserTenantCollection getByUserId(UUID consortiumId, UUID userId, Integer offset, Integer limit) {
+  public void deleteByUserIdAndTenantId(UUID consortiumId, String tenantId, UUID userId) {
+    FolioExecutionContext currentTenantContext = (FolioExecutionContext) folioExecutionContext.getInstance();
     consortiumService.checkConsortiumExistsOrThrow(consortiumId);
-    var result = new UserTenantCollection();
-    Page<UserTenantEntity> userTenantPage = userTenantRepository.findByUserId(userId, PageRequest.of(offset, limit));
+    UserTenantEntity userTenantEntity = userTenantRepository.findByUserIdAndTenantId(userId, tenantId)
+      .orElseThrow(() -> new ResourceNotFoundException(USER_ID + ", " + TENANT_ID, userId + ", " + tenantId));
 
-    if (userTenantPage.getContent().isEmpty()) {
-      throw new ResourceNotFoundException(USER_ID, String.valueOf(userId));
+    if (Boolean.TRUE.equals(userTenantEntity.getIsPrimary())) {
+      throw new PrimaryAffiliationException(String.valueOf(userId), tenantId);
+    }
+    userTenantRepository.deleteByUserIdAndTenantId(userId, tenantId);
+
+    try (var context = new FolioExecutionContextSetter(prepareContextForTenant(tenantId, currentTenantContext))) {
+      User user = getUser(userId);
+      deactivateUser(user);
     }
 
-    result.setUserTenants(userTenantPage.stream().map(o -> converter.convert(o, UserTenant.class)).toList());
-    result.setTotalRecords((int) userTenantPage.getTotalElements());
-    return result;
-  }
-
-  @Override
-  public UserTenantCollection getByUsernameAndTenantId(UUID consortiumId, String username, String tenantId) {
-    consortiumService.checkConsortiumExistsOrThrow(consortiumId);
-    var result = new UserTenantCollection();
-    UserTenantEntity userTenantEntity = userTenantRepository.findByUsernameAndTenantId(username, tenantId)
-      .orElseThrow(() -> new ResourceNotFoundException("username", username));
-    UserTenant userTenant = converter.convert(userTenantEntity, UserTenant.class);
-
-    result.setUserTenants(List.of(userTenant));
-    result.setTotalRecords(1);
-    return result;
   }
 
   private User prepareShadowUser(UUID userId, UserTenantEntity userTenantEntity, FolioExecutionContext folioExecutionContext) {
@@ -148,8 +169,7 @@ public class UserTenantServiceImpl implements UserTenantService {
         }
         user.setPatronGroup(userOptional.getPatronGroup());
         user.setActive(true);
-      }
-      else {
+      } else {
         throw new ResourceNotFoundException(USER_ID, userId.toString());
       }
       return user;
@@ -161,8 +181,7 @@ public class UserTenantServiceImpl implements UserTenantService {
       User user = getUser(userId);
       if (Objects.nonNull(user.getActive())) {
         activateUser(user);
-      }
-      else {
+      } else {
         createActiveUser(shadowUser);
       }
     }
@@ -170,8 +189,9 @@ public class UserTenantServiceImpl implements UserTenantService {
 
   /**
    * Gets user by id.
-   *
+   * <p>
    * This method will be called to get User from MOD_USERS module based on the tenant schema present in the folioContext.
+   *
    * @param userId user id.
    */
   private User getUser(UUID userId) {
@@ -193,10 +213,20 @@ public class UserTenantServiceImpl implements UserTenantService {
 
   private void activateUser(User user) {
     if (Boolean.TRUE.equals(user.getActive())) {
-      log.info("{} is up to date.", user.getId());
+      log.info("User with id '{}' is already active.", user.getId());
     } else {
       user.setActive(true);
-      log.info("Updating {}.", user.getId());
+      log.info("Updating User with id '{}' with active 'true'. ", user.getId());
+      usersClient.updateUser(user.getId(), user);
+    }
+  }
+
+  private void deactivateUser(User user) {
+    if (Boolean.FALSE.equals(user.getActive())) {
+      log.info("User with id '{}' is already not active", user.getId());
+    } else {
+      user.setActive(false);
+      log.info("Updating User with id '{}' with active 'false'. ", user.getId());
       usersClient.updateUser(user.getId(), user);
     }
   }
@@ -216,10 +246,9 @@ public class UserTenantServiceImpl implements UserTenantService {
     tenant.setName(userTenantDto.getTenantName());
     tenant.setConsortiumId(consortiumId);
 
-    if(Objects.nonNull(userTenantDto.getId())) {
+    if (Objects.nonNull(userTenantDto.getId())) {
       entity.setId(userTenantDto.getId());
-    }
-    else {
+    } else {
       entity.setId(UUID.randomUUID());
     }
 

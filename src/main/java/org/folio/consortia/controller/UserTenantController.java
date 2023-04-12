@@ -46,4 +46,10 @@ public class UserTenantController implements UserTenantsApi {
   public ResponseEntity<UserTenant> postUserTenants(UUID consortiumId, UserTenant userTenant) {
     return ResponseEntity.ok(userTenantService.save(consortiumId, userTenant));
   }
+
+  @Override
+  public ResponseEntity<Void> deleteUserTenant(UUID consortiumId, String tenantId, UUID userId) {
+    userTenantService.deleteByUserIdAndTenantId(consortiumId, tenantId, userId);
+    return ResponseEntity.noContent().build();
+  }
 }

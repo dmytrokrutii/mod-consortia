@@ -61,4 +61,12 @@ public interface UserTenantService {
    * @return userTenantDto
    */
   UserTenant save(UUID consortiumId, UserTenant userTenantDto);
+
+  /**
+   * Deletes user_tenant by userId and tenantId.
+   * @param consortiumId id of consortium
+   * @param tenantId id of tenant
+   * @param userId id of user
+   */
+  void deleteByUserIdAndTenantId(UUID consortiumId, String tenantId, UUID userId);
 }

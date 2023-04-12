@@ -44,6 +44,23 @@ paths:
           $ref: "#/components/responses/NotFound"
         "500":
           $ref: "#/components/responses/InternalServerError"
+    delete:
+      description: Delete User Tenant Associations for particular user id and tenant id
+      summary: Delete User Tenant Association by user id and tenant id
+      operationId: deleteUserTenant
+      parameters:
+        - $ref: "#/components/parameters/consortiumId"
+        - $ref: "#/components/parameters/requiredUserId"
+        - $ref: "#/components/parameters/requiredTenantId"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /user-tenants/{associationId}:
     description: User Tenant Associations
     get:
@@ -71,6 +88,12 @@ components:
           schema:
             $ref: "schemas/userTenant.yaml#/UserTenant"
   responses:
+    User:
+      description: User
+      content:
+        application/json:
+          schema:
+            $ref: "schemas/user.yaml#/User"
     UserTenant:
       description: Returns a user tenant association object
       content:
@@ -83,18 +106,14 @@ components:
         application/json:
           schema:
             $ref: "schemas/userTenant.yaml#/UserTenantCollection"
+    NoContent:
+      description: No content
     NotFound:
       description: Resource not found
       content:
         application/json:
           schema:
             $ref: "schemas/common.yaml#/Error"
-    User:
-      description: User
-      content:
-        application/json:
-          schema:
-            $ref: "schemas/user.yaml#/User"
     BadRequest:
       description: Bad request
       content:
@@ -132,6 +151,13 @@ components:
       schema:
         type: string
       description: The ID of the tenant
+    requiredTenantId:
+      in: query
+      name: tenantId
+      schema:
+        type: string
+      required: true
+      description: The ID of the tenant
     associationId:
       in: path
       name: associationId
@@ -140,6 +166,12 @@ components:
       required: true
       description: UUID of the user to get and associated tenants.
     userId:
+      in: query
+      name: userId
+      schema:
+        $ref: "schemas/common.yaml#/uuid"
+      description: The UUID of the user
+    requiredUserId:
       in: query
       name: userId
       schema:

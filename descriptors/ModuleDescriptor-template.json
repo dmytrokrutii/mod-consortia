@@ -118,6 +118,20 @@
         },
         {
           "methods": [
+            "DELETE"
+          ],
+          "pathPattern": "/consortia/{consortiumId}/user-tenants",
+          "permissionsRequired": [
+            "consortia.user-tenants.item.delete"
+          ],
+          "modulePermissions": [
+            "users.collection.get",
+            "users.item.put",
+            "users.item.post"
+          ]
+        },
+        {
+          "methods": [
             "GET"
           ],
           "pathPattern": "/consortia/{consortiumId}/user-tenants/{associationId}",
@@ -160,7 +174,8 @@
         "consortia.consortium.item.put",
         "consortia.consortium.item.get",
         "consortia.consortium.collection.get",
-        "consortia.user-tenants.item.post"
+        "consortia.user-tenants.item.post",
+        "consortia.user-tenants.item.delete"
       ]
     },
     {
@@ -192,6 +207,11 @@
       "permissionName": "consortia.user-tenants.collection.get",
       "displayName": "get user tenants",
       "description": "Get List of user tenants"
+    },
+    {
+      "permissionName": "consortia.user-tenants.item.delete",
+      "displayName": "delete user tenant",
+      "description": "Delete user tenant"
     },
     {
       "permissionName": "consortia.user-tenants.item.get",
