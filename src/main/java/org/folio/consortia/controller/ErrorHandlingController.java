@@ -1,6 +1,7 @@
 package org.folio.consortia.controller;
 
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.log4j.Log4j2;
 import org.folio.consortia.domain.dto.Error;
 import org.folio.consortia.domain.dto.Errors;
 import org.folio.consortia.exception.ConsortiumClientException;
@@ -27,6 +28,7 @@ import static org.folio.consortia.utils.ErrorHelper.ErrorCode.VALIDATION_ERROR;
 import static org.folio.consortia.utils.ErrorHelper.createInternalError;
 
 @RestControllerAdvice
+@Log4j2
 public class ErrorHandlingController {
 
   @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -44,6 +46,8 @@ public class ErrorHandlingController {
   @ResponseStatus(HttpStatus.CONFLICT)
   @ExceptionHandler(DataIntegrityViolationException.class)
   public Errors handleDataIntegrityViolationException(DataIntegrityViolationException e) {
+    log.error("Handle data integrity violation", e);
+
     /*
     org.springframework.dao.DataIntegrityViolationException :-
     this is a generic data exception typically thrown by the Spring exception translation mechanism when dealing with lower level persistence exceptions.
@@ -55,6 +59,7 @@ public class ErrorHandlingController {
   @ResponseStatus(HttpStatus.CONFLICT)
   @ExceptionHandler(IllegalStateException.class)
   public Errors handleIllegalStateException(IllegalStateException e) {
+    log.error("Handle illegal state", e);
     return createInternalError(e.getMessage(), VALIDATION_ERROR);
   }
 
@@ -67,12 +72,14 @@ public class ErrorHandlingController {
     ConsortiumClientException.class,
     PrimaryAffiliationException.class
   })
-  public Errors handleIllegalArgumentException(Exception e) {
+  public Errors handleValidationErrors(Exception e) {
+    log.error("Handle validation errors", e);
     return createInternalError(e.getMessage(), VALIDATION_ERROR);
   }
 
   @ExceptionHandler(ConstraintViolationException.class)
   public ResponseEntity<List<Error>> handleConstraintViolation(ConstraintViolationException ex) {
+    log.error("Handle constraint violation", ex);
 
     // Extract the error message and validation errors from the ConstraintViolationException
     List<String> validationErrors = ex.getConstraintViolations().stream()
