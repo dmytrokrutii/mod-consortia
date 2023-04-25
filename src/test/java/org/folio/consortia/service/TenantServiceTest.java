@@ -23,10 +23,14 @@ import org.springframework.data.domain.PageRequest;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
@@ -172,6 +176,20 @@ class TenantServiceTest {
     when(conversionService.convert(tenantEntity1, Tenant.class)).thenReturn(tenant);
 
     assertThrows(org.folio.consortia.exception.ResourceAlreadyExistException.class, () -> tenantService.save(UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002"), tenant));
+  }
+
+  @Test
+  void shouldRetrieveEntityByTenantId() {
+    when(tenantRepository.findById(anyString())).thenReturn(Optional.of(new TenantEntity()));
+    var tenantEntity = tenantService.getByTenantId(UUID.randomUUID().toString());
+    assertNotNull(tenantEntity);
+  }
+
+  @Test
+  void shouldNotRetrieveEntityByTenantId() {
+    when(tenantRepository.findById(anyString())).thenReturn(Optional.empty());
+    var tenantEntity = tenantService.getByTenantId(UUID.randomUUID().toString());
+    assertNull(tenantEntity);
   }
 
   private ConsortiumEntity createConsortiumEntity() {

@@ -39,6 +39,7 @@
     <consortia.yaml.file>${project.basedir}/src/main/resources/swagger.api/consortia.yaml</consortia.yaml.file>
     <tenants.yaml.file>${project.basedir}/src/main/resources/swagger.api/tenants.yaml</tenants.yaml.file>
     <user_tenants.yaml.file>${project.basedir}/src/main/resources/swagger.api/user_tenants.yaml</user_tenants.yaml.file>
+    <user_events.yaml.file>${project.basedir}/src/main/resources/swagger.api/schemas/kafka_message_schemas.yaml</user_events.yaml.file>
     <!-- runtime dependencies -->
     <folio-spring-base.version>6.2.0-SNAPSHOT</folio-spring-base.version>
     <openapi-generator.version>6.2.1</openapi-generator.version>
@@ -48,8 +49,21 @@
     <wiremock-standalone.version>2.27.2</wiremock-standalone.version>
     <testcontainers.version>1.17.6</testcontainers.version>
     <snakeyaml.version>2.0</snakeyaml.version>
+    <testcontainers-bom.version>1.17.6</testcontainers-bom.version>
+    <maven-checkstyle-plugin.version>3.2.0</maven-checkstyle-plugin.version>
   </properties>
 
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>testcontainers-bom</artifactId>
+        <version>${testcontainers-bom.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
   <dependencies>
     <dependency>
       <groupId>org.folio</groupId>
@@ -78,6 +92,16 @@
       </exclusions>
     </dependency>
 
+    <dependency>
+      <groupId>org.springframework.kafka</groupId>
+      <artifactId>spring-kafka</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.awaitility</groupId>
+      <artifactId>awaitility</artifactId>
+      <version>3.0.0</version>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.module</groupId>
       <artifactId>jackson-module-jaxb-annotations</artifactId>
@@ -136,6 +160,11 @@
       </exclusions>
     </dependency>
     <dependency>
+      <groupId>org.springframework.kafka</groupId>
+      <artifactId>spring-kafka-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>postgresql</artifactId>
       <version>${testcontainers.version}</version>
@@ -145,6 +174,11 @@
       <groupId>org.testcontainers</groupId>
       <artifactId>junit-jupiter</artifactId>
       <version>${testcontainers.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>kafka</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -171,6 +205,8 @@
 
       <plugin>
         <artifactId>maven-resources-plugin</artifactId>
+        <groupId>org.apache.maven.plugins</groupId>
+        <version>3.3.0</version>
         <executions>
           <execution>
             <id>filter-descriptor-inputs</id>
@@ -301,6 +337,32 @@
             </goals>
             <configuration>
               <inputSpec>${user_tenants.yaml.file}</inputSpec>
+              <output>${project.build.directory}/generated-sources</output>
+              <generatorName>spring</generatorName>
+              <modelPackage>${project.groupId}.consortia.domain.dto</modelPackage>
+              <apiPackage>${project.groupId}.consortia.rest.resource</apiPackage>
+              <generateApis>true</generateApis>
+              <generateApiTests>true</generateApiTests>
+              <generateApiDocumentation>true</generateApiDocumentation>
+              <generateModels>true</generateModels>
+              <generateModelTests>false</generateModelTests>
+              <generateSupportingFiles>true</generateSupportingFiles>
+              <supportingFilesToGenerate>ApiUtil.java</supportingFilesToGenerate>
+              <generateModelDocumentation>true</generateModelDocumentation>
+              <configOptions>
+                <dateLibrary>java</dateLibrary>
+                <interfaceOnly>true</interfaceOnly>
+                <useSpringBoot3>true</useSpringBoot3>
+              </configOptions>
+            </configuration>
+          </execution>
+          <execution>
+            <id>user_events</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <inputSpec>${user_events.yaml.file}</inputSpec>
               <output>${project.build.directory}/generated-sources</output>
               <generatorName>spring</generatorName>
               <modelPackage>${project.groupId}.consortia.domain.dto</modelPackage>

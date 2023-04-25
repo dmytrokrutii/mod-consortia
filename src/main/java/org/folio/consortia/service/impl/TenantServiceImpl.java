@@ -1,13 +1,15 @@
 package org.folio.consortia.service.impl;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import static org.folio.consortia.utils.HelperUtils.checkIdenticalOrThrow;
+
+import java.util.UUID;
+
 import org.folio.consortia.domain.dto.Tenant;
 import org.folio.consortia.domain.dto.TenantCollection;
 import org.folio.consortia.domain.entity.TenantEntity;
-import org.folio.consortia.repository.TenantRepository;
 import org.folio.consortia.exception.ResourceAlreadyExistException;
 import org.folio.consortia.exception.ResourceNotFoundException;
+import org.folio.consortia.repository.TenantRepository;
 import org.folio.consortia.repository.UserTenantRepository;
 import org.folio.consortia.service.ConsortiumService;
 import org.folio.consortia.service.TenantService;
@@ -16,9 +18,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import java.util.UUID;
-
-import static org.folio.consortia.utils.HelperUtils.checkIdenticalOrThrow;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 
 @Service
 @Log4j2
@@ -70,6 +71,12 @@ public class TenantServiceImpl implements TenantService {
       throw new IllegalStateException(TENANT_HAS_ACTIVE_USER_ASSOCIATIONS_ERROR_MSG);
     }
     tenantRepository.deleteById(tenantId);
+  }
+
+  @Override
+  public TenantEntity getByTenantId(String tenantId) {
+      return tenantRepository.findById(tenantId)
+        .orElse(null);
   }
 
   private void checkTenantNotExistsOrThrow(String tenantId) {
