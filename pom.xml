@@ -39,7 +39,7 @@
     <consortia.yaml.file>${project.basedir}/src/main/resources/swagger.api/consortia.yaml</consortia.yaml.file>
     <tenants.yaml.file>${project.basedir}/src/main/resources/swagger.api/tenants.yaml</tenants.yaml.file>
     <user_tenants.yaml.file>${project.basedir}/src/main/resources/swagger.api/user_tenants.yaml</user_tenants.yaml.file>
-    <user_events.yaml.file>${project.basedir}/src/main/resources/swagger.api/schemas/kafka_message_schemas.yaml</user_events.yaml.file>
+    <user_events.yaml.file>${project.basedir}/src/main/resources/swagger.api/kafka_message_schemas.yaml</user_events.yaml.file>
     <!-- runtime dependencies -->
     <folio-spring-base.version>6.2.0-SNAPSHOT</folio-spring-base.version>
     <openapi-generator.version>6.2.1</openapi-generator.version>

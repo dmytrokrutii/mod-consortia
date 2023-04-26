@@ -1,10 +1,8 @@
 package org.folio.consortia.service.impl;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-
+import feign.FeignException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.MapUtils;
 import org.folio.consortia.client.UsersClient;
 import org.folio.consortia.domain.dto.Personal;
@@ -31,9 +29,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import feign.FeignException;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 
 
 /**
@@ -160,8 +159,8 @@ public class UserTenantServiceImpl implements UserTenantService {
     return converter.convert(createdRecord, UserTenant.class);
   }
 
-  @Transactional
   @Override
+  @Transactional
   public void deleteByUserIdAndTenantId(UUID consortiumId, String tenantId, UUID userId) {
     log.debug("Going to delete user affiliation for user id: {} in the tenant: {}", userId.toString(), tenantId);
     FolioExecutionContext currentTenantContext = (FolioExecutionContext) folioExecutionContext.getInstance();
@@ -182,6 +181,12 @@ public class UserTenantServiceImpl implements UserTenantService {
       log.info("User affiliation deleted and user deactivated for user id: {} in the tenant: {}", userId.toString(), tenantId);
     }
 
+  }
+
+  @Override
+  @Transactional
+  public void deletePrimaryUserTenantAffiliation(UUID userId) {
+    userTenantRepository.deleteByUserIdAndIsPrimaryTrue(userId);
   }
 
   @Override

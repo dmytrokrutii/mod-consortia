@@ -33,6 +33,12 @@ public class TenantContextUtils {
     return getContextFromKafkaHeaders(headers, moduleMetadata);
   }
 
+  public static FolioExecutionContext getFolioExecutionContextDeletePrimaryAffiliationEvent(
+                                                                                  MessageHeaders headers,
+                                                                                  FolioModuleMetadata moduleMetadata) {
+    return getContextFromKafkaHeaders(headers, moduleMetadata);
+  }
+
   public static void runInFolioContext(FolioExecutionContext context, Runnable runnable) {
     try (var fec = new FolioExecutionContextSetter(context)) {
       runnable.run();

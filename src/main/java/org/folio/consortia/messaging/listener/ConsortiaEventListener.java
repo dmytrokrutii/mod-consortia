@@ -1,6 +1,7 @@
 package org.folio.consortia.messaging.listener;
 
 import static org.folio.consortia.utils.TenantContextUtils.getFolioExecutionContextCreatePrimaryAffiliationEvent;
+import static org.folio.consortia.utils.TenantContextUtils.getFolioExecutionContextDeletePrimaryAffiliationEvent;
 import static org.folio.consortia.utils.TenantContextUtils.runInFolioContext;
 
 import org.folio.consortia.service.UserAffiliationService;
@@ -18,7 +19,7 @@ import lombok.extern.log4j.Log4j2;
 public class ConsortiaEventListener {
 
   public static final String USER_CREATED_LISTENER_ID = "user-created-listener-id";
-
+  public static final String USER_DELETED_LISTENER_ID = "user-deleted-listener-id";
   private final UserAffiliationService userAffiliationService;
   private final FolioModuleMetadata moduleMetadata;
 
@@ -32,5 +33,14 @@ public class ConsortiaEventListener {
       () -> userAffiliationService.createPrimaryUserAffiliation(data));
   }
 
+  @KafkaListener(
+    id = USER_DELETED_LISTENER_ID,
+    topicPattern = "#{folioKafkaProperties.listener['user-deleted'].topicPattern}",
+    concurrency = "#{folioKafkaProperties.listener['user-deleted'].concurrency}",
+    containerFactory = "kafkaListenerContainerFactory")
+  public void userDeletedListener(String data, MessageHeaders messageHeaders) {
+    runInFolioContext(getFolioExecutionContextDeletePrimaryAffiliationEvent(messageHeaders, moduleMetadata),
+      () -> userAffiliationService.deletePrimaryUserAffiliation(data));
+  }
 
 }

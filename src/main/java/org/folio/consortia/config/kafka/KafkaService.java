@@ -1,10 +1,9 @@
 package org.folio.consortia.config.kafka;
 
-import static org.folio.consortia.messaging.listener.ConsortiaEventListener.USER_CREATED_LISTENER_ID;
-
-import java.util.List;
-import java.util.stream.Stream;
-
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.folio.consortia.config.kafka.properties.FolioKafkaProperties;
@@ -19,12 +18,12 @@ import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.util.Assert;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import java.util.List;
+import java.util.stream.Stream;
+
+import static org.folio.consortia.messaging.listener.ConsortiaEventListener.USER_CREATED_LISTENER_ID;
+import static org.folio.consortia.messaging.listener.ConsortiaEventListener.USER_DELETED_LISTENER_ID;
 
 @Component
 @Log4j2
@@ -77,11 +76,19 @@ public class KafkaService {
    * Restarts kafka event listeners in mod-consortia application.
    */
   public void restartEventListeners() {
-    log.info("Restarting kafka consumer to start listening created topics [id: {}]", USER_CREATED_LISTENER_ID);
-    var listenerContainer = kafkaListenerEndpointRegistry.getListenerContainer(USER_CREATED_LISTENER_ID);
-    Assert.notNull(listenerContainer, "Listener container not found");
-    listenerContainer.stop();
-    listenerContainer.start();
+    restartEventListener(USER_CREATED_LISTENER_ID);
+    restartEventListener(USER_DELETED_LISTENER_ID);
+  }
+
+  private void restartEventListener(String listenerId) {
+    log.info("Restarting kafka consumer to start listening topics [id: {}]", listenerId);
+    var listenerContainer = kafkaListenerEndpointRegistry.getListenerContainer(listenerId);
+    if (listenerContainer != null) {
+      listenerContainer.stop();
+      listenerContainer.start();
+    } else {
+      log.error("Listener container not found [id: {}]", listenerId);
+    }
   }
 
   private List<NewTopic> tenantSpecificTopics(String tenant) {
@@ -90,6 +97,7 @@ public class KafkaService {
       eventsNameStreamBuilder.add(consEventType);
     }
     eventsNameStreamBuilder.add(ConsortiaOutputEventType.CONSORTIUM_PRIMARY_AFFILIATION_CREATED);
+    eventsNameStreamBuilder.add(ConsortiaOutputEventType.CONSORTIUM_PRIMARY_AFFILIATION_DELETED);
     return eventsNameStreamBuilder.build()
       .map(Enum::name)
       .map(topic -> getTenantTopicName(topic, tenant))
@@ -108,7 +116,7 @@ public class KafkaService {
    * Returns topic name in the format - `{env}.{tenant}.topicName`
    *
    * @param topicName initial topic name as {@link String}
-   * @param tenantId tenant id as {@link String}
+   * @param tenantId  tenant id as {@link String}
    * @return topic name as {@link String} object
    */
   private String getTenantTopicName(String topicName, String tenantId) {

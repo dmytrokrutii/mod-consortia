@@ -82,6 +82,22 @@ public interface UserTenantService {
    */
   void deleteByUserIdAndTenantId(UUID consortiumId, String tenantId, UUID userId);
 
-  UserTenant update(UUID consortiumId, org.folio.consortia.domain.dto.UserTenant primary);
+  /**
+   * Updates user_tenant based on consortiumId and userTenantDto.
+   * @param consortiumId id of consortium
+   * @param primary userTenantDto
+   * @return userTenantDto
+   */
+  UserTenant update(UUID consortiumId, UserTenant primary);
+
+  /**
+   * Deletes user_tenant by id.
+   * @param consortiumId id of consortium
+   * @param username username of user
+   * @param tenantId id of tenant
+   * @return userTenantDto
+   */
   UserTenant getByUsernameAndTenantIdOrNull(UUID consortiumId, String username, String tenantId);
+
+  void deletePrimaryUserTenantAffiliation(UUID userId);
 }

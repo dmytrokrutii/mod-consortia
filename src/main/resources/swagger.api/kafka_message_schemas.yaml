@@ -16,4 +16,4 @@ components:
       type: string
       format: uuid
     userEvent:
-      $ref: 'json/user_event.json'
+      $ref: 'schemas/userEvent.yaml'

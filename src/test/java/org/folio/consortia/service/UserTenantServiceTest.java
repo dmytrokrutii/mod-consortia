@@ -4,10 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -26,9 +24,10 @@ import org.folio.consortia.client.UsersClient;
 import org.folio.consortia.domain.converter.UserTenantConverter;
 import org.folio.consortia.domain.dto.Personal;
 import org.folio.consortia.domain.dto.User;
+import org.folio.consortia.domain.dto.Userdata;
+import org.folio.consortia.domain.dto.UserEvent;
 import org.folio.consortia.domain.dto.UserTenant;
 import org.folio.consortia.domain.dto.UserTenantCollection;
-import org.folio.consortia.domain.dto.Userdata;
 import org.folio.consortia.domain.entity.ConsortiumEntity;
 import org.folio.consortia.domain.entity.TenantEntity;
 import org.folio.consortia.domain.entity.UserTenantEntity;
@@ -402,15 +401,23 @@ class UserTenantServiceTest {
   @Test
   void shouldSavePrimaryAffiliation() {
     var consId = UUID.randomUUID();
-    var userEvent = new org.folio.consortia.domain.dto.UserEvent();
-    userEvent.userDto(new Userdata()
-      .id(UUID.randomUUID().toString())
-      .username("userName"));
+    var userEvent = createUserEvent();
     ArgumentCaptor<UserTenantEntity> argCaptor = ArgumentCaptor.forClass(UserTenantEntity.class);
     when(userTenantRepository.save(argCaptor.capture())).thenAnswer(i -> i.getArguments()[0]);
 
     var result = userTenantService.createPrimaryUserTenantAffiliation(consId, new TenantEntity(), userEvent);
     assertNull(result);
+  }
+
+  @Test
+  void shouldDeletePrimaryAffiliation() {
+    var consId = UUID.randomUUID();
+    var userEvent = createUserEvent();
+    doNothing().when(userTenantRepository).deleteByUserIdAndIsPrimaryTrue(any());
+
+    userTenantService.deletePrimaryUserTenantAffiliation(UUID.fromString(userEvent.getUserDto().getId()));
+
+    verify(userTenantRepository, times(1)).deleteByUserIdAndIsPrimaryTrue(any());
   }
 
   private UserTenantEntity createUserTenantEntity(UUID associationId, UUID userId, String username, String tenantId) {
@@ -467,6 +474,13 @@ class UserTenantServiceTest {
     return user;
   }
 
+  private UserEvent createUserEvent() {
+    var userEvent = new UserEvent();
+    userEvent.userDto(new Userdata()
+      .id(UUID.randomUUID().toString())
+      .username("userName"));
+    return userEvent;
+  }
   private User createNullUserEntity() {
     User user = new User();
     user.setId(UUID.randomUUID().toString());
