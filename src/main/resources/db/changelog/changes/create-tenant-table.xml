@@ -18,5 +18,12 @@
       </column>
     </createTable>
   </changeSet>
+  <changeSet id="MOCON-26@add-code-unique-field" author="siarhei_hrabko@epam.com">
+    <addColumn tableName="tenant">
+      <column name="code" type="text">
+        <constraints unique="true" nullable="false"/>
+      </column>
+    </addColumn>
+  </changeSet>
 
 </databaseChangeLog>

@@ -3,11 +3,14 @@ Tenant:
   properties:
     id:
       type: string
+    code:
+      type: string
     name:
       type: string
   additionalProperties: false
   required:
     - id
+    - code
     - name
 
 TenantCollection:

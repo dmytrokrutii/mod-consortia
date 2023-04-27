@@ -1,8 +1,22 @@
 package org.folio.consortia.controller;
 
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.ConstraintViolationException;
-import org.folio.consortia.domain.entity.ConsortiumEntity;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
 import org.folio.consortia.domain.entity.TenantEntity;
 import org.folio.consortia.repository.ConsortiumRepository;
 import org.folio.consortia.repository.TenantRepository;
@@ -17,23 +31,8 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-
-import static org.folio.consortia.utils.ErrorHelper.ErrorCode.VALIDATION_ERROR;
-import static org.hamcrest.Matchers.is;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 
 @EntityScan(basePackageClasses = TenantEntity.class)
 class TenantControllerTest extends BaseTest {
@@ -46,8 +45,8 @@ class TenantControllerTest extends BaseTest {
   @Test
   void getTenants() throws Exception {
     UUID consortiumId = UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002");
-    TenantEntity tenantEntity1 = createTenantEntity("ABC", "TestName1");
-    TenantEntity tenantEntity2 = createTenantEntity("ABC", "TestName1");
+    TenantEntity tenantEntity1 = createTenantEntity("ABC", "TestName1", "TST");
+    TenantEntity tenantEntity2 = createTenantEntity("ABC", "TestName1", "TST");
     List<TenantEntity> tenantEntityList = new ArrayList<>();
     tenantEntityList.add(tenantEntity1);
     tenantEntityList.add(tenantEntity2);
@@ -87,7 +86,7 @@ class TenantControllerTest extends BaseTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"{\"id\":\"diku\",\"name\":\"diku_tenant_name\"}"})
+  @ValueSource(strings = {"{\"id\":\"diku\",\"code\":\"TST\",\"name\":\"diku_tenant_name\"}"})
   void shouldGet4xxErrorWhileSaving(String contentString) throws Exception {
     var headers = defaultHeaders();
 
@@ -99,7 +98,7 @@ class TenantControllerTest extends BaseTest {
         jsonPath("$.errors[0].code", is("NOT_FOUND_ERROR")));
   }
   @ParameterizedTest
-  @ValueSource(strings = {"{\"id\": \"123123123123123123\", \"name\": \"\"}"})
+  @ValueSource(strings = {"{\"id\": \"123123123123123123\",\"code\":\"TST\", \"name\": \"\"}"})
   void testConstraintViolationException(String contentString) throws Exception {
     var headers = defaultHeaders();
     // Given a request with invalid input
@@ -120,16 +119,16 @@ class TenantControllerTest extends BaseTest {
         .contentType(MediaType.APPLICATION_JSON)
         .content(contentString))
       .andExpect(status().isUnprocessableEntity())
-      .andExpect(jsonPath("$.size()", is(2)))
-      .andExpect(jsonPath("$[0].code", is(String.valueOf(VALIDATION_ERROR))))
-      .andExpect(jsonPath("$[0].type", is("-1")))
-      .andExpect(jsonPath("$[1].code", is(String.valueOf(VALIDATION_ERROR))))
-      .andExpect(jsonPath("$[1].type", is("-1")));
+      .andExpect(jsonPath("$.errors.size()", is(2)))
+      .andExpect(jsonPath("$.errors[0].code", is("ValidationError")))
+      .andExpect(jsonPath("$.errors[0].type", is("-1")))
+      .andExpect(jsonPath("$.errors[1].code", is("ValidationError")))
+      .andExpect(jsonPath("$.errors[1].type", is("-1")));
   }
 
 
   @ParameterizedTest
-  @ValueSource(strings = {"{\"id\":\"diku\",\"name\":\"diku_tenant_name\"}"})
+  @ValueSource(strings = {"{\"id\":\"diku\",\"code\":\"TST\",\"name\":\"diku_tenant_name\"}"})
   void shouldGet4xxErrorWhileSavingDuplicateName(String contentString) throws Exception {
     var headers = defaultHeaders();
     UUID consortiumId = UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002");
@@ -148,12 +147,12 @@ class TenantControllerTest extends BaseTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"{\"id\":\"diku1234\",\"name\":\"diku_tenant_name1234\"}"})
+  @ValueSource(strings = {"{\"id\":\"diku1234\",\"code\":\"TST\",\"name\":\"diku_tenant_name1234\"}"})
   void shouldSaveTenant(String contentString) throws Exception {
     var headers = defaultHeaders();
     when(consortiumRepository.existsById(any())).thenReturn(true);
     when(tenantRepository.existsById(any())).thenReturn(false);
-    when(tenantRepository.save(any(TenantEntity.class))).thenReturn(TenantEntity.class.newInstance());
+    when(tenantRepository.save(any(TenantEntity.class))).thenReturn(new TenantEntity());
 
     this.mockMvc.perform(
         post("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/tenants")
@@ -162,7 +161,7 @@ class TenantControllerTest extends BaseTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"{\"id\":\"diku1234\",\"name\":\"diku_tenant_name1234\"}"})
+  @ValueSource(strings = {"{\"id\":\"diku1234\",\"code\":\"TST\",\"name\":\"diku_tenant_name1234\"}"})
   void shouldThrowValidationErrorWhileUpdateTenant(String contentString) throws Exception {
     TenantEntity tenantEntity1 = new TenantEntity();
     tenantEntity1.setId("TestID");
@@ -183,9 +182,9 @@ class TenantControllerTest extends BaseTest {
 
 
   @ParameterizedTest
-  @ValueSource(strings = {"{\"id\":\"diku1234\",\"name\":\"diku_tenant_name1234\"}"})
+  @ValueSource(strings = {"{\"id\":\"diku1234\",\"code\":\"TST\",\"name\":\"diku_tenant_name1234\"}"})
   void shouldThrowNotFoundErrorWhileUpdateTenant(String contentString) throws Exception {
-    TenantEntity tenantEntity1 = createTenantEntity("ABC1", "TestName1");
+    TenantEntity tenantEntity1 = createTenantEntity("ABC1", "TestName1", "TST");
     var headers = defaultHeaders();
     when(tenantRepository.existsById(any())).thenReturn(true);
     when(consortiumRepository.existsById(any())).thenReturn(false);
@@ -195,9 +194,9 @@ class TenantControllerTest extends BaseTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"{\"id\":\"diku1234\",\"name\":\"diku_tenant_name1234\"}"})
+  @ValueSource(strings = {"{\"id\":\"diku1234\",\"code\":\"TST\",\"name\":\"diku_tenant_name1234\"}"})
   void shouldUpdateTenant(String contentString) throws Exception {
-    TenantEntity tenantEntity1 = createTenantEntity("diku1234", "TestName1");
+    TenantEntity tenantEntity1 = createTenantEntity("diku1234", "TestName1", "TST");
 
     var headers = defaultHeaders();
     when(tenantRepository.existsById(any())).thenReturn(true);
@@ -207,9 +206,10 @@ class TenantControllerTest extends BaseTest {
     this.mockMvc.perform(put("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/tenants/diku1234").headers(headers).content(contentString)).andExpectAll(status().isOk());
   }
 
-  private TenantEntity createTenantEntity(String id, String name) {
+  private TenantEntity createTenantEntity(String id, String name, String code) {
     TenantEntity tenantEntity = new TenantEntity();
     tenantEntity.setId(id);
+    tenantEntity.setCode(code);
     tenantEntity.setName(name);
     return tenantEntity;
   }

@@ -12,6 +12,7 @@ public class TenantConverter implements Converter<TenantEntity, Tenant> {
   public Tenant convert(TenantEntity source) {
     Tenant tenant = new Tenant();
     tenant.setId(source.getId());
+    tenant.setCode(source.getCode());
     tenant.setName(source.getName());
     return tenant;
   }

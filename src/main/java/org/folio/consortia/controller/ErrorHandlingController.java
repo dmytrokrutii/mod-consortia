@@ -1,16 +1,23 @@
 package org.folio.consortia.controller;
 
-import jakarta.validation.ConstraintViolationException;
-import lombok.extern.log4j.Log4j2;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.folio.consortia.utils.ErrorHelper.createInternalError;
+import static org.folio.consortia.utils.ErrorHelper.ErrorCode.DUPLICATE_ERROR;
+import static org.folio.consortia.utils.ErrorHelper.ErrorCode.NOT_FOUND_ERROR;
+import static org.folio.consortia.utils.ErrorHelper.ErrorCode.VALIDATION_ERROR;
+
+import java.util.List;
+import java.util.Objects;
+
 import org.folio.consortia.domain.dto.Error;
 import org.folio.consortia.domain.dto.Errors;
 import org.folio.consortia.exception.ConsortiumClientException;
 import org.folio.consortia.exception.PrimaryAffiliationException;
 import org.folio.consortia.exception.ResourceAlreadyExistException;
 import org.folio.consortia.exception.ResourceNotFoundException;
+import org.folio.consortia.utils.ErrorHelper;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -18,14 +25,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
-import static org.folio.consortia.utils.ErrorHelper.ErrorCode.DUPLICATE_ERROR;
-import static org.folio.consortia.utils.ErrorHelper.ErrorCode.NOT_FOUND_ERROR;
-import static org.folio.consortia.utils.ErrorHelper.ErrorCode.VALIDATION_ERROR;
-import static org.folio.consortia.utils.ErrorHelper.createInternalError;
+import jakarta.validation.ConstraintViolationException;
+import lombok.extern.log4j.Log4j2;
 
 @RestControllerAdvice
 @Log4j2
@@ -78,25 +79,22 @@ public class ErrorHandlingController {
   }
 
   @ExceptionHandler(ConstraintViolationException.class)
-  public ResponseEntity<List<Error>> handleConstraintViolation(ConstraintViolationException ex) {
+  @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+  public Errors handleConstraintViolation(ConstraintViolationException ex) {
     log.error("Handle constraint violation", ex);
 
-    // Extract the error message and validation errors from the ConstraintViolationException
-    List<String> validationErrors = ex.getConstraintViolations().stream()
-      .map(violation -> violation.getPropertyPath() + " " + violation.getMessage())
+    List<Error> errorList = ex.getConstraintViolations()
+      .stream()
+      .map(violation -> {
+        var customCode = (violation.getRootBeanClass() != null ? violation.getRootBeanClass().getSimpleName() : EMPTY) + "ValidationError";
+        return new Error()
+          // Extract the error message and validation errors from the ConstraintViolationException
+          .message(String.format("'%s' validation failed. %s", violation.getPropertyPath(), violation.getMessage()))
+          .type(ErrorHelper.ErrorType.INTERNAL.getTypeCode())
+          .code(customCode);
+      })
       .toList();
 
-    // Create an Error object containing the error message and validation errors
-    List<Error> errorList = new ArrayList<>();
-    for (String validationError : validationErrors) {
-      var error = new Error();
-      error.setMessage(validationError);
-      error.setType("-1");
-      error.setCode(String.valueOf(VALIDATION_ERROR));
-      errorList.add(error);
-    }
-    Errors errors = new Errors();
-    errors.setErrors(errorList);
-    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(errors.getErrors());
+    return new Errors().errors(errorList);
   }
 }
