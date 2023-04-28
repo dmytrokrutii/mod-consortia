@@ -1,0 +1,22 @@
+$schema: "http://json-schema.org/draft-04/schema#"
+description: "Primary affiliation event"
+type: object
+properties:
+  id:
+    description: "UUID of the event"
+    $ref: "uuid.yaml"
+  userId:
+    description: "UUID of the user"
+    $ref: "uuid.yaml"
+  userName:
+    description: "The user's username, for delete event it will be empty"
+    type: string
+  tenantId:
+    description: "The name of the user's tenant"
+    type: string
+additionalProperties: false
+required:
+  - id
+  - userId
+  - tenantId
+

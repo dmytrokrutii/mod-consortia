@@ -123,7 +123,7 @@ public class KafkaService {
     return String.format("%s.Default.%s.%s", kafkaEnvId, tenantId, topicName);
   }
 
-  public void send(Topic topic, String key, Object data) {
+  public void send(Topic topic, String key, String data) {
     log.info("Sending {}.", data);
     String tenant = folioExecutionContext.getTenantId();
     if (StringUtils.isBlank(tenant)) {

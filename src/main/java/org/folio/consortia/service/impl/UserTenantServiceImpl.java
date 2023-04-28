@@ -200,7 +200,7 @@ public class UserTenantServiceImpl implements UserTenantService {
       User userOptional = getUser(userId);
 
       if (Objects.nonNull(userOptional.getId())) {
-        user.setId(UUID.randomUUID().toString());
+        user.setId(userId.toString());
         user.setPatronGroup(PATRON_GROUP);
         user.setUsername(userOptional.getUsername() + HelperUtils.randomString(RANDOM_STRING_COUNT));
         var userPersonal = userOptional.getPersonal();
