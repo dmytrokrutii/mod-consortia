@@ -17,9 +17,7 @@
             "GET"
           ],
           "pathPattern": "/consortia",
-          "permissionsRequired": [
-            "consortia.consortium.collection.get"
-          ],
+          "permissionsRequired": [],
           "modulePermissions": []
         },
         {
@@ -57,9 +55,7 @@
             "GET"
           ],
           "pathPattern": "/consortia/{consortiumId}/tenants",
-          "permissionsRequired": [
-            "consortia.tenants.collection.get"
-          ],
+          "permissionsRequired": [],
           "modulePermissions": []
         },
         {
@@ -164,7 +160,6 @@
       "displayName": "Consortia API module - all permissions",
       "description": "All permissions for consortia module",
       "subPermissions": [
-        "consortia.tenants.collection.get",
         "consortia.tenants.item.post",
         "consortia.tenants.item.put",
         "consortia.tenants.item.delete",
@@ -173,15 +168,9 @@
         "consortia.consortium.item.post",
         "consortia.consortium.item.put",
         "consortia.consortium.item.get",
-        "consortia.consortium.collection.get",
         "consortia.user-tenants.item.post",
         "consortia.user-tenants.item.delete"
       ]
-    },
-    {
-      "permissionName": "consortia.tenants.collection.get",
-      "displayName": "get tenants",
-      "description": "Get list of tenants"
     },
     {
       "permissionName": "consortia.user-tenants.item.post",
@@ -232,11 +221,6 @@
       "permissionName": "consortia.consortium.item.put",
       "displayName": "update consortium",
       "description": "Update consortium"
-    },
-    {
-      "permissionName": "consortia.consortium.collection.get",
-      "displayName": "get consortiums",
-      "description": "Get consortiums"
     }
   ],
   "launchDescriptor": {
