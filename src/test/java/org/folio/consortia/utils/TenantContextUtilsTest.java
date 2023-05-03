@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.messaging.MessageHeaders;
 
 class TenantContextUtilsTest {
-  public static final String TENANT_ID = "test";
+  public static final String TENANT_ID = "mobius";
   FolioModuleMetadata folioModuleMetadata;
   @Test
   void shouldSetTenantIdIfHeadersPassed() {

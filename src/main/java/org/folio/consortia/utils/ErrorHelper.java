@@ -1,5 +1,6 @@
 package org.folio.consortia.utils;
 
+import feign.FeignException;
 import lombok.experimental.UtilityClass;
 import org.folio.consortia.domain.dto.Error;
 import org.folio.consortia.domain.dto.Errors;
@@ -33,13 +34,23 @@ public class ErrorHelper {
   }
 
   public static Errors createExternalError(String message, ErrorCode errorCode) {
-    return createErrors(createError(message, ErrorType.FOLIO_EXTERNAL_OR_UNDEFINED, errorCode));
+    return createErrors(createError(message, ErrorType.EXTERNAL, errorCode));
+  }
+
+  public static Errors createPermissionError(FeignException e, ErrorCode errorCode){
+    String message = e.getMessage();
+    String extractedMessage = extractPermissionFromErrorMessage(message);
+    return createErrors(createError(extractedMessage, ErrorType.INTERNAL, errorCode));
+  }
+
+  private String extractPermissionFromErrorMessage(String e) {
+    return e.substring(e.lastIndexOf('[') + 1, e.lastIndexOf(']')); // extract the main part from the error message
   }
 
   public enum ErrorType {
-    INTERNAL("-1"),
-    FOLIO_EXTERNAL_OR_UNDEFINED("-2"),
-    EXTERNAL_OR_UNDEFINED("-3"),
+    EXTERNAL("-1"), // bad request or client error
+    INTERNAL("-2"), // bad gateway or internal error (db error)
+    FOLIO_EXTERNAL_OR_UNDEFINED("-3"),
     UNKNOWN("-4");
 
     private final String typeCode;
@@ -55,6 +66,13 @@ public class ErrorHelper {
   }
 
   public enum ErrorCode {
-    VALIDATION_ERROR, NOT_FOUND_ERROR, INTERACT_ERROR, DUPLICATE_ERROR, HAS_ACTIVE_USER_ASSOCIATION_ERROR
+    VALIDATION_ERROR,
+    NOT_FOUND_ERROR,
+    INTERACT_ERROR,
+    DUPLICATE_ERROR,
+    HAS_PRIMARY_AFFILIATION_ERROR,
+    PERMISSION_REQUIRED,
+    BAD_GATEWAY
   }
+
 }

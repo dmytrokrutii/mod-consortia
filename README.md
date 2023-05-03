@@ -5,25 +5,29 @@ Copyright (C) 2022 The Open Library Foundation
 This software is distributed under the terms of the Apache License,
 Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
 
+## Table of Contents
+
+- [Introduction](#introduction)
+- [API information](#api-information)
+- [Permissions](#permissions)
+- [Installing and deployment](#installing-and-deployment)
+  - [Compiling](#compiling)
+  - [Running it](#running-it)
+  - [Docker](#docker)
+  - [Module descriptor](#module-descriptor)
+  - [Environment variables](#environment-variables)
+- [Additional information](#Additional-information)
+  - [Issue tracker](#issue-tracker)
+  - [API documentation](#api-documentation)
+  - [Code analysis](#code-analysis)
+  - [Other documentation](#other-documentation)
+
 ## Introduction
 
 APIs for Consortia module.
 
-## Environment variables:
+## API information
 
-| Name        | Default value | Description                                                                                                                                            |
-|:------------|:-------------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------|
-| DB_HOST     |   postgres    | Postgres hostname                                                                                                                                      |
-| DB_PORT     |     5432      | Postgres port                                                                                                                                          |
-| DB_USERNAME |  folio_admin  | Postgres username                                                                                                                                      |
-| DB_PASSWORD |       -       | Postgres username password                                                                                                                             |
-| DB_DATABASE | okapi_modules | Postgres database name                                                                                                                                 |
-| ENV         |     folio     | Environment                                                                                                                                            |
-| KAFKA_HOST  |     kafka     | Kafka broker hostname                                                                                                                                  |
-| KAFKA_PORT  |     9092      | Kafka broker port                                                                                                                                      |
-| ENV         |     folio     | Logical name of the deployment, must be set if Kafka/Elasticsearch are shared for environments, `a-z (any case)`, `0-9`, `-`, `_` symbols only allowed |
-
-## Additional information
 Consortia API provides the following URLs:
 
 | Method | URL                                                     | Permissions                           | Description                                                    |
@@ -38,19 +42,81 @@ Consortia API provides the following URLs:
 | PUT    | /consortia/{consortiumId}/tenants/{tenantId}            | consortia.tenants.item.put            | Update a single tenant name based on consortiumId and tenantId |
 | PUT    | /consortia/{consortiumId}                               | consortia.consortium.item.put         | Update consortium name based on consortiumId                   |
 
-More detail can be found on Consortia wiki-page: [https://wiki.folio.org/display/DD/Defining+Tenant+Schema+For+Consortia](https://wiki.folio.org/display/DD/Defining+Tenant+Schema+For+Consortia).
+More detail about mod-consortia
+ - API can be found on api-guide.md: [API Docs](/docs/api-guide.md).
+ - Schema architecture can be found on Consortia wiki-page: [mod-consortia schema and ER diagram](https://wiki.folio.org/display/DD/Defining+Tenant+Schema+For+Consortia).
 
-### Required Permissions
+## Permissions
+
 Institutional users should be granted the following permissions in order to use this Consortia API:
-- consortia.all
+```shell
+consortia.all
+```
+
+## Installing and deployment
+
+### Compiling
+
+Compile with
+```shell
+mvn clean install
+```
+
+### Running it
+
+Run locally on listening port 8081 (default listening port):
+
+Using Docker to run the local stand-alone instance:
+
+```shell
+DB_HOST=localhost DB_PORT=5432 DB_DATABASE=okapi_modules DB_USERNAME=folio_admin DB_PASSWORD=folio_admin \
+   java -Dserver.port=8081 -jar target/mod-consortia-*.jar
+```
+
+### Docker
+
+Build the docker container with:
+
+```shell
+docker build -t dev.folio/mod-consortia .
+```
+
+### Module Descriptor
+
+See the built `target/ModuleDescriptor.json` for the interfaces that this module
+requires and provides, the permissions, and the additional module metadata.
+
+### Environment variables
+
+| Name        | Default value | Description                                                                                                                                            |
+|:------------|:-------------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------|
+| DB_HOST     |   postgres    | Postgres hostname                                                                                                                                      |
+| DB_PORT     |     5432      | Postgres port                                                                                                                                          |
+| DB_USERNAME |  folio_admin  | Postgres username                                                                                                                                      |
+| DB_PASSWORD |       -       | Postgres username password                                                                                                                             |
+| DB_DATABASE | okapi_modules | Postgres database name                                                                                                                                 |
+| ENV         |     folio     | Environment                                                                                                                                            |
+| KAFKA_HOST  |     kafka     | Kafka broker hostname                                                                                                                                  |
+| KAFKA_PORT  |     9092      | Kafka broker port                                                                                                                                      |
+| ENV         |     folio     | Logical name of the deployment, must be set if Kafka/Elasticsearch are shared for environments, `a-z (any case)`, `0-9`, `-`, `_` symbols only allowed |
+
+## Additional information
 
 ### Issue tracker
 
 See project [mod-consortia]()
 at the [FOLIO issue tracker](https://dev.folio.org/guidelines/issue-tracker).
 
-### Other documentation
+### API documentation
 
-Other [modules](https://dev.folio.org/source-code/#server-side) are described,
-with further FOLIO Developer documentation at
-[dev.folio.org](https://dev.folio.org/)
+This module's [API documentation](https://dev.folio.org/reference/api/#mod-consortia).
+
+### Code analysis
+
+[SonarQube analysis](https://sonarcloud.io/project/overview?id=org.folio:mod-consortia).
+
+## Other documentation
+
+The built artifacts for this module are available.
+See [configuration](https://dev.folio.org/download/artifacts) for repository access,
+and the [Docker image](https://hub.docker.com/r/folioci/mod-consortia). Look at contribution guidelines [Contributing](https://dev.folio.org/guidelines/contributing).

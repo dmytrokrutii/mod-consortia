@@ -48,7 +48,8 @@ public class TenantContextUtils {
   private static FolioExecutionContext getContextFromKafkaHeaders(MessageHeaders headers,
                                                                   FolioModuleMetadata moduleMetadata) {
     Map<String, Collection<String>> map = new HashMap<>();
-    map.put(XOkapiHeaders.TENANT, getHeaderValue(headers, XOkapiHeaders.TENANT, null));
+    //todo temporary solution, separate story will be created
+    map.put(XOkapiHeaders.TENANT, List.of("mobius"));
     map.put(XOkapiHeaders.URL, getHeaderValue(headers, XOkapiHeaders.URL, null));
     map.put(XOkapiHeaders.TOKEN, getHeaderValue(headers, XOkapiHeaders.TOKEN, null));
     map.put(XOkapiHeaders.USER_ID, getHeaderValue(headers, XOkapiHeaders.USER_ID, null));

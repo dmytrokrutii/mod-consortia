@@ -22,6 +22,7 @@ import org.folio.consortia.utils.HelperUtils;
 import org.folio.spring.DefaultFolioExecutionContext;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.FolioModuleMetadata;
+import org.folio.spring.integration.XOkapiHeaders;
 import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.data.domain.Page;
@@ -47,7 +48,7 @@ import java.util.UUID;
 @Log4j2
 @RequiredArgsConstructor
 public class UserTenantServiceImpl implements UserTenantService {
-
+  private static final String NOT_FOUND_PRIMARY_AFFILIATION_MSG = "User with %s [%s] doesn't have primary affiliation";
   private static final String USER_ID = "userId";
   private static final String TENANT_ID = "tenantId";
   private static final Boolean IS_PRIMARY_TRUE = true;
@@ -126,9 +127,8 @@ public class UserTenantServiceImpl implements UserTenantService {
 
     Optional<UserTenantEntity> userTenant = userTenantRepository.findByUserIdAndIsPrimary(userTenantDto.getUserId(), IS_PRIMARY_TRUE);
     if (userTenant.isEmpty()) {
-      log.warn("Could not find user with id: {} in user_tenant table for tenant id: {}",
-        userTenantDto.getUserId(), userTenantDto.getTenantId());
-      throw new ResourceNotFoundException(USER_ID, String.valueOf(userTenantDto.getUserId()));
+      log.warn("Could not find user '{}' with primary affiliation in user_tenant table", userTenantDto.getUserId());
+      throw new ResourceNotFoundException(String.format(NOT_FOUND_PRIMARY_AFFILIATION_MSG, USER_ID, userTenantDto.getUserId()));
     }
 
     User shadowUser = prepareShadowUser(userTenantDto.getUserId(), userTenant.get(), currentTenantContext);
@@ -164,6 +164,7 @@ public class UserTenantServiceImpl implements UserTenantService {
   public void deleteByUserIdAndTenantId(UUID consortiumId, String tenantId, UUID userId) {
     log.debug("Going to delete user affiliation for user id: {} in the tenant: {}", userId.toString(), tenantId);
     FolioExecutionContext currentTenantContext = (FolioExecutionContext) folioExecutionContext.getInstance();
+
     consortiumService.checkConsortiumExistsOrThrow(consortiumId);
     UserTenantEntity userTenantEntity = userTenantRepository.findByUserIdAndTenantId(userId, tenantId)
       .orElseThrow(() -> new ResourceNotFoundException(USER_ID + ", " + TENANT_ID, userId + ", " + tenantId));
@@ -173,6 +174,7 @@ public class UserTenantServiceImpl implements UserTenantService {
         userId.toString(), userTenantEntity.getTenant().getId());
       throw new PrimaryAffiliationException(String.valueOf(userId), tenantId);
     }
+
     userTenantRepository.deleteByUserIdAndTenantId(userId, tenantId);
 
     try (var context = new FolioExecutionContextSetter(prepareContextForTenant(tenantId, currentTenantContext))) {
@@ -180,7 +182,6 @@ public class UserTenantServiceImpl implements UserTenantService {
       deactivateUser(user);
       log.info("User affiliation deleted and user deactivated for user id: {} in the tenant: {}", userId.toString(), tenantId);
     }
-
   }
 
   @Override
@@ -248,8 +249,10 @@ public class UserTenantServiceImpl implements UserTenantService {
     } catch (FeignException.NotFound e) {
       log.info("User with userId {} does not exist in schema, going to use new one", userId);
       return new User();
+    } catch (FeignException.Forbidden e) {
+      throw new ConsortiumClientException(e);
     } catch (FeignException e) {
-      throw new ConsortiumClientException(String.format("Could not get a user with id %s", userId), e);
+      throw new IllegalStateException(e);
     }
   }
 
@@ -280,7 +283,7 @@ public class UserTenantServiceImpl implements UserTenantService {
 
   private FolioExecutionContext prepareContextForTenant(String tenantId, FolioExecutionContext context) {
     if (MapUtils.isNotEmpty(context.getOkapiHeaders())) {
-      context.getOkapiHeaders().put("x-okapi-tenant", List.of(tenantId));
+      context.getOkapiHeaders().put(XOkapiHeaders.TENANT, List.of(tenantId));
       log.info("FOLIO context initialized with tenant {}", tenantId);
     }
     return new DefaultFolioExecutionContext(folioModuleMetadata, context.getOkapiHeaders());

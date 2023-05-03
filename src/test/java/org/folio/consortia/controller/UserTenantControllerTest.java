@@ -1,10 +1,18 @@
 package org.folio.consortia.controller;
 
+import feign.FeignException;
+import feign.Request;
+import feign.RequestTemplate;
+import feign.Response;
+import org.folio.consortia.client.UsersClient;
 import org.folio.consortia.domain.dto.UserTenant;
 import org.folio.consortia.domain.dto.UserTenantCollection;
 import org.folio.consortia.domain.entity.ConsortiumEntity;
+import org.folio.consortia.domain.entity.TenantEntity;
 import org.folio.consortia.domain.entity.UserTenantEntity;
+import org.folio.consortia.exception.ResourceNotFoundException;
 import org.folio.consortia.repository.ConsortiumRepository;
+import org.folio.consortia.repository.UserTenantRepository;
 import org.folio.consortia.service.UserTenantService;
 import org.folio.consortia.support.BaseTest;
 import org.junit.jupiter.api.Assertions;
@@ -15,14 +23,22 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
+import java.nio.charset.Charset;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -35,12 +51,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class UserTenantControllerTest extends BaseTest {
 
   private static final String CONSORTIUM_ID = "7698e46-c3e3-11ed-afa1-0242ac120002";
+  private static final String PERMISSION_EXCEPTION_MSG = "[403 Forbidden] during [GET] to " +
+    "[http://users/8c54ff1e-5954-4227-8402-9a5dd061a350] [UsersClient#getUsersByUserId(String)]: " +
+    "[Access for user 'ss_admin' (b82b46b6-9a6e-46f0-b986-5c643d9ba036) requires permission: users.item.get]";
   @Mock
   private UserTenantService userTenantService;
   @InjectMocks
   private UserTenantController userTenantController;
   @MockBean
   private ConsortiumRepository consortiumRepository;
+  @MockBean
+  private UserTenantRepository userTenantRepository;
+  @MockBean
+  private UsersClient usersClient;
 
 
   @Test
@@ -90,18 +113,24 @@ class UserTenantControllerTest extends BaseTest {
   void shouldGetUserTenantList() throws Exception {
     var headers = defaultHeaders();
     UUID consortiumId = UUID.fromString(CONSORTIUM_ID);
+    Page<UserTenantEntity> userTenantPage = new PageImpl<>(List.of(createUserTenantEntity(consortiumId)));
+
     when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
-    this.mockMvc.perform(get("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/user-tenants?limit=2&offset=1")
-      .headers(headers))
+    when(userTenantRepository.findAll(PageRequest.of(1, 2))).thenReturn(userTenantPage);
+
+    this.mockMvc.perform(
+        get("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/user-tenants?limit=2&offset=1")
+          .headers(headers))
       .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_JSON_VALUE));
   }
 
+  /* Error cases */
   @Test
   void returnNotFoundUserAndTenantAssociationWhenDeletingUserTenant() throws Exception {
     var headers = defaultHeaders();
     when(consortiumRepository.existsById(UUID.fromString(CONSORTIUM_ID))).thenReturn(true);
     this.mockMvc.perform(delete("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/user-tenants?userId=7698e46-c3e3-11ed-afa1-0242ac120001&tenantId=diku")
-      .headers(headers))
+        .headers(headers))
       .andExpect(status().isNotFound())
       .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
       .andExpect(jsonPath("$.errors[0].code", is("NOT_FOUND_ERROR")));
@@ -114,10 +143,50 @@ class UserTenantControllerTest extends BaseTest {
     when(consortiumRepository.existsById(consortiumId)).thenReturn(false);
 
     this.mockMvc.perform(get("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/user-tenants?limit=0&offset=0")
-      .headers(headers))
+        .headers(headers))
       .andExpectAll(status().is4xxClientError(),
         content().contentType(MediaType.APPLICATION_JSON_VALUE),
         jsonPath("$.errors[0].code", is("NOT_FOUND_ERROR")));
+  }
+
+  @Test
+  void returnPermissionRequiredException() throws Exception {
+    var headers = defaultHeaders();
+    UUID consortiumId = UUID.fromString(CONSORTIUM_ID);
+    UserTenantEntity userTenantEntity = createUserTenantEntity(consortiumId);
+
+    when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
+    when(userTenantRepository.findByUserIdAndTenantId(any(), any())).thenReturn(Optional.of(userTenantEntity));
+    doNothing().when(userTenantRepository).deleteByUserIdAndTenantId(any(), any());
+    when(usersClient.getUsersByUserId(any())).thenThrow(
+      FeignException.Forbidden.errorStatus("getByUserId", createForbiddenResponse(PERMISSION_EXCEPTION_MSG)));
+
+    this.mockMvc.perform(
+        delete("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/user-tenants?userId=7698e46-c3e3-11ed-afa1-0242ac120001&tenantId=diku")
+          .headers(headers))
+      .andExpectAll(status().is4xxClientError(),
+        content().contentType(MediaType.APPLICATION_JSON_VALUE),
+        jsonPath("$.errors[0].code", is("PERMISSION_REQUIRED")));
+  }
+
+  @Test
+  void returnIllegalStateExceptionWhileGettingUser() throws Exception {
+    var headers = defaultHeaders();
+    UUID consortiumId = UUID.fromString(CONSORTIUM_ID);
+    UserTenantEntity userTenantEntity = createUserTenantEntity(consortiumId);
+
+    when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
+    when(userTenantRepository.findByUserIdAndTenantId(any(), any())).thenReturn(Optional.of(userTenantEntity));
+    doNothing().when(userTenantRepository).deleteByUserIdAndTenantId(any(), any());
+    when(usersClient.getUsersByUserId(any())).thenThrow(
+      FeignException.errorStatus("getByUserId", createUnknownResponse("network error")));
+
+    this.mockMvc.perform(
+        delete("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/user-tenants?userId=7698e46-c3e3-11ed-afa1-0242ac120001&tenantId=diku")
+          .headers(headers))
+      .andExpectAll(status().is5xxServerError(),
+        content().contentType(MediaType.APPLICATION_JSON_VALUE),
+        jsonPath("$.errors[0].code", is("BAD_GATEWAY")));
   }
 
   @ParameterizedTest
@@ -130,6 +199,7 @@ class UserTenantControllerTest extends BaseTest {
     var headers = defaultHeaders();
     UUID consortiumId = UUID.fromString(CONSORTIUM_ID);
     when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
+    when(userTenantRepository.findByUserId(any(), any())).thenThrow(ResourceNotFoundException.class);
 
     this.mockMvc.perform(get(path).headers(headers))
       .andExpectAll(status().is4xxClientError(),
@@ -152,5 +222,34 @@ class UserTenantControllerTest extends BaseTest {
     userTenant.setTenantId(String.valueOf(UUID.randomUUID()));
     userTenant.setIsPrimary(true);
     return userTenant;
+  }
+
+  private UserTenantEntity createUserTenantEntity(UUID associationId) {
+    UserTenantEntity userTenantEntity = new UserTenantEntity();
+    userTenantEntity.setId(associationId);
+    userTenantEntity.setTenant(new TenantEntity());
+    userTenantEntity.setUsername("username");
+    userTenantEntity.setUserId(UUID.randomUUID());
+    userTenantEntity.setIsPrimary(false);
+    return userTenantEntity;
+  }
+
+  private Response createForbiddenResponse(String message) {
+    Request request = Request.create(Request.HttpMethod.GET, "", Map.of(), null, Charset.defaultCharset(),
+      new RequestTemplate());
+    return Response.builder()
+      .status(HttpStatus.FORBIDDEN.value())
+      .body(message, Charset.defaultCharset())
+      .request(request)
+      .build();
+  }
+  private Response createUnknownResponse(String message) {
+    Request request = Request.create(Request.HttpMethod.GET, "", Map.of(), null, Charset.defaultCharset(),
+      new RequestTemplate());
+    return Response.builder()
+      .status(HttpStatus.BAD_GATEWAY.value())
+      .body(message, Charset.defaultCharset())
+      .request(request)
+      .build();
   }
 }

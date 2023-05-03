@@ -6,10 +6,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.folio.consortia.config.kafka.properties.FolioKafkaProperties;
 import org.folio.consortia.messaging.domain.ConsortiaInputEventType;
 import org.folio.consortia.messaging.domain.ConsortiaOutputEventType;
 import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.integration.XOkapiHeaders;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.core.env.Environment;
@@ -19,6 +21,7 @@ import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -29,8 +32,6 @@ import static org.folio.consortia.messaging.listener.ConsortiaEventListener.USER
 @Log4j2
 @RequiredArgsConstructor
 public class KafkaService {
-
-  public static final String EVENT_LISTENER_ID = "mod-consortia-events-listener";
 
   private final KafkaAdmin kafkaAdmin;
   private final BeanFactory beanFactory;
@@ -129,7 +130,10 @@ public class KafkaService {
     if (StringUtils.isBlank(tenant)) {
       throw new IllegalStateException("Can't send to Kafka because tenant is blank");
     }
-    kafkaTemplate.send(getTenantTopicName(topic.getTopicName(), tenant), key, data);
-    log.info("Sent {}.", data);
+    String tenantTopicName = getTenantTopicName(topic.getTopicName(), tenant);
+    ProducerRecord<String, Object> producerRecord = new ProducerRecord<>(tenantTopicName, key, data);
+    producerRecord.headers().add(XOkapiHeaders.TENANT, tenant.getBytes(StandardCharsets.UTF_8));
+    kafkaTemplate.send(producerRecord);
+    log.info("Kafka event sent to topic: {} for tenant: {} with data: {}.", tenantTopicName, tenant, data);
   }
 }

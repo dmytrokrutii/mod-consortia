@@ -129,7 +129,7 @@ class TenantServiceTest {
     Mockito.when(userTenantRepository.existsByTenantId(tenantId)).thenReturn(true);
 
     // Call the method
-    assertThrows(IllegalStateException.class, () -> tenantService.delete(consortiumId, tenantId));
+    assertThrows(IllegalArgumentException.class, () -> tenantService.delete(consortiumId, tenantId));
   }
 
   @Test

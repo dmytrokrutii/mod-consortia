@@ -1,14 +1,15 @@
 package org.folio.consortia.controller;
 
 import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.folio.consortia.utils.ErrorHelper.ErrorCode.*;
+import static org.folio.consortia.utils.ErrorHelper.createExternalError;
 import static org.folio.consortia.utils.ErrorHelper.createInternalError;
-import static org.folio.consortia.utils.ErrorHelper.ErrorCode.DUPLICATE_ERROR;
-import static org.folio.consortia.utils.ErrorHelper.ErrorCode.NOT_FOUND_ERROR;
-import static org.folio.consortia.utils.ErrorHelper.ErrorCode.VALIDATION_ERROR;
+import static org.folio.consortia.utils.ErrorHelper.createPermissionError;
 
 import java.util.List;
 import java.util.Objects;
 
+import feign.FeignException;
 import org.folio.consortia.domain.dto.Error;
 import org.folio.consortia.domain.dto.Errors;
 import org.folio.consortia.exception.ConsortiumClientException;
@@ -35,17 +36,17 @@ public class ErrorHandlingController {
   @ResponseStatus(HttpStatus.NOT_FOUND)
   @ExceptionHandler(ResourceNotFoundException.class)
   public Errors handleNotFoundException(ResourceNotFoundException e) {
-    return createInternalError(e.getMessage(), NOT_FOUND_ERROR);
+    return createExternalError(e.getMessage(), NOT_FOUND_ERROR);
   }
 
   @ResponseStatus(HttpStatus.CONFLICT)
   @ExceptionHandler(ResourceAlreadyExistException.class)
   public Errors handleResourceAlreadyExistException(ResourceAlreadyExistException e) {
-    return createInternalError(e.getMessage(), DUPLICATE_ERROR);
+    return createExternalError(e.getMessage(), DUPLICATE_ERROR);
   }
 
   @ResponseStatus(HttpStatus.CONFLICT)
-  @ExceptionHandler(DataIntegrityViolationException.class)
+  @ExceptionHandler({DataIntegrityViolationException.class})
   public Errors handleDataIntegrityViolationException(DataIntegrityViolationException e) {
     log.error("Handle data integrity violation", e);
 
@@ -54,14 +55,7 @@ public class ErrorHandlingController {
     this is a generic data exception typically thrown by the Spring exception translation mechanism when dealing with lower level persistence exceptions.
     So to get clear error message we need to find rootCause first.
     */
-    return createInternalError(Objects.requireNonNull(e.getRootCause()).getMessage(), VALIDATION_ERROR);
-  }
-
-  @ResponseStatus(HttpStatus.CONFLICT)
-  @ExceptionHandler(IllegalStateException.class)
-  public Errors handleIllegalStateException(IllegalStateException e) {
-    log.error("Handle illegal state", e);
-    return createInternalError(e.getMessage(), VALIDATION_ERROR);
+    return createExternalError(Objects.requireNonNull(e.getRootCause()).getMessage(), VALIDATION_ERROR);
   }
 
   @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -69,13 +63,31 @@ public class ErrorHandlingController {
     MissingServletRequestParameterException.class,
     MethodArgumentTypeMismatchException.class,
     HttpMessageNotReadableException.class,
-    IllegalArgumentException.class,
-    ConsortiumClientException.class,
-    PrimaryAffiliationException.class
+    IllegalArgumentException.class
   })
   public Errors handleValidationErrors(Exception e) {
     log.error("Handle validation errors", e);
-    return createInternalError(e.getMessage(), VALIDATION_ERROR);
+    return createExternalError(e.getMessage(), VALIDATION_ERROR);
+  }
+
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  @ExceptionHandler(PrimaryAffiliationException.class)
+  public Errors handlePrimaryAffiliationException(Exception e) {
+    return createExternalError(e.getMessage(), HAS_PRIMARY_AFFILIATION_ERROR);
+  }
+
+  @ResponseStatus(HttpStatus.FORBIDDEN)
+  @ExceptionHandler(ConsortiumClientException.class)
+  public Errors handleConsortiumClientException(FeignException e) {
+    log.error("Handle consortium client exception", e);
+    return createPermissionError(e, PERMISSION_REQUIRED);
+  }
+
+  @ResponseStatus(HttpStatus.BAD_GATEWAY)
+  @ExceptionHandler(IllegalStateException.class)
+  public Errors handleIllegalStateException(IllegalStateException e) {
+    log.error("Handle illegal state exception", e);
+    return createInternalError(e.getMessage(), BAD_GATEWAY);
   }
 
   @ExceptionHandler(ConstraintViolationException.class)
@@ -90,7 +102,7 @@ public class ErrorHandlingController {
         return new Error()
           // Extract the error message and validation errors from the ConstraintViolationException
           .message(String.format("'%s' validation failed. %s", violation.getPropertyPath(), violation.getMessage()))
-          .type(ErrorHelper.ErrorType.INTERNAL.getTypeCode())
+          .type(ErrorHelper.ErrorType.EXTERNAL.getTypeCode())
           .code(customCode);
       })
       .toList();
