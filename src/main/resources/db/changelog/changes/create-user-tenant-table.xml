@@ -34,5 +34,15 @@
     </createIndex>
 
   </changeSet>
+  <changeSet id="MODCON-31@@update-user-tenant-index" author="singhadesh">
+
+    <dropIndex indexName="username_tenant_id_idx" tableName="user_tenant"/>
+
+    <createIndex indexName="user_id_tenant_id_idx" unique="true" tableName="user_tenant">
+      <column name="user_id"/>
+      <column name="tenant_id"/>
+    </createIndex>
+
+  </changeSet>
 
 </databaseChangeLog>
