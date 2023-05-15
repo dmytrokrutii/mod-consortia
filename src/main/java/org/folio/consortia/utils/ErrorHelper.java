@@ -68,11 +68,11 @@ public class ErrorHelper {
   public enum ErrorCode {
     VALIDATION_ERROR,
     NOT_FOUND_ERROR,
-    INTERACT_ERROR,
     DUPLICATE_ERROR,
     HAS_PRIMARY_AFFILIATION_ERROR,
     PERMISSION_REQUIRED,
-    BAD_GATEWAY
+    BAD_GATEWAY,
+    UNAUTHORIZED
   }
 
 }

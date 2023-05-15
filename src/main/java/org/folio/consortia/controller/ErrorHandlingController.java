@@ -16,6 +16,7 @@ import org.folio.consortia.exception.ConsortiumClientException;
 import org.folio.consortia.exception.PrimaryAffiliationException;
 import org.folio.consortia.exception.ResourceAlreadyExistException;
 import org.folio.consortia.exception.ResourceNotFoundException;
+import org.folio.consortia.exception.InvalidTokenException;
 import org.folio.consortia.utils.ErrorHelper;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -68,6 +69,15 @@ public class ErrorHandlingController {
   public Errors handleValidationErrors(Exception e) {
     log.error("Handle validation errors", e);
     return createExternalError(e.getMessage(), VALIDATION_ERROR);
+  }
+
+  @ResponseStatus(HttpStatus.UNAUTHORIZED)
+  @ExceptionHandler({
+    InvalidTokenException.class
+  })
+  public Errors handleTokenErrors(Exception e) {
+    log.error("Handle token validation errors", e);
+    return createExternalError(e.getMessage(), UNAUTHORIZED);
   }
 
   @ResponseStatus(HttpStatus.BAD_REQUEST)

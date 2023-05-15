@@ -96,6 +96,14 @@
           "methods": [
             "GET"
           ],
+          "pathPattern": "/consortia/{consortiumId}/_self",
+          "permissionsRequired": [],
+          "modulePermissions": []
+        },
+        {
+          "methods": [
+            "GET"
+          ],
           "pathPattern": "/consortia/{consortiumId}/user-tenants",
           "permissionsRequired": [
             "consortia.user-tenants.collection.get"

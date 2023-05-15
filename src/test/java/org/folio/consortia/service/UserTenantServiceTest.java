@@ -568,4 +568,3 @@ class UserTenantServiceTest {
     return user;
   }
 }
-

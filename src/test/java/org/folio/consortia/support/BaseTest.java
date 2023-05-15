@@ -18,7 +18,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.http.HttpHeaders;
-import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.support.TestPropertySourceUtils;
@@ -91,6 +90,7 @@ public abstract class BaseTest {
     httpHeaders.put(XOkapiHeaders.TENANT, List.of(TENANT));
     httpHeaders.add(XOkapiHeaders.URL, wireMockServer.baseUrl());
     httpHeaders.add(XOkapiHeaders.TOKEN, TOKEN);
+    httpHeaders.add(XOkapiHeaders.USER_ID, "7698e46-c3e3-11ed-afa1-0242ac120002");
 
     return httpHeaders;
   }
