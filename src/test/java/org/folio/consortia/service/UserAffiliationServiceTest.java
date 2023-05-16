@@ -2,7 +2,6 @@ package org.folio.consortia.service;
 
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.folio.consortia.config.kafka.KafkaService;
-import org.folio.consortia.domain.dto.UserTenant;
 import org.folio.consortia.repository.TenantRepository;
 import org.folio.consortia.service.impl.UserAffiliationServiceImpl;
 import org.folio.spring.DefaultFolioExecutionContext;
@@ -106,7 +105,7 @@ class UserAffiliationServiceTest {
     var te = createTenantEntity();
 
     when(tenantService.getByTenantId(anyString())).thenReturn(te);
-    when(userTenantService.getByUsernameAndTenantIdOrNull(any(), anyString(), anyString())).thenReturn(new UserTenant().isPrimary(true));
+    when(userTenantService.checkUserIfHasPrimaryAffiliationByUserId(any(), anyString())).thenReturn(true);
 
     Map<String, Collection<String>> map = new HashMap<>();
     map.put(TENANT, List.of(TENANT));

@@ -6,12 +6,12 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.MapUtils;
 import org.folio.consortia.client.PermissionsClient;
 import org.folio.consortia.client.UsersClient;
+import org.folio.consortia.domain.dto.PermissionUser;
 import org.folio.consortia.domain.dto.Personal;
 import org.folio.consortia.domain.dto.User;
 import org.folio.consortia.domain.dto.UserEvent;
 import org.folio.consortia.domain.dto.UserTenant;
 import org.folio.consortia.domain.dto.UserTenantCollection;
-import org.folio.consortia.domain.dto.PermissionUser;
 import org.folio.consortia.domain.entity.TenantEntity;
 import org.folio.consortia.domain.entity.UserTenantEntity;
 import org.folio.consortia.exception.ConsortiumClientException;
@@ -99,14 +99,6 @@ public class UserTenantServiceImpl implements UserTenantService {
   }
 
   @Override
-  public UserTenant getByUsernameAndTenantIdOrNull(UUID consortiumId, String username, String tenantId) {
-    consortiumService.checkConsortiumExistsOrThrow(consortiumId);
-    return userTenantRepository.findByUsernameAndTenantId(username, tenantId)
-      .map(ute -> converter.convert(ute, UserTenant.class))
-      .orElse(null);
-  }
-
-  @Override
   public UserTenantCollection getByUserId(UUID consortiumId, UUID userId, Integer offset, Integer limit) {
     consortiumService.checkConsortiumExistsOrThrow(consortiumId);
     var result = new UserTenantCollection();
@@ -186,6 +178,14 @@ public class UserTenantServiceImpl implements UserTenantService {
       deactivateUser(user);
       log.info("User affiliation deleted and user deactivated for user id: {} in the tenant: {}", userId.toString(), tenantId);
     }
+  }
+
+  @Override
+  public boolean checkUserIfHasPrimaryAffiliationByUserId(UUID consortiumId, String userId) {
+    consortiumService.checkConsortiumExistsOrThrow(consortiumId);
+    Optional<UserTenantEntity> optionalUserTenant = userTenantRepository
+      .findByUserIdAndIsPrimary(UUID.fromString(userId), IS_PRIMARY_TRUE);
+    return optionalUserTenant.isPresent();
   }
 
   @Override

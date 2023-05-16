@@ -49,8 +49,9 @@ public class UserAffiliationServiceImpl implements UserAffiliationService {
         return;
       }
 
-      var consortiaUserTenant = userTenantService.getByUsernameAndTenantIdOrNull(consortiaTenant.getConsortiumId(), userEvent.getUserDto().getUsername(), userEvent.getTenantId());
-      if (consortiaUserTenant != null && consortiaUserTenant.getIsPrimary()) {
+      boolean isPrimaryAffiliationExists = userTenantService
+        .checkUserIfHasPrimaryAffiliationByUserId(consortiaTenant.getConsortiumId(), userEvent.getUserDto().getId());
+      if (isPrimaryAffiliationExists) {
         log.warn("Primary affiliation already exists for tenant/user: {}/{}", userEvent.getTenantId(), userEvent.getUserDto().getUsername());
         return;
       } else {
