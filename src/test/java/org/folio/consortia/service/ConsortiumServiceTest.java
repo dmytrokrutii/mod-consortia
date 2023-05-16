@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.folio.consortia.utils.EntityUtils.createConsortium;
+import static org.folio.consortia.utils.EntityUtils.createConsortiumEntity;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -138,17 +140,4 @@ class ConsortiumServiceTest {
       () -> consortiumService.update(UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002"), consortium));
   }
 
-  private ConsortiumEntity createConsortiumEntity(String id, String name) {
-    ConsortiumEntity consortiumEntity = new ConsortiumEntity();
-    consortiumEntity.setId(UUID.fromString(id));
-    consortiumEntity.setName(name);
-    return consortiumEntity;
-  }
-
-  private Consortium createConsortium(String id, String name) {
-    Consortium consortium = new Consortium();
-    consortium.setId(UUID.fromString(id));
-    consortium.setName(name);
-    return consortium;
-  }
 }

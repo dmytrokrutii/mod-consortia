@@ -3,7 +3,6 @@ package org.folio.consortia.service;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.folio.consortia.config.kafka.KafkaService;
 import org.folio.consortia.domain.dto.UserTenant;
-import org.folio.consortia.domain.entity.TenantEntity;
 import org.folio.consortia.repository.TenantRepository;
 import org.folio.consortia.service.impl.UserAffiliationServiceImpl;
 import org.folio.spring.DefaultFolioExecutionContext;
@@ -25,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.folio.consortia.utils.EntityUtils.createTenantEntity;
 import static org.folio.consortia.utils.InputOutputTestUtils.getMockData;
 import static org.folio.spring.integration.XOkapiHeaders.TENANT;
 import static org.folio.spring.integration.XOkapiHeaders.TOKEN;
@@ -69,7 +69,7 @@ class UserAffiliationServiceTest {
 
   @Test
   void primaryAffiliationAddedSuccessfullyTest() {
-    var te = getTenantEntity();
+    var te = createTenantEntity();
 
     when(tenantService.getByTenantId(anyString())).thenReturn(te);
     doNothing().when(consortiumService).checkConsortiumExistsOrThrow(any());
@@ -103,7 +103,7 @@ class UserAffiliationServiceTest {
 
   @Test
   void primaryAffiliationAlreadyExists() {
-    var te = getTenantEntity();
+    var te = createTenantEntity();
 
     when(tenantService.getByTenantId(anyString())).thenReturn(te);
     when(userTenantService.getByUsernameAndTenantIdOrNull(any(), anyString(), anyString())).thenReturn(new UserTenant().isPrimary(true));
@@ -120,7 +120,7 @@ class UserAffiliationServiceTest {
 
   @Test
   void primaryAffiliationSuccessfullyDeletedTest() {
-    var te = getTenantEntity();
+    var te = createTenantEntity();
     when(tenantService.getByTenantId(anyString())).thenReturn(te);
     doNothing().when(consortiumService).checkConsortiumExistsOrThrow(any());
 
@@ -137,7 +137,7 @@ class UserAffiliationServiceTest {
 
   @Test
   void kafkaMessageFailedWhenDeletingTest() {
-    var te = getTenantEntity();
+    var te = createTenantEntity();
     when(tenantService.getByTenantId(anyString())).thenReturn(te);
     doNothing().when(consortiumService).checkConsortiumExistsOrThrow(any());
     doThrow(new RuntimeException("Unable to send message to Kafka")).when(kafkaService).send(any(), anyString(), any());
@@ -164,12 +164,5 @@ class UserAffiliationServiceTest {
       userAffiliationService.deletePrimaryUserAffiliation(userDeletedEventSample);
     }
     verify(kafkaService, times(0)).send(any(), anyString(), any());
-  }
-
-  private TenantEntity getTenantEntity() {
-    var te = new TenantEntity();
-    te.setId(UUID.randomUUID().toString());
-    te.setConsortiumId(UUID.randomUUID());
-    return te;
   }
 }

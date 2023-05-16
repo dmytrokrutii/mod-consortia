@@ -51,4 +51,10 @@ public interface TenantService {
    * @return tenant Entity
    */
   TenantEntity getByTenantId(String tenantId);
+
+  /**
+   * Gets central tenant id from db
+   * @return central tenant id
+   */
+  String getCentralTenantId();
 }

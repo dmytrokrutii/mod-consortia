@@ -131,6 +131,7 @@ public class KafkaService {
       throw new IllegalStateException("Can't send to Kafka because tenant is blank");
     }
     String tenantTopicName = getTenantTopicName(topic.getTopicName(), tenant);
+
     ProducerRecord<String, Object> producerRecord = new ProducerRecord<>(tenantTopicName, key, data);
     producerRecord.headers().add(XOkapiHeaders.TENANT, tenant.getBytes(StandardCharsets.UTF_8));
     kafkaTemplate.send(producerRecord);

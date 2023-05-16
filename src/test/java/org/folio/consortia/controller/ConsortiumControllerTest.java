@@ -1,8 +1,8 @@
 package org.folio.consortia.controller;
 
 import org.folio.consortia.domain.entity.ConsortiumEntity;
-import org.folio.consortia.repository.ConsortiumRepository;
 import org.folio.consortia.exception.ResourceAlreadyExistException;
+import org.folio.consortia.repository.ConsortiumRepository;
 import org.folio.consortia.support.BaseTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -14,13 +14,13 @@ import org.springframework.data.domain.PageRequest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
+import static org.folio.consortia.utils.EntityUtils.createConsortiumEntity;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -37,14 +37,16 @@ class ConsortiumControllerTest extends BaseTest {
   })
   void shouldGet4xxErrorWhileSaving(String contentString) throws Exception {
     var headers = defaultHeaders();
+
     when(consortiumRepository.count()).thenThrow(new ResourceAlreadyExistException(CONSORTIUM_RESOURCE_EXIST_MSG_TEMPLATE));
+
     this.mockMvc.perform(
         post("/consortia")
           .headers(headers)
           .content(contentString))
-        .andExpectAll(status().is4xxClientError(),
-          jsonPath("$.errors[0].code", is("DUPLICATE_ERROR")),
-          jsonPath("$.errors[0].message", is("System can not have more than one consortium record")));
+      .andExpectAll(status().is4xxClientError(),
+        jsonPath("$.errors[0].code", is("DUPLICATE_ERROR")),
+        jsonPath("$.errors[0].message", is("System can not have more than one consortium record")));
   }
 
   @ParameterizedTest
@@ -54,6 +56,7 @@ class ConsortiumControllerTest extends BaseTest {
   void shouldSaveConsortium(String contentString) throws Exception {
     var headers = defaultHeaders();
     ConsortiumEntity consortiumEntity = createConsortiumEntity("111841e3-e6fb-4191-8fd8-5674a5107c33", "Test");
+
     when(consortiumRepository.count()).thenReturn(0L);
     when(consortiumRepository.save(any(ConsortiumEntity.class))).thenReturn(consortiumEntity);
 
@@ -71,6 +74,7 @@ class ConsortiumControllerTest extends BaseTest {
   void shouldGetConsortium(String contentString) throws Exception {
     var headers = defaultHeaders();
     ConsortiumEntity consortiumEntity = createConsortiumEntity("111841e3-e6fb-4191-8fd8-5674a5107c33", "Test");
+
     when(consortiumRepository.findById(any())).thenReturn(Optional.of(consortiumEntity));
 
     this.mockMvc.perform(
@@ -86,6 +90,7 @@ class ConsortiumControllerTest extends BaseTest {
   })
   void shouldThrowNotFoundWhileGetConsortium(String contentString) throws Exception {
     var headers = defaultHeaders();
+
     when(consortiumRepository.existsById(any())).thenReturn(false);
 
     this.mockMvc.perform(
@@ -102,6 +107,7 @@ class ConsortiumControllerTest extends BaseTest {
   })
   void shouldThrowNotFoundWhileUpdateConsortium(String contentString) throws Exception {
     var headers = defaultHeaders();
+
     when(consortiumRepository.existsById(any())).thenReturn(false);
 
     this.mockMvc.perform(
@@ -118,6 +124,7 @@ class ConsortiumControllerTest extends BaseTest {
   })
   void shouldThrowNotIdenticalWhileUpdateConsortium(String contentString) throws Exception {
     var headers = defaultHeaders();
+
     when(consortiumRepository.existsById(any())).thenReturn(true);
 
     this.mockMvc.perform(
@@ -136,6 +143,7 @@ class ConsortiumControllerTest extends BaseTest {
   void shouldUpdateConsortium(String contentString) throws Exception {
     var headers = defaultHeaders();
     ConsortiumEntity consortiumEntity = createConsortiumEntity("111841e3-e6fb-4191-8fd8-5674a5107c33", "Test");
+
     when(consortiumRepository.existsById(any())).thenReturn(true);
     when(consortiumRepository.save(any())).thenReturn(consortiumEntity);
 
@@ -155,16 +163,11 @@ class ConsortiumControllerTest extends BaseTest {
 
     when(consortiumRepository.findAll(PageRequest.of(0, 1)))
       .thenReturn(new PageImpl<>(consortiumEntityList, PageRequest.of(0, 1), consortiumEntityList.size()));
+
     this.mockMvc.perform(
         get("/consortia")
           .headers(headers))
       .andExpectAll(status().isOk());
   }
 
-  private ConsortiumEntity createConsortiumEntity(String id, String name) {
-    ConsortiumEntity consortiumEntity = new ConsortiumEntity();
-    consortiumEntity.setId(UUID.fromString(id));
-    consortiumEntity.setName(name);
-    return consortiumEntity;
-  }
 }

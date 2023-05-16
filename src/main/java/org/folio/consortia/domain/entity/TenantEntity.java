@@ -35,17 +35,17 @@ public class TenantEntity {
   @Size(min = 2, max = 150, message = "Invalid Name: Must be of 2 - 150 characters")
   private String name;
   private UUID consortiumId;
+  private Boolean isCentral;
 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    TenantEntity that = (TenantEntity) o;
-    return Objects.equals(id, that.id) && Objects.equals(name, that.name) && Objects.equals(consortiumId, that.consortiumId);
+    if (!(o instanceof TenantEntity that)) return false;
+    return Objects.equals(id, that.id) && Objects.equals(code, that.code) && Objects.equals(name, that.name) && Objects.equals(consortiumId, that.consortiumId) && Objects.equals(isCentral, that.isCentral);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, name, consortiumId);
+    return Objects.hash(id, code, name, consortiumId, isCentral);
   }
 }

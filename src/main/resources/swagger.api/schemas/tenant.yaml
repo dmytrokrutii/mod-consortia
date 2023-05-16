@@ -7,11 +7,14 @@ Tenant:
       type: string
     name:
       type: string
+    isCentral:
+      type: boolean
   additionalProperties: false
   required:
     - id
     - code
     - name
+    - isCentral
 
 TenantCollection:
   type: object

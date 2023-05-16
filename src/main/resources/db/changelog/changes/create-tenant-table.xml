@@ -18,10 +18,19 @@
       </column>
     </createTable>
   </changeSet>
+
   <changeSet id="MOCON-26@add-code-unique-field" author="siarhei_hrabko@epam.com">
     <addColumn tableName="tenant">
       <column name="code" type="text">
         <constraints unique="true" nullable="false"/>
+      </column>
+    </addColumn>
+  </changeSet>
+
+  <changeSet id="MODCON-32@add-is_central-field" author="azizbekxm">
+    <addColumn tableName="tenant">
+      <column name="is_central" type="boolean" defaultValueBoolean="false">
+        <constraints unique="false" nullable="false"/>
       </column>
     </addColumn>
   </changeSet>

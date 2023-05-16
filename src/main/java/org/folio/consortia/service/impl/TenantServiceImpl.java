@@ -2,6 +2,8 @@ package org.folio.consortia.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.consortia.client.ConsortiaConfigurationClient;
+import org.folio.consortia.domain.dto.ConsortiaConfiguration;
 import org.folio.consortia.domain.dto.Tenant;
 import org.folio.consortia.domain.dto.TenantCollection;
 import org.folio.consortia.domain.entity.TenantEntity;
@@ -11,14 +13,19 @@ import org.folio.consortia.repository.TenantRepository;
 import org.folio.consortia.repository.UserTenantRepository;
 import org.folio.consortia.service.ConsortiumService;
 import org.folio.consortia.service.TenantService;
+import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.FolioModuleMetadata;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
 import static org.folio.consortia.utils.HelperUtils.checkIdenticalOrThrow;
+import static org.folio.consortia.utils.TenantContextUtils.createFolioExecutionContextForTenant;
+import static org.folio.consortia.utils.TenantContextUtils.runInFolioContext;
 
 @Service
 @Log4j2
@@ -32,6 +39,9 @@ public class TenantServiceImpl implements TenantService {
   private final UserTenantRepository userTenantRepository;
   private final ConversionService converter;
   private final ConsortiumService consortiumService;
+  private final FolioExecutionContext folioExecutionContext;
+  private final FolioModuleMetadata folioMetadata;
+  private final ConsortiaConfigurationClient configurationClient;
 
   @Override
   public TenantCollection get(UUID consortiumId, Integer offset, Integer limit) {
@@ -44,32 +54,10 @@ public class TenantServiceImpl implements TenantService {
   }
 
   @Override
-  public Tenant save(UUID consortiumId, Tenant tenantDto) {
-    consortiumService.checkConsortiumExistsOrThrow(consortiumId);
-    checkTenantNotExistsOrThrow(tenantDto.getId());
-    TenantEntity entity = toEntity(consortiumId, tenantDto);
-    TenantEntity tenantEntity = tenantRepository.save(entity);
-    return converter.convert(tenantEntity, Tenant.class);
-  }
-
-  @Override
-  public Tenant update(UUID consortiumId, String tenantId, Tenant tenantDto) {
-    consortiumService.checkConsortiumExistsOrThrow(consortiumId);
-    checkTenantExistsOrThrow(tenantId);
-    checkIdenticalOrThrow(tenantId, tenantDto.getId(), TENANTS_IDS_NOT_MATCHED_ERROR_MSG);
-    TenantEntity entity = toEntity(consortiumId, tenantDto);
-    TenantEntity tenantEntity = tenantRepository.save(entity);
-    return converter.convert(tenantEntity, Tenant.class);
-  }
-
-  @Override
-  public void delete(UUID consortiumId, String tenantId) {
-    consortiumService.checkConsortiumExistsOrThrow(consortiumId);
-    checkTenantExistsOrThrow(tenantId);
-    if (userTenantRepository.existsByTenantId(tenantId)) {
-      throw new IllegalArgumentException(TENANT_HAS_ACTIVE_USER_ASSOCIATIONS_ERROR_MSG);
-    }
-    tenantRepository.deleteById(tenantId);
+  public String getCentralTenantId() {
+    TenantEntity tenant = tenantRepository.findCentralTenant()
+      .orElseThrow(() -> new ResourceNotFoundException("A central tenant is not found. The central tenant must be created"));
+    return tenant.getId();
   }
 
   @Override
@@ -78,15 +66,71 @@ public class TenantServiceImpl implements TenantService {
       .orElse(null);
   }
 
-  private void checkTenantNotExistsOrThrow(String tenantId) {
+  @Override
+  @Transactional
+  public Tenant save(UUID consortiumId, Tenant tenantDto) {
+    log.debug("save:: Trying to save a tenant by consortiumId '{}', tenant object with id '{}' and isCentral={}", consortiumId, tenantDto.getId(), tenantDto.getIsCentral());
+    FolioExecutionContext currentTenantContext = (FolioExecutionContext) folioExecutionContext.getInstance();
+    String centralTenantId;
+
+    if (tenantDto.getIsCentral()) {
+      checkCentralTenantExistsOrThrow();
+      centralTenantId = tenantDto.getId();
+    } else {
+      centralTenantId = getCentralTenantId();
+    }
+
+    checkTenantNotExistsAndConsortiumExistsOrThrow(consortiumId, tenantDto.getId());
+    Tenant savedTenant = saveTenant(consortiumId, tenantDto);
+
+    runInFolioContext(createFolioExecutionContextForTenant(tenantDto.getId(), currentTenantContext, folioMetadata),
+      () -> configurationClient.saveConfiguration(createConsortiaConfigurationBody(centralTenantId)));
+    log.info("save:: saved consortia configuration with centralTenantId={} by tenantId={} context", centralTenantId, tenantDto.getId());
+
+    return savedTenant;
+  }
+
+  @Override
+  public Tenant update(UUID consortiumId, String tenantId, Tenant tenantDto) {
+    checkTenantAndConsortiumExistsOrThrow(consortiumId, tenantId);
+    checkIdenticalOrThrow(tenantId, tenantDto.getId(), TENANTS_IDS_NOT_MATCHED_ERROR_MSG);
+    return saveTenant(consortiumId, tenantDto);
+  }
+
+  @Override
+  public void delete(UUID consortiumId, String tenantId) {
+    checkTenantAndConsortiumExistsOrThrow(consortiumId, tenantId);
+    if (userTenantRepository.existsByTenantId(tenantId)) {
+      throw new IllegalArgumentException(TENANT_HAS_ACTIVE_USER_ASSOCIATIONS_ERROR_MSG);
+    }
+    tenantRepository.deleteById(tenantId);
+  }
+
+  private Tenant saveTenant(UUID consortiumId, Tenant tenantDto) {
+    log.debug("saveTenant:: Trying to save tenant with consoritumId={} and tenant with id={}", consortiumId, tenantDto);
+    TenantEntity entity = toEntity(consortiumId, tenantDto);
+    TenantEntity savedTenant = tenantRepository.save(entity);
+    log.info("saveTenant: Tenant '{}' successfully saved", savedTenant.getId());
+    return converter.convert(savedTenant, Tenant.class);
+  }
+
+  private void checkTenantNotExistsAndConsortiumExistsOrThrow(UUID consortiumId, String tenantId) {
+    consortiumService.checkConsortiumExistsOrThrow(consortiumId);
     if (tenantRepository.existsById(tenantId)) {
       throw new ResourceAlreadyExistException("id", tenantId);
     }
   }
 
-  private void checkTenantExistsOrThrow(String tenantId) {
+  private void checkTenantAndConsortiumExistsOrThrow(UUID consortiumId, String tenantId) {
+    consortiumService.checkConsortiumExistsOrThrow(consortiumId);
     if (!tenantRepository.existsById(tenantId)) {
       throw new ResourceNotFoundException("id", tenantId);
+    }
+  }
+
+  private void checkCentralTenantExistsOrThrow() {
+    if (tenantRepository.existsByIsCentralTrue()) {
+      throw new ResourceAlreadyExistException("isCentral", "true");
     }
   }
 
@@ -95,7 +139,14 @@ public class TenantServiceImpl implements TenantService {
     entity.setId(tenantDto.getId());
     entity.setName(tenantDto.getName());
     entity.setCode(tenantDto.getCode());
+    entity.setIsCentral(tenantDto.getIsCentral());
     entity.setConsortiumId(consortiumId);
     return entity;
+  }
+
+  private ConsortiaConfiguration createConsortiaConfigurationBody(String tenantId) {
+    ConsortiaConfiguration configuration = new ConsortiaConfiguration();
+    configuration.setCentralTenantId(tenantId);
+    return configuration;
   }
 }

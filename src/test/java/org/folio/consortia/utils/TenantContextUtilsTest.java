@@ -1,7 +1,7 @@
 package org.folio.consortia.utils;
 
 import static org.folio.consortia.utils.TenantContextUtils.getFolioExecutionContextCopyForTenant;
-import static org.folio.consortia.utils.TenantContextUtils.getFolioExecutionContextCreatePrimaryAffiliationEvent;
+import static org.folio.consortia.utils.TenantContextUtils.createFolioExecutionContext;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.HashMap;
@@ -37,12 +37,11 @@ class TenantContextUtilsTest {
 
   @Test
   void shouldSetTenantIdIfNoHeadersPassed2() {
-    var context = new DefaultFolioExecutionContext(null, new HashMap<>());
     Map<String, Object> header = new HashMap<>();
     header.put(XOkapiHeaders.TENANT, TENANT_ID.getBytes());
 
     var messageHeaders = new MessageHeaders(header);
-    var result = getFolioExecutionContextCreatePrimaryAffiliationEvent(messageHeaders, folioModuleMetadata);
+    var result = createFolioExecutionContext(messageHeaders, folioModuleMetadata, TENANT_ID);
 
     assertEquals(TENANT_ID, result.getTenantId());
   }

@@ -17,5 +17,5 @@ components:
       format: uuid
     userEvent:
       $ref: 'schemas/userEvent.yaml'
-    userAffiliationEvent:
+    primaryAffiliationEvent:
       $ref: 'schemas/primaryAffiliationEvent.yaml'

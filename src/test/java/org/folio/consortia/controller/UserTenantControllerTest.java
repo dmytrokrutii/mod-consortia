@@ -7,8 +7,6 @@ import feign.Response;
 import org.folio.consortia.client.UsersClient;
 import org.folio.consortia.domain.dto.UserTenant;
 import org.folio.consortia.domain.dto.UserTenantCollection;
-import org.folio.consortia.domain.entity.ConsortiumEntity;
-import org.folio.consortia.domain.entity.TenantEntity;
 import org.folio.consortia.domain.entity.UserTenantEntity;
 import org.folio.consortia.exception.ResourceNotFoundException;
 import org.folio.consortia.repository.ConsortiumRepository;
@@ -36,6 +34,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.folio.consortia.utils.EntityUtils.createUserTenant;
+import static org.folio.consortia.utils.EntityUtils.createUserTenantEntity;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -205,33 +205,6 @@ class UserTenantControllerTest extends BaseTest {
       .andExpectAll(status().is4xxClientError(),
         content().contentType(MediaType.APPLICATION_JSON_VALUE),
         jsonPath("$.errors[0].code", is(errorCode)));
-  }
-
-  private ConsortiumEntity createConsortiumEntity() {
-    ConsortiumEntity consortiumEntity = new ConsortiumEntity();
-    consortiumEntity.setId(UUID.fromString(CONSORTIUM_ID));
-    consortiumEntity.setName("TestConsortium");
-    return consortiumEntity;
-  }
-
-  private UserTenant createUserTenant(UUID associationId) {
-    UserTenant userTenant = new UserTenant();
-    userTenant.setId(associationId);
-    userTenant.setUserId(UUID.randomUUID());
-    userTenant.setUsername("username");
-    userTenant.setTenantId(String.valueOf(UUID.randomUUID()));
-    userTenant.setIsPrimary(true);
-    return userTenant;
-  }
-
-  private UserTenantEntity createUserTenantEntity(UUID associationId) {
-    UserTenantEntity userTenantEntity = new UserTenantEntity();
-    userTenantEntity.setId(associationId);
-    userTenantEntity.setTenant(new TenantEntity());
-    userTenantEntity.setUsername("username");
-    userTenantEntity.setUserId(UUID.randomUUID());
-    userTenantEntity.setIsPrimary(false);
-    return userTenantEntity;
   }
 
   private Response createForbiddenResponse(String message) {

@@ -7,4 +7,5 @@
   <include file="changes/create-consortium-table.xml" relativeToChangelogFile="true"/>
   <include file="changes/create-tenant-table.xml" relativeToChangelogFile="true"/>
   <include file="changes/create-user-tenant-table.xml" relativeToChangelogFile="true"/>
+  <include file="changes/create-consortia-configuration-table.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

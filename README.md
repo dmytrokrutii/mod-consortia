@@ -30,17 +30,17 @@ APIs for Consortia module.
 
 Consortia API provides the following URLs:
 
-| Method | URL                                                     | Permissions                           | Description                                                    |
-|--------|---------------------------------------------------------|---------------------------------------|----------------------------------------------------------------|
-| GET    | /consortia/{consortiumId}/tenants                       | consortia.tenants.collection.get      | Gets list of tenants based on consortiumId                     |
-| GET    | /consortia/{consortiumId}/user-tenants                  | consortia.user-tenants.collection.get | Gets list of user-tenants based on consortiumId                |
-| GET    | /consortia/{consortiumId}/user-tenants/{associationId}  | consortia.user-tenants.item.get       | Gets single user-tenant based on consortiumId and consortiumId |
-| GET    | /consortia/{consortiumId}                               | consortia.consortium.item.get         | Gets single tenant based on consortiumId                       |
-| GET    | /consortia                                              | consortia.consortium.collection.get   | Gets list of consortium                                        |
-| POST   | /consortia                                              | consortia.consortium.item.post        | Inserts single consortium                                      |
-| POST   | /consortia/{consortiumId}/tenants                       | consortia.tenants.item.post           | Inserts a single tenant based on consortiumId                  |
-| PUT    | /consortia/{consortiumId}/tenants/{tenantId}            | consortia.tenants.item.put            | Update a single tenant name based on consortiumId and tenantId |
-| PUT    | /consortia/{consortiumId}                               | consortia.consortium.item.put         | Update consortium name based on consortiumId                   |
+| Method | URL                                                     | Permissions                           | Description                                                     |
+|--------|---------------------------------------------------------|---------------------------------------|-----------------------------------------------------------------|
+| GET    | /consortia/{consortiumId}/tenants                       | consortia.tenants.collection.get      | Gets list of tenants based on consortiumId                      |
+| GET    | /consortia/{consortiumId}/user-tenants                  | consortia.user-tenants.collection.get | Gets list of user-tenants based on consortiumId                 |
+| GET    | /consortia/{consortiumId}/user-tenants/{associationId}  | consortia.user-tenants.item.get       | Gets single user-tenant based on consortiumId and associationId |
+| GET    | /consortia/{consortiumId}                               | consortia.consortium.item.get         | Gets single tenant based on consortiumId                        |
+| GET    | /consortia                                              | consortia.consortium.collection.get   | Gets list of consortia                                          |
+| POST   | /consortia                                              | consortia.consortium.item.post        | Inserts single consortium                                       |
+| POST   | /consortia/{consortiumId}/tenants                       | consortia.tenants.item.post           | Inserts a single tenant based on consortiumId                   |
+| PUT    | /consortia/{consortiumId}/tenants/{tenantId}            | consortia.tenants.item.put            | Update a single tenant name based on consortiumId and tenantId  |
+| PUT    | /consortia/{consortiumId}                               | consortia.consortium.item.put         | Update consortium name based on consortiumId                    |
 
 More detail about mod-consortia
  - API can be found on api-guide.md: [API Docs](/docs/api-guide.md).

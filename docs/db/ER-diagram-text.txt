@@ -7,6 +7,8 @@ Table "tenant" {
   "id" "text" [pk, not null]
   "name" "text" [not null, unique]
   "consortium_id" uuid [not null]
+  "code" "text"
+  "is_central" bool
 }
 
 Table "user_tenant" {
@@ -17,8 +19,13 @@ Table "user_tenant" {
   "is_primary" bool [not null]
     Indexes {
       (user_id)
-      (username, tenant_id) [unique]
+      (user_id, tenant_id) [unique]
     }
 }
 Ref: "consortium"."id" < "tenant"."consortium_id"
 Ref: "user_tenant"."tenant_id" < "tenant"."id"
+
+Table "consortium_configuration" {
+  "id" uuid [pk, not null]
+  "central_tenant_id" string
+}
