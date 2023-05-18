@@ -151,6 +151,7 @@ class UserAffiliationServiceTest {
 
     verify(kafkaService, times(1)).send(any(), anyString(), any());
   }
+
   @Test
   void tenantNotInConsortiaWhenDeletingTest() {
     when(tenantRepository.findById(anyString())).thenReturn(null);

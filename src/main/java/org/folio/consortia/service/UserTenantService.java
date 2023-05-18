@@ -106,4 +106,9 @@ public interface UserTenantService {
    * @param userId id of user in user_tenant table
    */
   void deletePrimaryUserTenantAffiliation(UUID userId);
+
+  /**
+   * Deletes orphaned shadow_users.
+   */
+  void deleteShadowUsers(UUID userId);
 }

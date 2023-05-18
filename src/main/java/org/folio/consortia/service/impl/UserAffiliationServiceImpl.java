@@ -15,6 +15,7 @@ import org.folio.consortia.service.TenantService;
 import org.folio.consortia.service.UserAffiliationService;
 import org.folio.consortia.service.UserTenantService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -38,6 +39,7 @@ public class UserAffiliationServiceImpl implements UserAffiliationService {
 
   @Override
   @SneakyThrows
+  @Transactional
   public void createPrimaryUserAffiliation(String eventPayload) {
     try {
       var userEvent = OBJECT_MAPPER.readValue(eventPayload, UserEvent.class);
@@ -70,6 +72,7 @@ public class UserAffiliationServiceImpl implements UserAffiliationService {
 
   @Override
   @SneakyThrows
+  @Transactional
   public void deletePrimaryUserAffiliation(String eventPayload) {
     try {
       var userEvent = OBJECT_MAPPER.readValue(eventPayload, UserEvent.class);
@@ -82,6 +85,8 @@ public class UserAffiliationServiceImpl implements UserAffiliationService {
       }
 
       userTenantService.deletePrimaryUserTenantAffiliation(UUID.fromString(userEvent.getUserDto().getId()));
+      userTenantService.deleteShadowUsers(UUID.fromString(userEvent.getUserDto().getId()));
+
       PrimaryAffiliationEvent affiliationEvent = createPrimaryAffiliationEvent(userEvent);
       String data = OBJECT_MAPPER.writeValueAsString(affiliationEvent);
 

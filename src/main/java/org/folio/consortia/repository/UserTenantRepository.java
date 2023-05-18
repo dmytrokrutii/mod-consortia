@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -33,4 +34,11 @@ public interface UserTenantRepository extends JpaRepository<UserTenantEntity, UU
   @Modifying
   @Query("DELETE FROM UserTenantEntity ut WHERE ut.userId= ?1 AND ut.isPrimary= true")
   void deleteByUserIdAndIsPrimaryTrue(UUID userId);
+
+  @Query("SELECT ut FROM UserTenantEntity ut WHERE ut.userId NOT IN (SELECT ut.userId FROM UserTenantEntity ut WHERE ut.userId= ?1 AND ut.isPrimary=true) AND ut.userId= ?1")
+  List<UserTenantEntity> getByUserIdAndIsPrimaryFalse(UUID userId);
+
+  @Modifying
+  @Query("DELETE FROM UserTenantEntity ut WHERE ut.userId NOT IN (SELECT ut.userId FROM UserTenantEntity ut WHERE ut.userId= ?1 AND ut.isPrimary=true) AND ut.userId= ?1")
+  void deleteByUserIdAndIsPrimaryFalse(UUID userId);
 }
