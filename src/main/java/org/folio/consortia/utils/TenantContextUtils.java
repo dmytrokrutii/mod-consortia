@@ -34,6 +34,23 @@ public class TenantContextUtils {
     return getContextFromKafkaHeaders(headers, moduleMetadata, centralTenantId);
   }
 
+  /**
+   * This method change tenant(x-okapi-tenant: tenantId) of context to new tenant and return new context with tenantId.
+   *
+   * @param tenantId new tenantId
+   * @param context current context
+   * @param folioModuleMetadata current module metadata
+   * @return new context with new tenantId
+   */
+  public static FolioExecutionContext prepareContextForTenant(String tenantId, FolioModuleMetadata folioModuleMetadata, FolioExecutionContext context) {
+    if (MapUtils.isNotEmpty(context.getOkapiHeaders())) {
+      context.getOkapiHeaders().put(XOkapiHeaders.TENANT, List.of(tenantId));
+      log.info("FOLIO context initialized with tenant {}", tenantId);
+      return new DefaultFolioExecutionContext(folioModuleMetadata, context.getOkapiHeaders());
+    }
+    throw new IllegalStateException("Okapi headers not provided");
+  }
+
   public static void runInFolioContext(FolioExecutionContext context, Runnable runnable) {
     try (var fec = new FolioExecutionContextSetter(context)) {
       runnable.run();
@@ -57,23 +74,6 @@ public class TenantContextUtils {
       ? defaultValue
       : new String((byte[]) headerValue, StandardCharsets.UTF_8);
     return value == null ? Collections.emptyList() : Collections.singletonList(value);
-  }
-
-  /**
-   * This method change tenant(x-okapi-tenant: tenantId) of context to new tenant and return new context with tenantId
-   * @param tenantId new tenantId
-   * @param context current context
-   * @param folioModuleMetadata current module metadata
-   * @return new context with new tenantId
-   */
-  public static FolioExecutionContext createFolioExecutionContextForTenant(String tenantId, FolioExecutionContext context,
-                                                                           FolioModuleMetadata folioModuleMetadata) {
-    if (MapUtils.isNotEmpty(context.getOkapiHeaders())) {
-      context.getOkapiHeaders().put(XOkapiHeaders.TENANT, List.of(tenantId));
-      log.info("FOLIO context initialized with tenant {}", tenantId);
-      return new DefaultFolioExecutionContext(folioModuleMetadata, context.getOkapiHeaders());
-    }
-    throw new IllegalStateException("Tenant is not available in header");
   }
 
   public static String getTenantIdFromHeader(FolioExecutionContext folioExecutionContext) {

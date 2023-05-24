@@ -71,7 +71,11 @@
             "consortia.tenants.item.post"
           ],
           "modulePermissions": [
-            "consortia.consortia-configuration.item.post"
+            "consortia.consortia-configuration.item.post",
+            "perms.users.item.put",
+            "perms.users.item.post",
+            "perms.users.assign.immutable",
+            "perms.users.assign.mutable"
           ]
         },
         {

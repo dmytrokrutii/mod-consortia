@@ -3,10 +3,17 @@ package org.folio.consortia.controller;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.folio.consortia.client.ConsortiaConfigurationClient;
+import org.folio.consortia.client.PermissionsClient;
+import org.folio.consortia.client.UsersClient;
+import org.folio.consortia.domain.dto.PermissionUser;
+import org.folio.consortia.domain.dto.PermissionUserCollection;
+import org.folio.consortia.domain.dto.User;
 import org.folio.consortia.domain.entity.TenantEntity;
 import org.folio.consortia.repository.ConsortiumRepository;
 import org.folio.consortia.repository.TenantRepository;
 import org.folio.consortia.repository.UserTenantRepository;
+import org.folio.consortia.service.UserService;
+import org.folio.consortia.service.UserTenantService;
 import org.folio.consortia.service.impl.ConsortiaConfigurationServiceImpl;
 import org.folio.consortia.support.BaseTest;
 import org.junit.jupiter.api.Test;
@@ -55,6 +62,14 @@ class TenantControllerTest extends BaseTest {
   ConsortiaConfigurationServiceImpl configurationService;
   @MockBean
   ConsortiaConfigurationClient configurationClient;
+  @MockBean
+  PermissionsClient permissionsClient;
+  @MockBean
+  UsersClient usersClient;
+  @MockBean
+  UserTenantService userTenantService;
+  @MockBean
+  UserService userService;
 
   /* Success cases */
   @Test
@@ -80,7 +95,17 @@ class TenantControllerTest extends BaseTest {
   void shouldSaveTenant(String contentString) throws Exception {
     var headers = defaultHeaders();
     TenantEntity centralTenant = createTenantEntity(CENTRAL_TENANT_ID, CENTRAL_TENANT_ID, "AAA", true);
+    PermissionUser permissionUser = new PermissionUser();
+    permissionUser.setPermissions(List.of("test.permission"));
+    PermissionUserCollection permissionUserCollection = new PermissionUserCollection();
+    permissionUserCollection.setPermissionUsers(List.of(permissionUser));
+    User user = new User();
+    user.setId(UUID.randomUUID().toString());
 
+    when(userService.prepareShadowUser(any(), any())).thenReturn(user);
+    when(userService.getById(any())).thenReturn(user);
+    when(usersClient.getUsersByUserId(any())).thenReturn(new User());
+    when(permissionsClient.get(any())).thenReturn(permissionUserCollection);
     when(consortiumRepository.existsById(any())).thenReturn(true);
     when(tenantRepository.existsById(any())).thenReturn(false);
     when(tenantRepository.save(any(TenantEntity.class))).thenReturn(new TenantEntity());
@@ -88,7 +113,7 @@ class TenantControllerTest extends BaseTest {
     doNothing().when(configurationClient).saveConfiguration(createConsortiaConfiguration(CENTRAL_TENANT_ID));
 
     this.mockMvc.perform(
-        post("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/tenants")
+        post("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/tenants?adminUserId=111841e3-e6fb-4191-9fd8-5674a5107c34")
           .headers(headers).content(contentString))
       .andExpect(status().isCreated());
   }
@@ -142,11 +167,16 @@ class TenantControllerTest extends BaseTest {
   void shouldGet4xxErrorWhileSaving(String contentString) throws Exception {
     var headers = defaultHeaders();
     TenantEntity centralTenant = createTenantEntity(CENTRAL_TENANT_ID, CENTRAL_TENANT_ID, "TTA", true);
+    PermissionUser permissionUser = new PermissionUser();
+    PermissionUserCollection permissionUserCollection = new PermissionUserCollection();
+    permissionUserCollection.setPermissionUsers(List.of(permissionUser));
 
+    when(usersClient.getUsersByUserId(any())).thenReturn(new User());
+    when(permissionsClient.get(any())).thenReturn(permissionUserCollection);
     when(tenantRepository.findCentralTenant()).thenReturn(Optional.of(centralTenant));
     doNothing().when(configurationClient).saveConfiguration(createConsortiaConfiguration(CENTRAL_TENANT_ID));
 
-    this.mockMvc.perform(post("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/tenants")
+    this.mockMvc.perform(post("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/tenants?adminUserId=111841e3-e6fb-4191-9fd8-5674a5107c34")
         .headers(headers).content(contentString))
       .andExpectAll(
         status().is4xxClientError(),
@@ -160,7 +190,7 @@ class TenantControllerTest extends BaseTest {
   void shouldThrowMethodArgumentNotValidationException(String contentString) throws Exception {
     var headers = defaultHeaders();
 
-    mockMvc.perform(post("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/tenants")
+    mockMvc.perform(post("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/tenants?adminUserId=111841e3-e6fb-4191-9fd8-5674a5107c34")
         .headers(headers)
         .contentType(MediaType.APPLICATION_JSON)
         .content(contentString))
@@ -177,6 +207,12 @@ class TenantControllerTest extends BaseTest {
 
     // Given a request with invalid input
     UUID consortiumId = UUID.fromString(CONSORTIUM_ID);
+    PermissionUser permissionUser = new PermissionUser();
+    PermissionUserCollection permissionUserCollection = new PermissionUserCollection();
+    permissionUserCollection.setPermissionUsers(List.of(permissionUser));
+
+    when(usersClient.getUsersByUserId(any())).thenReturn(new User());
+    when(permissionsClient.get(any())).thenReturn(permissionUserCollection);
     when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
     when(tenantRepository.existsById(any(String.class))).thenReturn(false);
     when(tenantRepository.findCentralTenant()).thenReturn(Optional.of(centralTenant));
@@ -190,7 +226,7 @@ class TenantControllerTest extends BaseTest {
       .thenThrow(new ConstraintViolationException("Invalid input", constraintViolations));
 
     // When performing a request to the endpoint
-    mockMvc.perform(post("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/tenants")
+    mockMvc.perform(post("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/tenants?adminUserId=111841e3-e6fb-4191-9fd8-5674a5107c34")
         .headers(headers)
         .contentType(MediaType.APPLICATION_JSON)
         .content(contentString))
@@ -209,6 +245,12 @@ class TenantControllerTest extends BaseTest {
     var headers = defaultHeaders();
     UUID consortiumId = UUID.fromString(CONSORTIUM_ID);
     TenantEntity centralTenant = createTenantEntity(CENTRAL_TENANT_ID, CENTRAL_TENANT_ID, "TTA", true);
+    PermissionUser permissionUser = new PermissionUser();
+    PermissionUserCollection permissionUserCollection = new PermissionUserCollection();
+    permissionUserCollection.setPermissionUsers(List.of(permissionUser));
+
+    when(usersClient.getUsersByUserId(any())).thenReturn(new User());
+    when(permissionsClient.get(any())).thenReturn(permissionUserCollection);
 
     when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
     when(tenantRepository.existsById(any(String.class))).thenReturn(true);
@@ -216,7 +258,7 @@ class TenantControllerTest extends BaseTest {
     doNothing().when(configurationClient).saveConfiguration(createConsortiaConfiguration(CENTRAL_TENANT_ID));
 
     this.mockMvc.perform(
-        post("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/tenants")
+        post("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/tenants?adminUserId=111841e3-e6fb-4191-9fd8-5674a5107c34")
           .headers(headers).content(contentString))
       .andExpectAll(
         status().is4xxClientError(),

@@ -1,31 +1,23 @@
 package org.folio.consortia.service.impl;
 
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.MapUtils;
-import org.folio.consortia.client.PermissionsClient;
-import org.folio.consortia.client.UsersClient;
-import org.folio.consortia.domain.dto.PermissionUser;
-import org.folio.consortia.domain.dto.Personal;
 import org.folio.consortia.domain.dto.User;
 import org.folio.consortia.domain.dto.UserEvent;
 import org.folio.consortia.domain.dto.UserTenant;
 import org.folio.consortia.domain.dto.UserTenantCollection;
 import org.folio.consortia.domain.entity.TenantEntity;
 import org.folio.consortia.domain.entity.UserTenantEntity;
-import org.folio.consortia.exception.ConsortiumClientException;
 import org.folio.consortia.exception.PrimaryAffiliationException;
 import org.folio.consortia.exception.ResourceNotFoundException;
 import org.folio.consortia.repository.UserTenantRepository;
 import org.folio.consortia.service.ConsortiumService;
+import org.folio.consortia.service.PermissionUserService;
+import org.folio.consortia.service.UserService;
 import org.folio.consortia.service.UserTenantService;
-import org.folio.consortia.utils.HelperUtils;
-import org.folio.spring.DefaultFolioExecutionContext;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.FolioModuleMetadata;
-import org.folio.spring.integration.XOkapiHeaders;
 import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.data.domain.Page;
@@ -33,12 +25,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.folio.consortia.utils.TenantContextUtils.prepareContextForTenant;
 
 /**
  * Implementation of {@link UserTenantService}.
@@ -57,16 +49,13 @@ public class UserTenantServiceImpl implements UserTenantService {
   private static final String TENANT_ID = "tenantId";
   private static final Boolean IS_PRIMARY_TRUE = true;
   private static final Boolean IS_PRIMARY_FALSE = false;
-  private static final Integer RANDOM_STRING_COUNT = 5;
-  private static final String PATRON_GROUP = null;
-
   private final UserTenantRepository userTenantRepository;
   private final FolioExecutionContext folioExecutionContext;
   private final ConversionService converter;
   private final ConsortiumService consortiumService;
-  private final UsersClient usersClient;
-  private final PermissionsClient permissionsClient;
+  private final UserService userService;
   private final FolioModuleMetadata folioModuleMetadata;
+  private final PermissionUserService permissionUserService;
 
   @Override
   public UserTenantCollection get(UUID consortiumId, Integer offset, Integer limit) {
@@ -128,10 +117,10 @@ public class UserTenantServiceImpl implements UserTenantService {
       throw new ResourceNotFoundException(String.format(NOT_FOUND_PRIMARY_AFFILIATION_MSG, USER_ID, userTenantDto.getUserId()));
     }
 
-    User shadowUser = prepareShadowUser(userTenantDto.getUserId(), userTenant.get(), currentTenantContext);
+    User shadowUser = userService.prepareShadowUser(userTenantDto.getUserId(), userTenant.get().getTenant().getId());
     createOrUpdateShadowUser(userTenantDto.getUserId(), shadowUser, userTenantDto, currentTenantContext);
 
-    try (var context = new FolioExecutionContextSetter(prepareContextForTenant(currentTenantId, currentTenantContext))) {
+    try (var context = new FolioExecutionContextSetter(prepareContextForTenant(currentTenantId, folioModuleMetadata, currentTenantContext))) {
       UserTenantEntity userTenantEntity = toEntity(userTenantDto, consortiumId, shadowUser);
       userTenantRepository.save(userTenantEntity);
       log.info("User affiliation added and user created or activated for user id: {} in the tenant: {}",
@@ -174,8 +163,8 @@ public class UserTenantServiceImpl implements UserTenantService {
 
     userTenantRepository.deleteByUserIdAndTenantId(userId, tenantId);
 
-    try (var context = new FolioExecutionContextSetter(prepareContextForTenant(tenantId, currentTenantContext))) {
-      User user = getUser(userId);
+    try (var context = new FolioExecutionContextSetter(prepareContextForTenant(tenantId, folioModuleMetadata, currentTenantContext))) {
+      User user = userService.getById(userId);
       deactivateUser(user);
       log.info("User affiliation deleted and user deactivated for user id: {} in the tenant: {}", userId.toString(), tenantId);
     }
@@ -200,38 +189,10 @@ public class UserTenantServiceImpl implements UserTenantService {
     return new UserTenant();
   }
 
-  private User prepareShadowUser(UUID userId, UserTenantEntity userTenantEntity, FolioExecutionContext folioExecutionContext) {
-    try (var context = new FolioExecutionContextSetter(prepareContextForTenant(userTenantEntity.getTenant().getId(), folioExecutionContext))) {
-      User user = new User();
-      User userOptional = getUser(userId);
-
-      if (Objects.nonNull(userOptional.getId())) {
-        user.setId(userId.toString());
-        user.setPatronGroup(PATRON_GROUP);
-        user.setUsername(userOptional.getUsername() + HelperUtils.randomString(RANDOM_STRING_COUNT));
-        var userPersonal = userOptional.getPersonal();
-        if (Objects.nonNull(userPersonal)) {
-          Personal personal = new Personal();
-          personal.setLastName(userPersonal.getLastName());
-          personal.setFirstName(userPersonal.getFirstName());
-          personal.setEmail(userPersonal.getEmail());
-          personal.setPreferredContactTypeId(userPersonal.getPreferredContactTypeId());
-          user.setPersonal(personal);
-        }
-        user.setPatronGroup(userOptional.getPatronGroup());
-        user.setActive(true);
-      } else {
-        log.warn("Could not find real user with id: {} in his home tenant: {}", userId.toString(), userTenantEntity.getTenant().getId());
-        throw new ResourceNotFoundException(USER_ID, userId.toString());
-      }
-      return user;
-    }
-  }
-
   private void createOrUpdateShadowUser(UUID userId, User shadowUser, UserTenant userTenantDto, FolioExecutionContext folioExecutionContext) {
     log.info("Going to create or update shadow user with id: {} in the desired tenant: {}", userId.toString(), userTenantDto.getTenantId());
-    try (var context = new FolioExecutionContextSetter(prepareContextForTenant(userTenantDto.getTenantId(), folioExecutionContext))) {
-      User user = getUser(userId);
+    try (var context = new FolioExecutionContextSetter(prepareContextForTenant(userTenantDto.getTenantId(), folioModuleMetadata, folioExecutionContext))) {
+      User user = userService.getById(userId);
       if (Objects.nonNull(user.getActive())) {
         activateUser(user);
       } else {
@@ -240,31 +201,11 @@ public class UserTenantServiceImpl implements UserTenantService {
     }
   }
 
-  /**
-   * Gets user by id.
-   * <p>
-   * This method will be called to get User from MOD_USERS module based on the tenant schema present in the folioContext.
-   *
-   * @param userId user id.
-   */
-  private User getUser(UUID userId) {
-    try {
-      log.info("Getting user by userId {}.", userId);
-      return usersClient.getUsersByUserId(String.valueOf(userId));
-    } catch (FeignException.NotFound e) {
-      log.info("User with userId {} does not exist in schema, going to use new one", userId);
-      return new User();
-    } catch (FeignException.Forbidden e) {
-      throw new ConsortiumClientException(e);
-    } catch (FeignException e) {
-      throw new IllegalStateException(e);
-    }
-  }
-
   private void createActiveUserWithPermissions(User user) {
-    createPermissionUser(user.getId());
+    log.info("Creating permissionUser for userId {} with empty set of permissions", user.getId());
+    permissionUserService.createWithEmptyPermissions(user.getId());
     log.info("Creating user with id {}.", user.getId());
-    usersClient.saveUser(user);
+    userService.createUser(user);
   }
 
   private void activateUser(User user) {
@@ -273,7 +214,7 @@ public class UserTenantServiceImpl implements UserTenantService {
     } else {
       user.setActive(true);
       log.info("Updating User with id '{}' with active 'true'. ", user.getId());
-      usersClient.updateUser(user.getId(), user);
+      userService.updateUser(user);
     }
   }
 
@@ -283,28 +224,19 @@ public class UserTenantServiceImpl implements UserTenantService {
     } else {
       user.setActive(false);
       log.info("Updating User with id '{}' with active 'false'. ", user.getId());
-      usersClient.updateUser(user.getId(), user);
+      userService.updateUser(user);
     }
-  }
-
-  private FolioExecutionContext prepareContextForTenant(String tenantId, FolioExecutionContext context) {
-    if (MapUtils.isNotEmpty(context.getOkapiHeaders())) {
-      context.getOkapiHeaders().put(XOkapiHeaders.TENANT, List.of(tenantId));
-      log.info("FOLIO context initialized with tenant {}", tenantId);
-    }
-    return new DefaultFolioExecutionContext(folioModuleMetadata, context.getOkapiHeaders());
   }
 
   public void deleteShadowUsers(UUID userId) {
-    FolioExecutionContext currentTenantContext = (FolioExecutionContext) folioExecutionContext.getInstance();
     List<UserTenantEntity> userTenantEntities = userTenantRepository.getByUserIdAndIsPrimaryFalse(userId);
     if (CollectionUtils.isNotEmpty(userTenantEntities)) {
       List<String> tenantIds = userTenantEntities.stream().map(userTenantEntity -> userTenantEntity.getTenant().getId()).toList();
 
       log.info("Removing orphaned shadow users from all tenants exist in consortia for the user: {}", userId);
       tenantIds.forEach(tenantId -> {
-        try (var context = new FolioExecutionContextSetter(prepareContextForTenant(tenantId, currentTenantContext))) {
-          usersClient.deleteUser(userId.toString());
+        try (var context = new FolioExecutionContextSetter(prepareContextForTenant(tenantId, folioModuleMetadata, folioExecutionContext))) {
+          userService.deleteById(userId.toString());
           log.info("Removed shadow user: {} from tenant : {}", userId, tenantId);
         }
       });
@@ -331,22 +263,5 @@ public class UserTenantServiceImpl implements UserTenantService {
     entity.setTenant(tenant);
     entity.setIsPrimary(IS_PRIMARY_FALSE);
     return entity;
-  }
-
-  private PermissionUser createPermissionUser(String userId) {
-    List<String> emptyPermissionList = new ArrayList<>();
-    Optional<PermissionUser> permissionUserOptional = permissionsClient.get("userId==" + userId)
-      .getPermissionUsers()
-      .stream()
-      .findFirst();
-    if (permissionUserOptional.isPresent()) {
-      // this case possible because for initial admin users setup we are creating user and permissions separately
-      log.info("PermissionUser already exist {}.", permissionUserOptional.get());
-      return permissionUserOptional.get();
-    } else {
-      var permissionUser = PermissionUser.of(UUID.randomUUID().toString(), userId, emptyPermissionList);
-      log.info("Creating permissionUser {}.", permissionUser);
-      return permissionsClient.create(permissionUser);
-    }
   }
 }
