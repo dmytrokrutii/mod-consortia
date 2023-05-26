@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.apache.logging.log4j.core.config.plugins.validation.constraints.NotBlank;
+import org.folio.consortia.domain.entity.base.AuditableEntity;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -21,7 +22,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Entity
 @Table(name = "tenant")
-public class TenantEntity {
+public class TenantEntity extends AuditableEntity {
   @Id
   private String id;
 

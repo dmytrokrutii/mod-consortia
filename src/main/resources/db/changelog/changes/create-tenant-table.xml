@@ -35,4 +35,14 @@
     </addColumn>
   </changeSet>
 
+  <changeSet id="MODCON-23@add-metadata-fields" author="singhAdesh">
+    <addColumn tableName="tenant">
+      <column name="created_by" type="uuid"/>
+      <column name="created_date" type="timestamp without time zone" defaultValueComputed="now()">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_by" type="uuid"/>
+      <column name="updated_date" type="timestamp without time zone"/>
+    </addColumn>
+  </changeSet>
 </databaseChangeLog>

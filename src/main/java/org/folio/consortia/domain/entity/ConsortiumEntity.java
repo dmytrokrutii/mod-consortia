@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.folio.consortia.domain.entity.base.AuditableEntity;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -17,7 +18,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Entity
 @Table(name = "consortium")
-public class ConsortiumEntity {
+public class ConsortiumEntity extends AuditableEntity {
   @Id
   private UUID id;
   private String name;

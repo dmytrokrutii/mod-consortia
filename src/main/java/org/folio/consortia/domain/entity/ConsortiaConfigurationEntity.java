@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.folio.consortia.domain.entity.base.AuditableEntity;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -19,7 +20,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Entity
 @Table(name = "consortia_configuration")
-public class ConsortiaConfigurationEntity {
+public class ConsortiaConfigurationEntity extends AuditableEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
