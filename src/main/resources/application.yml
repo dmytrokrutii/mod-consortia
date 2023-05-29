@@ -33,6 +33,8 @@ spring:
         enabled: true
 folio:
   environment: ${ENV:folio}
+  okapi:
+    url: ${OKAPI_URL:http://okapi:9130}
   kafka:
     numberOfPartitions: ${NUMBER_OF_PARTITIONS:1}
     replicationFactor: ${REPLICATION_FACTOR:1}
@@ -48,6 +50,9 @@ folio:
   tenant:
     validation:
       enabled: true
+  system:
+    username: consortia-system-user
+    password: ${SYSTEM_USER_PASSWORD:consortia-system-user}
 feign:
   client:
     config:

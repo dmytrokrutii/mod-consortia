@@ -19,7 +19,7 @@ import static org.mockito.ArgumentMatchers.any;
 
 @SpringBootTest
 @EnableAutoConfiguration(exclude = BatchAutoConfiguration.class)
-public class PermissionServiceTest {
+class PermissionServiceTest {
   private static final String PERMISSIONS_FILE_PATH = "permissions/test-user-permissions.csv";
   private static final String EMPTY_PERMISSIONS_FILE_PATH = "permissions/test-user--empty-permissions.csv";
   @InjectMocks
@@ -31,12 +31,12 @@ public class PermissionServiceTest {
   void shouldThrowErrorForEmptyPermissionFileWhileAdding() {
     PermissionUser permissionUser = PermissionUser.of(UUID.randomUUID().toString(), UUID.randomUUID().toString(), List.of());
 
-    Assertions.assertThrows(IllegalStateException.class, () -> permissionUserService.addPermissions(permissionUser, EMPTY_PERMISSIONS_FILE_PATH));
+    Assertions.assertThrows(java.lang.IllegalStateException.class, () -> permissionUserService.addPermissions(permissionUser, EMPTY_PERMISSIONS_FILE_PATH));
   }
 
   @Test
   void shouldThrowErrorForEmptyPermissionFileWhileCreating() {
-    Assertions.assertThrows(IllegalStateException.class, () -> permissionUserService.createWithPermissionsFromFile(UUID.randomUUID().toString(), EMPTY_PERMISSIONS_FILE_PATH));
+    Assertions.assertThrows(java.lang.IllegalStateException.class, () -> permissionUserService.createWithPermissionsFromFile(UUID.randomUUID().toString(), EMPTY_PERMISSIONS_FILE_PATH));
   }
 
   @Test

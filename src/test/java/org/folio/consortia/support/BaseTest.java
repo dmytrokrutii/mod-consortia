@@ -20,6 +20,8 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.http.HttpHeaders;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.support.TestPropertySourceUtils;
 import org.springframework.test.util.TestSocketUtils;
 import org.springframework.test.web.servlet.MockMvc;
@@ -102,5 +104,10 @@ public abstract class BaseTest {
         "spring.datasource.username=" + postgreDBContainer.getUsername(),
         "spring.datasource.password=" + postgreDBContainer.getPassword());
     }
+  }
+
+  @DynamicPropertySource
+  static void setFolioOkapiUrl(DynamicPropertyRegistry registry) {
+    registry.add("folio.okapi.url", () -> "http://localhost:" + WIRE_MOCK_PORT);
   }
 }

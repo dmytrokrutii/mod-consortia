@@ -2,6 +2,7 @@ package org.folio.consortia.service;
 
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.BooleanUtils;
+import org.folio.consortia.config.FolioExecutionContextHelper;
 import org.folio.consortia.config.kafka.KafkaService;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.liquibase.FolioSpringLiquibase;
@@ -21,18 +22,21 @@ public class FolioTenantService extends TenantService {
   private static final String EXIST_SQL = "SELECT EXISTS(SELECT 1 FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?)";
 
   private final KafkaService kafkaService;
+  private final FolioExecutionContextHelper contextHelper;
 
   public FolioTenantService(JdbcTemplate jdbcTemplate,
                             KafkaService kafkaService,
                             FolioExecutionContext context,
-                            FolioSpringLiquibase folioSpringLiquibase) {
+                            FolioSpringLiquibase folioSpringLiquibase, FolioExecutionContextHelper contextHelper) {
     super(jdbcTemplate, context, folioSpringLiquibase);
     this.kafkaService = kafkaService;
+    this.contextHelper = contextHelper;
   }
 
   @Override
   protected void afterTenantUpdate(TenantAttributes tenantAttributes) {
     try {
+      contextHelper.registerTenant();
       kafkaService.createKafkaTopics();
       kafkaService.restartEventListeners();
     } catch (Exception e) {

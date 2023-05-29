@@ -66,7 +66,7 @@ class UserServiceTest {
     okapiHeaders.put(XOkapiHeaders.TENANT, List.of("diku"));
     when(folioExecutionContext.getOkapiHeaders()).thenReturn(okapiHeaders);
     Mockito.when(usersClient.getUsersByUserId(any())).thenReturn(new User());
-    Assertions.assertThrows(ResourceNotFoundException.class, () -> userService.prepareShadowUser(UUID.randomUUID(), ""));
+    Assertions.assertThrows(org.folio.consortia.exception.ResourceNotFoundException.class, () -> userService.prepareShadowUser(UUID.randomUUID(), ""));
   }
 
   @Test

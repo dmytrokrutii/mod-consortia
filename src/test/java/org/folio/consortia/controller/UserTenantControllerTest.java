@@ -21,6 +21,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -39,6 +40,7 @@ import static org.folio.consortia.utils.EntityUtils.createUserTenantEntity;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -62,9 +64,8 @@ class UserTenantControllerTest extends BaseTest {
   private ConsortiumRepository consortiumRepository;
   @MockBean
   private UserTenantRepository userTenantRepository;
-  @MockBean
+  @SpyBean
   private UsersClient usersClient;
-
 
   @Test
   void shouldGetUserTenantsByUserId() {
@@ -158,8 +159,8 @@ class UserTenantControllerTest extends BaseTest {
     when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
     when(userTenantRepository.findByUserIdAndTenantId(any(), any())).thenReturn(Optional.of(userTenantEntity));
     doNothing().when(userTenantRepository).deleteByUserIdAndTenantId(any(), any());
-    when(usersClient.getUsersByUserId(any())).thenThrow(
-      FeignException.Forbidden.errorStatus("getByUserId", createForbiddenResponse(PERMISSION_EXCEPTION_MSG)));
+    doThrow(FeignException.Forbidden.errorStatus("getByUserId", createForbiddenResponse(PERMISSION_EXCEPTION_MSG)))
+      .when(usersClient).getUsersByUserId(any());
 
     this.mockMvc.perform(
         delete("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/user-tenants?userId=7698e46-c3e3-11ed-afa1-0242ac120001&tenantId=diku")
@@ -178,8 +179,8 @@ class UserTenantControllerTest extends BaseTest {
     when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
     when(userTenantRepository.findByUserIdAndTenantId(any(), any())).thenReturn(Optional.of(userTenantEntity));
     doNothing().when(userTenantRepository).deleteByUserIdAndTenantId(any(), any());
-    when(usersClient.getUsersByUserId(any())).thenThrow(
-      FeignException.errorStatus("getByUserId", createUnknownResponse("network error")));
+    doThrow(FeignException.errorStatus("getByUserId", createUnknownResponse("network error")))
+      .when(usersClient).getUsersByUserId(any());
 
     this.mockMvc.perform(
         delete("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/user-tenants?userId=7698e46-c3e3-11ed-afa1-0242ac120001&tenantId=diku")

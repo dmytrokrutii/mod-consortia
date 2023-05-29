@@ -1,10 +1,35 @@
 package org.folio.consortia.controller;
 
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.ConstraintViolationException;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static org.folio.consortia.utils.EntityUtils.createConsortiaConfiguration;
+import static org.folio.consortia.utils.EntityUtils.createTenantEntity;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+
 import org.folio.consortia.client.ConsortiaConfigurationClient;
 import org.folio.consortia.client.PermissionsClient;
 import org.folio.consortia.client.UsersClient;
+import org.folio.consortia.config.FolioExecutionContextHelper;
 import org.folio.consortia.domain.dto.PermissionUser;
 import org.folio.consortia.domain.dto.PermissionUserCollection;
 import org.folio.consortia.domain.dto.User;
@@ -16,42 +41,31 @@ import org.folio.consortia.service.UserService;
 import org.folio.consortia.service.UserTenantService;
 import org.folio.consortia.service.impl.ConsortiaConfigurationServiceImpl;
 import org.folio.consortia.support.BaseTest;
+import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.FolioModuleMetadata;
+import org.folio.spring.integration.XOkapiHeaders;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.Mock;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import com.github.tomakehurst.wiremock.client.WireMock;
 
-import static org.folio.consortia.utils.EntityUtils.createConsortiaConfiguration;
-import static org.folio.consortia.utils.EntityUtils.createTenantEntity;
-import static org.hamcrest.Matchers.is;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 
 @EntityScan(basePackageClasses = TenantEntity.class)
 class TenantControllerTest extends BaseTest {
   private static final String TENANT_REQUEST_BODY = "{\"id\":\"diku1234\",\"code\":\"TST\",\"name\":\"diku_tenant_name1234\", \"isCentral\":false}";
   private static final String CONSORTIUM_ID = "7698e46-c3e3-11ed-afa1-0242ac120002";
   private static final String CENTRAL_TENANT_ID = "diku";
+
   @MockBean
   ConsortiumRepository consortiumRepository;
   @MockBean
@@ -63,13 +77,19 @@ class TenantControllerTest extends BaseTest {
   @MockBean
   ConsortiaConfigurationClient configurationClient;
   @MockBean
-  PermissionsClient permissionsClient;
-  @MockBean
-  UsersClient usersClient;
-  @MockBean
   UserTenantService userTenantService;
   @MockBean
   UserService userService;
+  @MockBean
+  FolioExecutionContextHelper contextHelper;
+  @Mock
+  FolioModuleMetadata folioModuleMetadata;
+  @Mock
+  FolioExecutionContext folioExecutionContext = new FolioExecutionContext() {};
+  @MockBean
+  PermissionsClient permissionsClient;
+  @SpyBean
+  UsersClient usersClient;
 
   /* Success cases */
   @Test
@@ -102,10 +122,17 @@ class TenantControllerTest extends BaseTest {
     User user = new User();
     user.setId(UUID.randomUUID().toString());
 
+    wireMockServer.stubFor(
+      WireMock.post(urlEqualTo("https://perms/users//permissions?indexField=userId"))
+        .willReturn(aResponse()
+          .withHeader(XOkapiHeaders.TOKEN, TOKEN)));
+
     when(userService.prepareShadowUser(any(), any())).thenReturn(user);
     when(userService.getById(any())).thenReturn(user);
-    when(usersClient.getUsersByUserId(any())).thenReturn(new User());
-    when(permissionsClient.get(any())).thenReturn(permissionUserCollection);
+    doReturn(folioExecutionContext).when(contextHelper).getSystemUserFolioExecutionContext(anyString());
+    doReturn(new User()).when(usersClient).getUsersByUserId(any());
+    doReturn(permissionUserCollection).when(permissionsClient).get(anyString());
+    doNothing().when(permissionsClient).addPermission(anyString(), any());
     when(consortiumRepository.existsById(any())).thenReturn(true);
     when(tenantRepository.existsById(any())).thenReturn(false);
     when(tenantRepository.save(any(TenantEntity.class))).thenReturn(new TenantEntity());
@@ -171,8 +198,8 @@ class TenantControllerTest extends BaseTest {
     PermissionUserCollection permissionUserCollection = new PermissionUserCollection();
     permissionUserCollection.setPermissionUsers(List.of(permissionUser));
 
-    when(usersClient.getUsersByUserId(any())).thenReturn(new User());
-    when(permissionsClient.get(any())).thenReturn(permissionUserCollection);
+    doReturn(new User()).when(usersClient).getUsersByUserId(any());
+    doReturn(permissionUserCollection).when(permissionsClient).get(any());
     when(tenantRepository.findCentralTenant()).thenReturn(Optional.of(centralTenant));
     doNothing().when(configurationClient).saveConfiguration(createConsortiaConfiguration(CENTRAL_TENANT_ID));
 
@@ -211,8 +238,8 @@ class TenantControllerTest extends BaseTest {
     PermissionUserCollection permissionUserCollection = new PermissionUserCollection();
     permissionUserCollection.setPermissionUsers(List.of(permissionUser));
 
-    when(usersClient.getUsersByUserId(any())).thenReturn(new User());
-    when(permissionsClient.get(any())).thenReturn(permissionUserCollection);
+    doReturn(new User()).when(usersClient).getUsersByUserId(any());
+    doReturn(permissionUserCollection).when(permissionsClient).get(any());
     when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
     when(tenantRepository.existsById(any(String.class))).thenReturn(false);
     when(tenantRepository.findCentralTenant()).thenReturn(Optional.of(centralTenant));
@@ -249,9 +276,8 @@ class TenantControllerTest extends BaseTest {
     PermissionUserCollection permissionUserCollection = new PermissionUserCollection();
     permissionUserCollection.setPermissionUsers(List.of(permissionUser));
 
-    when(usersClient.getUsersByUserId(any())).thenReturn(new User());
-    when(permissionsClient.get(any())).thenReturn(permissionUserCollection);
-
+    doReturn(new User()).when(usersClient).getUsersByUserId(any());
+    doReturn(permissionUserCollection).when(permissionsClient).get(any());
     when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
     when(tenantRepository.existsById(any(String.class))).thenReturn(true);
     when(tenantRepository.findCentralTenant()).thenReturn(Optional.of(centralTenant));

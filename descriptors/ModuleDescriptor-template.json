@@ -3,6 +3,14 @@
   "name": "Consortia integration business logic module",
   "requires": [
     {
+      "id": "login",
+      "version": "7.0"
+    },
+    {
+      "id": "authtoken",
+      "version": "2.0"
+    },
+    {
       "id": "users",
       "version": "16.0"
     },
@@ -183,7 +191,16 @@
       "handlers": [
         {
           "methods": ["POST"],
-          "pathPattern": "/_/tenant"
+          "pathPattern": "/_/tenant",
+          "modulePermissions": [
+            "users.collection.get",
+            "users.item.post",
+            "users.item.put",
+            "login.item.post",
+            "perms.users.get",
+            "perms.users.item.post",
+            "perms.users.assign.immutable"
+          ]
         },
         {
           "methods": ["GET", "DELETE"],
