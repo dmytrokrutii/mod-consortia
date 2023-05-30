@@ -28,6 +28,7 @@ import java.util.UUID;
 
 import org.folio.consortia.client.ConsortiaConfigurationClient;
 import org.folio.consortia.client.PermissionsClient;
+import org.folio.consortia.client.UserTenantsClient;
 import org.folio.consortia.client.UsersClient;
 import org.folio.consortia.config.FolioExecutionContextHelper;
 import org.folio.consortia.domain.dto.PermissionUser;
@@ -88,6 +89,8 @@ class TenantControllerTest extends BaseTest {
   FolioExecutionContext folioExecutionContext = new FolioExecutionContext() {};
   @MockBean
   PermissionsClient permissionsClient;
+  @MockBean
+  UserTenantsClient userTenantsClient;
   @SpyBean
   UsersClient usersClient;
 
@@ -127,6 +130,7 @@ class TenantControllerTest extends BaseTest {
         .willReturn(aResponse()
           .withHeader(XOkapiHeaders.TOKEN, TOKEN)));
 
+    doNothing().when(userTenantsClient).postUserTenant(any());
     when(userService.prepareShadowUser(any(), any())).thenReturn(user);
     when(userService.getById(any())).thenReturn(user);
     doReturn(folioExecutionContext).when(contextHelper).getSystemUserFolioExecutionContext(anyString());

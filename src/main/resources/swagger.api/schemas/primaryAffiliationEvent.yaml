@@ -8,7 +8,7 @@ properties:
   userId:
     description: "UUID of the user"
     $ref: "uuid.yaml"
-  userName:
+  username:
     description: "The user's username, for delete event it will be empty"
     type: string
   tenantId:

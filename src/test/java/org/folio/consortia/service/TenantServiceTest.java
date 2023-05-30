@@ -2,6 +2,7 @@ package org.folio.consortia.service;
 
 import org.folio.consortia.client.ConsortiaConfigurationClient;
 import org.folio.consortia.client.PermissionsClient;
+import org.folio.consortia.client.UserTenantsClient;
 import org.folio.consortia.config.FolioExecutionContextHelper;
 import org.folio.consortia.domain.dto.PermissionUser;
 import org.folio.consortia.domain.dto.PermissionUserCollection;
@@ -75,6 +76,8 @@ class TenantServiceTest {
   @Mock
   private PermissionsClient permissionsClient;
   @Mock
+  private UserTenantsClient userTenantsClient;
+  @Mock
   private UserTenantServiceImpl userTenantService;
   @Mock
   private PermissionUserService permissionUserService;
@@ -126,12 +129,15 @@ class TenantServiceTest {
     when(tenantRepository.findCentralTenant()).thenReturn(Optional.of(centralTenant));
     when(tenantRepository.save(any(TenantEntity.class))).thenReturn(tenantEntity1);
     doNothing().when(configurationClient).saveConfiguration(createConsortiaConfiguration(CENTRAL_TENANT_ID));
+    doNothing().when(userTenantsClient).postUserTenant(any());
     when(conversionService.convert(tenantEntity1, Tenant.class)).thenReturn(tenant);
     doReturn(folioExecutionContext).when(contextHelper).getSystemUserFolioExecutionContext(anyString());
     when(folioExecutionContext.getTenantId()).thenReturn("diku");
     when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
 
     var tenant1 = tenantService.save(consortiumId, UUID.randomUUID(), tenant);
+    Mockito.verify(userTenantsClient, Mockito.times(1)).postUserTenant(any());
+    Mockito.verify(configurationClient, Mockito.times(1)).saveConfiguration(any());
     Assertions.assertEquals(tenant, tenant1);
   }
 
@@ -157,12 +163,15 @@ class TenantServiceTest {
     when(tenantRepository.findCentralTenant()).thenReturn(Optional.of(centralTenant));
     when(tenantRepository.save(any(TenantEntity.class))).thenReturn(tenantEntity1);
     doNothing().when(configurationClient).saveConfiguration(createConsortiaConfiguration(CENTRAL_TENANT_ID));
+    doNothing().when(userTenantsClient).postUserTenant(any());
     when(conversionService.convert(tenantEntity1, Tenant.class)).thenReturn(tenant);
     doReturn(folioExecutionContext).when(contextHelper).getSystemUserFolioExecutionContext(anyString());
     when(folioExecutionContext.getTenantId()).thenReturn("diku");
     when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
 
     var tenant1 = tenantService.save(consortiumId, UUID.randomUUID(), tenant);
+    Mockito.verify(userTenantsClient, Mockito.times(1)).postUserTenant(any());
+    Mockito.verify(configurationClient, Mockito.times(1)).saveConfiguration(any());
     Assertions.assertEquals(tenant, tenant1);
   }
 

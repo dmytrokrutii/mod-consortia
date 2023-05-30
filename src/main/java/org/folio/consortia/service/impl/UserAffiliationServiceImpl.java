@@ -102,7 +102,7 @@ public class UserAffiliationServiceImpl implements UserAffiliationService {
     event.setId(userEvent.getId());
     event.setUserId(UUID.fromString(userEvent.getUserDto().getId()));
     if (StringUtils.isNotBlank(userEvent.getUserDto().getUsername())) { // for delete event username will be empty
-      event.setUserName(userEvent.getUserDto().getUsername());
+      event.setUsername(userEvent.getUserDto().getUsername());
     }
     event.setTenantId(userEvent.getTenantId());
     return event;
