@@ -48,7 +48,7 @@ public class TenantServiceImpl implements TenantService {
   private static final String TENANTS_IDS_NOT_MATCHED_ERROR_MSG = "Request body tenantId and path param tenantId should be identical";
   private static final String TENANT_HAS_ACTIVE_USER_ASSOCIATIONS_ERROR_MSG = "Cannot delete tenant with ID {tenantId} because it has an association with a user. "
       + "Please remove the user association before attempting to delete the tenant.";
-  private static final String DUMMY_USERNAME = "*-dummy_user-*";
+  private static final String DUMMY_USERNAME = "dummy_user";
   private final TenantRepository tenantRepository;
   private final UserTenantRepository userTenantRepository;
   private final ConversionService converter;
@@ -88,31 +88,39 @@ public class TenantServiceImpl implements TenantService {
   @Override
   @Transactional
   public Tenant save(UUID consortiumId, UUID adminUserId, Tenant tenantDto) {
-    log.debug("save:: Trying to save a tenant by consortiumId '{}', tenant object with id '{}' and isCentral={}", consortiumId,
+    log.info("save:: Trying to save a tenant by consortiumId '{}', tenant object with id '{}' and isCentral={}", consortiumId,
         tenantDto.getId(), tenantDto.getIsCentral());
     FolioExecutionContext currentTenantContext = (FolioExecutionContext) folioExecutionContext.getInstance();
-    String centralTenantId;
-    consortiumService.checkConsortiumExistsOrThrow(consortiumId);
 
+    // validation part
+    checkTenantNotExistsAndConsortiumExistsOrThrow(consortiumId, tenantDto.getId());
     if (tenantDto.getIsCentral()) {
       checkCentralTenantExistsOrThrow();
-      centralTenantId = tenantDto.getId();
-    } else {
-      centralTenantId = getCentralTenantId();
     }
 
-    checkTenantNotExistsAndConsortiumExistsOrThrow(consortiumId, tenantDto.getId());
+    // save tenant to db
     TenantEntity savedTenantEntity = saveTenantEntity(consortiumId, tenantDto);
     var savedTenant = converter.convert(savedTenantEntity, Tenant.class);
 
-    User shadowAdminUser = userService.prepareShadowUser(adminUserId, currentTenantContext.getTenantId());
-    userTenantRepository.save(createUserTenantEntity(consortiumId, shadowAdminUser, tenantDto));
+    // save admin user tenant association for non-central tenant
+    String centralTenantId;
+    User shadowAdminUser = null;
+    if (tenantDto.getIsCentral()) {
+      centralTenantId = tenantDto.getId();
+    } else {
+      centralTenantId = getCentralTenantId();
+      shadowAdminUser = userService.prepareShadowUser(adminUserId, currentTenantContext.getTenantId());
+      userTenantRepository.save(createUserTenantEntity(consortiumId, shadowAdminUser, tenantDto));
+    }
 
+    // switch to context of the desired tenant and apply all necessary setup
     try (var context = new FolioExecutionContextSetter(contextHelper.getSystemUserFolioExecutionContext(tenantDto.getId()))) {
       configurationClient.saveConfiguration(createConsortiaConfigurationBody(centralTenantId));
-      createUserTenantWithDummyUser(tenantDto.getId());
-      createShadowAdminUserWithPermissions(shadowAdminUser);
       createPrimaryUserAffiliationsAsync.createPrimaryUserAffiliationsAsync(consortiumId, savedTenantEntity, tenantDto);
+      if (!tenantDto.getIsCentral()) {
+        createUserTenantWithDummyUser(tenantDto.getId());
+        createShadowAdminUserWithPermissions(shadowAdminUser); //NOSONAR
+      }
     }
     log.info("save:: saved consortia configuration with centralTenantId={} by tenantId={} context", centralTenantId, tenantDto.getId());
     return savedTenant;

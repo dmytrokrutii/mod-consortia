@@ -12,6 +12,8 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -124,7 +126,7 @@ class TenantServiceTest {
   }
 
   @Test
-  void shouldSaveTenantWithNewUserAndPermissions() {
+  void shouldSaveNotCentralTenantWithNewUserAndPermissions() {
     UUID consortiumId = UUID.fromString(CONSORTIUM_ID);
     TenantEntity tenantEntity1 = createTenantEntity("ABC1", "TestName1");
     Tenant tenant = createTenant("TestID", "Test");
@@ -151,13 +153,19 @@ class TenantServiceTest {
     when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
 
     var tenant1 = tenantService.save(consortiumId, UUID.randomUUID(), tenant);
-    Mockito.verify(userTenantsClient, Mockito.times(1)).postUserTenant(any());
-    Mockito.verify(configurationClient, Mockito.times(1)).saveConfiguration(any());
+
+    verify(userService).prepareShadowUser(any(), any());
+    verify(userTenantRepository).save(any());
+    verify(configurationClient).saveConfiguration(any());
+    verify(userAffiliationAsyncService).createPrimaryUserAffiliationsAsync(any(), any(), any());
+    verify(userTenantsClient).postUserTenant(any());
+    verify(userService).createUser(any());
+
     Assertions.assertEquals(tenant, tenant1);
   }
 
   @Test
-  void shouldSaveTenantWithExistingAndPermissions() throws JsonProcessingException {
+  void shouldSaveCentralTenantWithExistingAndPermissions() throws JsonProcessingException {
     UUID consortiumId = UUID.fromString(CONSORTIUM_ID);
     TenantEntity tenantEntity1 = createTenantEntity("ABC1", "TestName1");
     Tenant tenant = createTenant("TestID", "Test", true);
@@ -173,7 +181,6 @@ class TenantServiceTest {
 
     when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
     when(userService.prepareShadowUser(any(), any())).thenReturn(user);
-    when(userService.getById(any())).thenReturn(user);
     when(permissionsClient.get(any())).thenReturn(permissionUserCollection);
     doNothing().when(permissionsClient).addPermission(any(), any());
     when(tenantRepository.existsById(any())).thenReturn(false);
@@ -191,8 +198,16 @@ class TenantServiceTest {
     when(usersClient.getUserCollection(anyString(), anyInt(), anyInt())).thenReturn(userCollection);
 
     var tenant1 = tenantService.save(consortiumId, UUID.randomUUID(), tenant);
-    Mockito.verify(userTenantsClient, Mockito.times(1)).postUserTenant(any());
-    Mockito.verify(configurationClient, Mockito.times(1)).saveConfiguration(any());
+
+    verify(configurationClient).saveConfiguration(any());
+    verify(userAffiliationAsyncService).createPrimaryUserAffiliationsAsync(any(), any(), any());
+
+    verify(userService, never()).prepareShadowUser(any(), any());
+    verify(userTenantRepository, never()).save(any());
+    verify(userTenantsClient, never()).postUserTenant(any());
+    verify(userService, never()).createUser(any());
+    verify(permissionUserService, never()).createWithPermissionsFromFile(any(), any());
+
     Assertions.assertEquals(tenant, tenant1);
   }
 
