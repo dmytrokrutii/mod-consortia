@@ -83,7 +83,8 @@
             "perms.users.item.put",
             "perms.users.item.post",
             "perms.users.assign.immutable",
-            "perms.users.assign.mutable"
+            "perms.users.assign.mutable",
+            "users.collection.get"
           ]
         },
         {
@@ -94,7 +95,9 @@
           "permissionsRequired": [
             "consortia.tenants.item.put"
           ],
-          "modulePermissions": []
+          "modulePermissions": [
+            "users.collection.get"
+          ]
         },
         {
           "methods": [

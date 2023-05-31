@@ -2,6 +2,7 @@ package org.folio.consortia.service;
 
 import org.folio.consortia.domain.dto.User;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -39,6 +40,8 @@ public interface UserService {
    * @return user
    */
   Optional<User> getByUsername(String username);
+
+  List<User> getUsersByQuery(String query, int offset, int limit);
 
   /**
    * Deletes existing user by id.

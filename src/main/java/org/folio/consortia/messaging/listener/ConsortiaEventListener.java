@@ -1,7 +1,9 @@
 package org.folio.consortia.messaging.listener;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import static org.folio.consortia.utils.TenantContextUtils.createFolioExecutionContext;
+import static org.folio.consortia.utils.TenantContextUtils.getHeaderValue;
+import static org.folio.consortia.utils.TenantContextUtils.runInFolioContext;
+
 import org.folio.consortia.service.ConsortiaConfigurationService;
 import org.folio.consortia.service.UserAffiliationService;
 import org.folio.spring.FolioModuleMetadata;
@@ -11,9 +13,8 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.stereotype.Component;
 
-import static org.folio.consortia.utils.TenantContextUtils.createFolioExecutionContext;
-import static org.folio.consortia.utils.TenantContextUtils.getHeaderValue;
-import static org.folio.consortia.utils.TenantContextUtils.runInFolioContext;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @Component

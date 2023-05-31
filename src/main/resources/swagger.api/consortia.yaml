@@ -123,3 +123,7 @@ components:
         $ref: "schemas/common.yaml#/uuid"
       required: true
       description: The ID of consortium
+
+  schemas:
+    userCollection:
+      $ref: 'schemas/user.yaml#/UserCollection'

@@ -27,6 +27,10 @@ spring:
     change-log: classpath:db/changelog/changelog-master.xml
   jackson:
     default-property-inclusion: non_null
+    deserialization:
+      fail-on-unknown-properties: false
+    serialization:
+      write-dates-as-timestamps: false
   cloud:
     openfeign:
       okhttp:

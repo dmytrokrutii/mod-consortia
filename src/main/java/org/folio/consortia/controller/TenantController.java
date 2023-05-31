@@ -1,6 +1,10 @@
 package org.folio.consortia.controller;
 
-import lombok.RequiredArgsConstructor;
+import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.NO_CONTENT;
+
+import java.util.UUID;
+
 import org.folio.consortia.domain.dto.Tenant;
 import org.folio.consortia.domain.dto.TenantCollection;
 import org.folio.consortia.rest.resource.TenantsApi;
@@ -10,10 +14,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.UUID;
-
-import static org.springframework.http.HttpStatus.CREATED;
-import static org.springframework.http.HttpStatus.NO_CONTENT;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/consortia/{consortiumId}")
@@ -33,8 +34,8 @@ public class TenantController implements TenantsApi {
   }
 
   @Override
-  public ResponseEntity<Tenant> updateTenant(UUID consortiumId, String tenantId, @Validated Tenant tenant) {
-    return ResponseEntity.ok(service.update(consortiumId, tenantId, tenant));
+  public ResponseEntity<Tenant> updateTenant(UUID consortiumId, String tenantId, @Validated Tenant tenant, Boolean forceCreatePrimaryAff) {
+    return ResponseEntity.ok(service.update(consortiumId, tenantId, tenant, forceCreatePrimaryAff));
   }
 
   @Override

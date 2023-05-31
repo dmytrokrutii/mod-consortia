@@ -1,20 +1,44 @@
 package org.folio.consortia.service;
 
+import static org.folio.consortia.utils.EntityUtils.createConsortiaConfiguration;
+import static org.folio.consortia.utils.EntityUtils.createTenant;
+import static org.folio.consortia.utils.EntityUtils.createTenantEntity;
+import static org.folio.consortia.utils.InputOutputTestUtils.getMockData;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.folio.consortia.client.ConsortiaConfigurationClient;
 import org.folio.consortia.client.PermissionsClient;
 import org.folio.consortia.client.UserTenantsClient;
+import org.folio.consortia.client.UsersClient;
 import org.folio.consortia.config.FolioExecutionContextHelper;
+import org.folio.consortia.config.kafka.KafkaService;
 import org.folio.consortia.domain.dto.PermissionUser;
 import org.folio.consortia.domain.dto.PermissionUserCollection;
 import org.folio.consortia.domain.dto.Tenant;
 import org.folio.consortia.domain.dto.User;
+import org.folio.consortia.domain.dto.UserCollection;
 import org.folio.consortia.domain.entity.TenantEntity;
 import org.folio.consortia.exception.ResourceNotFoundException;
 import org.folio.consortia.repository.ConsortiumRepository;
 import org.folio.consortia.repository.TenantRepository;
 import org.folio.consortia.repository.UserTenantRepository;
 import org.folio.consortia.service.impl.TenantServiceImpl;
-import org.folio.consortia.service.impl.UserTenantServiceImpl;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.junit.jupiter.api.Assertions;
@@ -30,25 +54,8 @@ import org.springframework.core.convert.ConversionService;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.folio.consortia.utils.EntityUtils.createConsortiaConfiguration;
-import static org.folio.consortia.utils.EntityUtils.createTenant;
-import static org.folio.consortia.utils.EntityUtils.createTenantEntity;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.when;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @SpringBootTest
 @EnableAutoConfiguration(exclude = BatchAutoConfiguration.class)
@@ -64,6 +71,10 @@ class TenantServiceTest {
   @Mock
   private UserTenantRepository userTenantRepository;
   @Mock
+  private UserAffiliationService userAffiliationService;
+  @Mock
+  private UserAffiliationAsyncService userAffiliationAsyncService;
+  @Mock
   private ConversionService conversionService;
   @Mock
   private ConsortiumRepository consortiumRepository;
@@ -74,11 +85,15 @@ class TenantServiceTest {
   @Mock
   private ConsortiaConfigurationClient configurationClient;
   @Mock
+  private KafkaService kafkaService;
+  @Mock
+  UsersClient usersClient;
+  @Mock
+  UserTenantService userTenantService;
+  @Mock
   private PermissionsClient permissionsClient;
   @Mock
   private UserTenantsClient userTenantsClient;
-  @Mock
-  private UserTenantServiceImpl userTenantService;
   @Mock
   private PermissionUserService permissionUserService;
   @Mock
@@ -142,10 +157,10 @@ class TenantServiceTest {
   }
 
   @Test
-  void shouldSaveTenantWithExistingAndPermissions() {
+  void shouldSaveTenantWithExistingAndPermissions() throws JsonProcessingException {
     UUID consortiumId = UUID.fromString(CONSORTIUM_ID);
     TenantEntity tenantEntity1 = createTenantEntity("ABC1", "TestName1");
-    Tenant tenant = createTenant("TestID", "Test");
+    Tenant tenant = createTenant("TestID", "Test", true);
     TenantEntity centralTenant = createTenantEntity("diku", "diku");
     PermissionUser permissionUser = new PermissionUser();
     permissionUser.setPermissions(List.of("users.collection.get"));
@@ -153,6 +168,8 @@ class TenantServiceTest {
     permissionUserCollection.setPermissionUsers(List.of(permissionUser));
     User user = new User();
     user.setId(UUID.randomUUID().toString());
+    var userCollectionString = getMockData("mockdata/user_collection.json");
+    UserCollection userCollection = new ObjectMapper().readValue(userCollectionString, UserCollection.class);
 
     when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
     when(userService.prepareShadowUser(any(), any())).thenReturn(user);
@@ -168,6 +185,10 @@ class TenantServiceTest {
     doReturn(folioExecutionContext).when(contextHelper).getSystemUserFolioExecutionContext(anyString());
     when(folioExecutionContext.getTenantId()).thenReturn("diku");
     when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
+    Map<String, Collection<String>> okapiHeaders = new HashMap<>();
+    okapiHeaders.put(XOkapiHeaders.TENANT, List.of("diku"));
+    when(folioExecutionContext.getOkapiHeaders()).thenReturn(okapiHeaders);
+    when(usersClient.getUserCollection(anyString(), anyInt(), anyInt())).thenReturn(userCollection);
 
     var tenant1 = tenantService.save(consortiumId, UUID.randomUUID(), tenant);
     Mockito.verify(userTenantsClient, Mockito.times(1)).postUserTenant(any());
@@ -187,7 +208,7 @@ class TenantServiceTest {
     when(tenantRepository.save(any(TenantEntity.class))).thenReturn(tenantEntity1);
     when(conversionService.convert(tenantEntity1, Tenant.class)).thenReturn(tenant);
 
-    var tenant1 = tenantService.update(UUID.fromString(CONSORTIUM_ID), tenant.getId(), tenant);
+    var tenant1 = tenantService.update(UUID.fromString(CONSORTIUM_ID), tenant.getId(), tenant, false);
     Assertions.assertEquals(tenant.getId(), tenant1.getId());
     Assertions.assertEquals("TestName2", tenant1.getName());
   }
@@ -247,7 +268,7 @@ class TenantServiceTest {
     when(conversionService.convert(tenantEntity1, Tenant.class)).thenReturn(tenant);
 
     assertThrows(java.lang.IllegalArgumentException.class, () ->
-      tenantService.update(UUID.fromString(CONSORTIUM_ID), tenant.getId() + "1234", tenant));
+      tenantService.update(UUID.fromString(CONSORTIUM_ID), tenant.getId() + "1234", tenant, false));
   }
 
   @Test
@@ -260,7 +281,7 @@ class TenantServiceTest {
     when(conversionService.convert(tenantEntity1, Tenant.class)).thenReturn(tenant);
 
     assertThrows(org.folio.consortia.exception.ResourceNotFoundException.class, () ->
-      tenantService.update(UUID.fromString(CONSORTIUM_ID), tenant.getId() + "1234", tenant));
+      tenantService.update(UUID.fromString(CONSORTIUM_ID), tenant.getId() + "1234", tenant, false));
   }
 
   @Test
@@ -279,7 +300,7 @@ class TenantServiceTest {
   @Test
   void shouldNotSaveTenantForDuplicateId() {
     TenantEntity tenantEntity1 = createTenantEntity("TestID", "Test");
-    Tenant tenant = createTenant("TestID", "Testq");
+    Tenant tenant = createTenant("TestID", "Testq", true);
     TenantEntity centralTenant = createTenantEntity("diku", "diku");
 
     when(tenantRepository.existsById(any())).thenReturn(true);

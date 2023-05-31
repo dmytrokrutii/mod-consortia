@@ -1,17 +1,39 @@
 package org.folio.consortia.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.apache.commons.lang3.RandomStringUtils;
+import feign.FeignException;
 import org.folio.consortia.client.PermissionsClient;
 import org.folio.consortia.client.UsersClient;
 import org.folio.consortia.domain.converter.UserTenantConverter;
+import org.folio.consortia.domain.dto.PermissionUser;
+import org.folio.consortia.domain.dto.PermissionUserCollection;
 import org.folio.consortia.domain.dto.Personal;
 import org.folio.consortia.domain.dto.User;
 import org.folio.consortia.domain.dto.UserEvent;
 import org.folio.consortia.domain.dto.UserTenant;
 import org.folio.consortia.domain.dto.UserTenantCollection;
-import org.folio.consortia.domain.dto.Userdata;
-import org.folio.consortia.domain.entity.*;
-import org.folio.consortia.domain.dto.PermissionUser;
-import org.folio.consortia.domain.dto.PermissionUserCollection;
+import org.folio.consortia.domain.entity.ConsortiumEntity;
+import org.folio.consortia.domain.entity.TenantEntity;
+import org.folio.consortia.domain.entity.UserTenantEntity;
 import org.folio.consortia.exception.ResourceNotFoundException;
 import org.folio.consortia.repository.ConsortiumRepository;
 import org.folio.consortia.repository.UserTenantRepository;
@@ -55,6 +77,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import feign.FeignException;
 
 @SpringBootTest
 @EnableAutoConfiguration(exclude = BatchAutoConfiguration.class)
@@ -182,7 +205,7 @@ class UserTenantServiceTest {
     ArgumentCaptor<UserTenantEntity> argCaptor = ArgumentCaptor.forClass(UserTenantEntity.class);
     when(userTenantRepository.save(argCaptor.capture())).thenAnswer(i -> i.getArguments()[0]);
 
-    var result = userTenantService.createPrimaryUserTenantAffiliation(consId, new TenantEntity(), userEvent);
+    var result = userTenantService.createPrimaryUserTenantAffiliation(consId, new TenantEntity(), userEvent.getUserDto().getId(), userEvent.getUserDto().getUsername());
     assertNull(result);
   }
 
@@ -588,7 +611,7 @@ class UserTenantServiceTest {
 
   private UserEvent createUserEvent() {
     var userEvent = new UserEvent();
-    userEvent.userDto(new Userdata()
+    userEvent.userDto(new User()
       .id(UUID.randomUUID().toString())
       .username("userName"));
     return userEvent;

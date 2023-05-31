@@ -1,10 +1,14 @@
 package org.folio.consortia.service.impl;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import static org.folio.consortia.utils.TenantContextUtils.prepareContextForTenant;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.folio.consortia.domain.dto.User;
-import org.folio.consortia.domain.dto.UserEvent;
 import org.folio.consortia.domain.dto.UserTenant;
 import org.folio.consortia.domain.dto.UserTenantCollection;
 import org.folio.consortia.domain.entity.TenantEntity;
@@ -25,12 +29,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.folio.consortia.utils.TenantContextUtils.prepareContextForTenant;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 
 /**
  * Implementation of {@link UserTenantService}.
@@ -132,17 +132,19 @@ public class UserTenantServiceImpl implements UserTenantService {
 
   @Override
   @Transactional
-  public UserTenant createPrimaryUserTenantAffiliation(UUID consortiumId, TenantEntity consortiaTenant, UserEvent userEvent) {
+  public UserTenant createPrimaryUserTenantAffiliation(UUID consortiumId, TenantEntity consortiaTenant, String userId, String username) {
     UserTenantEntity userTenantEntity = new UserTenantEntity();
 
     userTenantEntity.setId(UUID.randomUUID());
-    userTenantEntity.setUserId(UUID.fromString(userEvent.getUserDto().getId()));
-    userTenantEntity.setUsername(userEvent.getUserDto().getUsername());
+    userTenantEntity.setUserId(UUID.fromString(userId));
+    userTenantEntity.setUsername(username);
     userTenantEntity.setTenant(consortiaTenant);
     userTenantEntity.setIsPrimary(IS_PRIMARY_TRUE);
 
     var createdRecord = userTenantRepository.save(userTenantEntity);
-    return converter.convert(createdRecord, UserTenant.class);
+    var userTenant = converter.convert(createdRecord, UserTenant.class);
+    log.info("createPrimaryUserTenantAffiliation:: Successfully created primary affiliation for tenant/user {}/{}", consortiaTenant.getId(), userId);
+    return userTenant;
   }
 
   @Override

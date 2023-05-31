@@ -1,10 +1,10 @@
 package org.folio.consortia.service;
 
+import java.util.UUID;
+
 import org.folio.consortia.domain.dto.Tenant;
 import org.folio.consortia.domain.dto.TenantCollection;
 import org.folio.consortia.domain.entity.TenantEntity;
-
-import java.util.UUID;
 
 public interface TenantService {
 
@@ -34,9 +34,10 @@ public interface TenantService {
    * @param consortiumId  the consortiumId
    * @param tenantId the tenantId
    * @param tenantDto  the tenantDto
+   * @param forceCreatePrimaryAff force create primary affiliations flag
    * @return tenantDto
    */
-  Tenant update(UUID consortiumId, String tenantId, Tenant tenantDto);
+  Tenant update(UUID consortiumId, String tenantId, Tenant tenantDto, Boolean forceCreatePrimaryAff);
 
   /**
    * Deletes single tenant based on consortiumId.

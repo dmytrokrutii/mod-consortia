@@ -149,3 +149,19 @@ Tags:
       items:
         type: string
   additionalProperties: false
+
+UserCollection:
+  type: object
+  properties:
+    users:
+      type: array
+      description: "User collection"
+      items:
+        type: object
+        $ref: "user.yaml#/User"
+    totalRecords:
+      type: integer
+  additionalProperties: false
+  required:
+    - users
+    - totalRecords

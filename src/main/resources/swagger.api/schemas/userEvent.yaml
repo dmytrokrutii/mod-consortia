@@ -26,5 +26,5 @@ properties:
   userDto:
     description: "Full snapshot of the user"
     type: object
-    $ref: "userdata.yaml"
+    $ref: "user.yaml#/User"
 additionalProperties: false

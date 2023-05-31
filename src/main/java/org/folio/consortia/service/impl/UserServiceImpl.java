@@ -1,8 +1,12 @@
 package org.folio.consortia.service.impl;
 
-import feign.FeignException;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import static org.folio.consortia.utils.TenantContextUtils.prepareContextForTenant;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.folio.consortia.client.UsersClient;
 import org.folio.consortia.domain.dto.Personal;
 import org.folio.consortia.domain.dto.User;
@@ -15,11 +19,9 @@ import org.folio.spring.FolioModuleMetadata;
 import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.springframework.stereotype.Service;
 
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.folio.consortia.utils.TenantContextUtils.prepareContextForTenant;
+import feign.FeignException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 
 @Service
 @Log4j2
@@ -66,6 +68,11 @@ public class UserServiceImpl implements UserService {
       .getUsers()
       .stream()
       .findFirst();
+  }
+
+  @Override
+  public List<User> getUsersByQuery(String query, int offset, int limit) {
+    return usersClient.getUserCollection(query, offset, limit).getUsers();
   }
 
   @Override

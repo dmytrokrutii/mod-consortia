@@ -1,11 +1,10 @@
 package org.folio.consortia.service;
 
-import org.folio.consortia.domain.dto.UserEvent;
+import java.util.UUID;
+
 import org.folio.consortia.domain.dto.UserTenant;
 import org.folio.consortia.domain.dto.UserTenantCollection;
 import org.folio.consortia.domain.entity.TenantEntity;
-
-import java.util.UUID;
 
 /**
  * Service to work with user tenant associations, it provides ability to add association between user and tenant
@@ -69,10 +68,11 @@ public interface UserTenantService {
    *
    * @param consortiumId    the consortiumId
    * @param consortiaTenant the consortiaTenant
-   * @param userEventDto    the kafka userEventDto
+   * @param userId  id of existing user
+   * @param username    the name of existing user
    * @return userTenantDto
    */
-  UserTenant createPrimaryUserTenantAffiliation(UUID consortiumId, TenantEntity consortiaTenant, UserEvent userEventDto);
+  UserTenant createPrimaryUserTenantAffiliation(UUID consortiumId, TenantEntity consortiaTenant, String userId, String username);
 
   /**
    * Deletes user_tenant by userId and tenantId.
