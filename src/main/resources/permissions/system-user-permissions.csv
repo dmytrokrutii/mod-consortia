@@ -9,3 +9,4 @@ perms.users.item.delete
 perms.users.assign.immutable
 perms.users.assign.mutable
 perms.users.get
+user-tenants.item.post

@@ -109,10 +109,10 @@ public class TenantServiceImpl implements TenantService {
     userTenantRepository.save(createUserTenantEntity(consortiumId, shadowAdminUser, tenantDto));
 
     try (var context = new FolioExecutionContextSetter(contextHelper.getSystemUserFolioExecutionContext(tenantDto.getId()))) {
-      createShadowAdminUserWithPermissions(shadowAdminUser);
-      createUserTenantWithDummyUser(tenantDto.getId());
-      createPrimaryUserAffiliationsAsync.createPrimaryUserAffiliationsAsync(consortiumId, savedTenantEntity, tenantDto);
       configurationClient.saveConfiguration(createConsortiaConfigurationBody(centralTenantId));
+      createUserTenantWithDummyUser(tenantDto.getId());
+      createShadowAdminUserWithPermissions(shadowAdminUser);
+      createPrimaryUserAffiliationsAsync.createPrimaryUserAffiliationsAsync(consortiumId, savedTenantEntity, tenantDto);
     }
     log.info("save:: saved consortia configuration with centralTenantId={} by tenantId={} context", centralTenantId, tenantDto.getId());
     return savedTenant;
