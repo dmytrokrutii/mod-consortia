@@ -127,3 +127,4 @@ components:
   schemas:
     userCollection:
       $ref: 'schemas/user.yaml#/UserCollection'
+
