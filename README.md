@@ -104,7 +104,7 @@ requires and provides, the permissions, and the additional module metadata.
 
 ### Issue tracker
 
-See project [mod-consortia]()
+See project [MODCON](https://issues.folio.org/browse/MODCON)
 at the [FOLIO issue tracker](https://dev.folio.org/guidelines/issue-tracker).
 
 ### API documentation
