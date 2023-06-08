@@ -1,0 +1,29 @@
+SyncPrimaryAffiliationBody:
+  description: "Primary affiliation DTO"
+  type: object
+  properties:
+    tenantId:
+      description: "Unique tenant id"
+      type: string
+    users:
+      description: users
+      type: array
+      items:
+        "$ref": "primaryAffiliationBody.yaml#/SyncUser"
+  additionalProperties: false
+  required:
+    - tenantId
+
+SyncUser:
+  description: "Users item"
+  type: object
+  properties:
+    id:
+      description: "User id"
+      type: string
+    username:
+      description: "The name of the user"
+      type: string
+  additionalProperties: false
+
+

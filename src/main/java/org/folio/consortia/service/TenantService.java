@@ -34,10 +34,9 @@ public interface TenantService {
    * @param consortiumId  the consortiumId
    * @param tenantId the tenantId
    * @param tenantDto  the tenantDto
-   * @param forceCreatePrimaryAff force create primary affiliations flag
    * @return tenantDto
    */
-  Tenant update(UUID consortiumId, String tenantId, Tenant tenantDto, Boolean forceCreatePrimaryAff);
+  Tenant update(UUID consortiumId, String tenantId, Tenant tenantDto);
 
   /**
    * Deletes single tenant based on consortiumId.

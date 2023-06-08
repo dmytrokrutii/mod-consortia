@@ -3,7 +3,9 @@ package org.folio.consortia.controller;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.folio.consortia.utils.EntityUtils.createConsortiaConfiguration;
+import static org.folio.consortia.utils.EntityUtils.createTenant;
 import static org.folio.consortia.utils.EntityUtils.createTenantEntity;
+import static org.folio.consortia.utils.EntityUtils.createUserTenantEntity;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -20,6 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -28,16 +31,23 @@ import java.util.UUID;
 
 import org.folio.consortia.client.ConsortiaConfigurationClient;
 import org.folio.consortia.client.PermissionsClient;
+import org.folio.consortia.client.SyncPrimaryAffiliationClient;
 import org.folio.consortia.client.UserTenantsClient;
 import org.folio.consortia.client.UsersClient;
 import org.folio.consortia.config.FolioExecutionContextHelper;
+import org.folio.consortia.config.kafka.KafkaService;
 import org.folio.consortia.domain.dto.PermissionUser;
 import org.folio.consortia.domain.dto.PermissionUserCollection;
+import org.folio.consortia.domain.dto.SyncPrimaryAffiliationBody;
+import org.folio.consortia.domain.dto.SyncUser;
+import org.folio.consortia.domain.dto.Tenant;
 import org.folio.consortia.domain.dto.User;
 import org.folio.consortia.domain.entity.TenantEntity;
+import org.folio.consortia.domain.entity.UserTenantEntity;
 import org.folio.consortia.repository.ConsortiumRepository;
 import org.folio.consortia.repository.TenantRepository;
 import org.folio.consortia.repository.UserTenantRepository;
+import org.folio.consortia.service.TenantService;
 import org.folio.consortia.service.UserService;
 import org.folio.consortia.service.UserTenantService;
 import org.folio.consortia.service.impl.ConsortiaConfigurationServiceImpl;
@@ -56,6 +66,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.client.WireMock;
 
 import jakarta.validation.ConstraintViolation;
@@ -66,6 +77,8 @@ class TenantControllerTest extends BaseTest {
   private static final String TENANT_REQUEST_BODY = "{\"id\":\"diku1234\",\"code\":\"TST\",\"name\":\"diku_tenant_name1234\", \"isCentral\":false}";
   private static final String CONSORTIUM_ID = "7698e46-c3e3-11ed-afa1-0242ac120002";
   private static final String CENTRAL_TENANT_ID = "diku";
+  public static final String SYNC_PRIMARY_AFFILIATIONS_URL = "/consortia/%s/tenants/%s/sync-primary-affiliations";
+  public static final String PRIMARY_AFFILIATIONS_URL = "/consortia/%s/tenants/%s/create-primary-affiliations";
 
   @MockBean
   ConsortiumRepository consortiumRepository;
@@ -77,6 +90,8 @@ class TenantControllerTest extends BaseTest {
   ConsortiaConfigurationServiceImpl configurationService;
   @MockBean
   ConsortiaConfigurationClient configurationClient;
+  @MockBean
+  KafkaService kafkaService;
   @MockBean
   UserTenantService userTenantService;
   @MockBean
@@ -91,6 +106,9 @@ class TenantControllerTest extends BaseTest {
   PermissionsClient permissionsClient;
   @MockBean
   UserTenantsClient userTenantsClient;
+  @MockBean
+  SyncPrimaryAffiliationClient syncPrimaryAffiliationClient;
+
   @SpyBean
   UsersClient usersClient;
 
@@ -117,13 +135,19 @@ class TenantControllerTest extends BaseTest {
   @ValueSource(strings = {TENANT_REQUEST_BODY})
   void shouldSaveTenant(String contentString) throws Exception {
     var headers = defaultHeaders();
+    String userId = UUID.randomUUID().toString();
     TenantEntity centralTenant = createTenantEntity(CENTRAL_TENANT_ID, CENTRAL_TENANT_ID, "AAA", true);
     PermissionUser permissionUser = new PermissionUser();
+    permissionUser.setUserId(userId);
     permissionUser.setPermissions(List.of("test.permission"));
     PermissionUserCollection permissionUserCollection = new PermissionUserCollection();
     permissionUserCollection.setPermissionUsers(List.of(permissionUser));
     User user = new User();
-    user.setId(UUID.randomUUID().toString());
+    user.setId(userId);
+
+    var tenantEntity = new TenantEntity();
+    tenantEntity.setConsortiumId(centralTenant.getConsortiumId());
+    tenantEntity.setId("diku1234");
 
     wireMockServer.stubFor(
       WireMock.post(urlEqualTo("https://perms/users//permissions?indexField=userId"))
@@ -139,8 +163,9 @@ class TenantControllerTest extends BaseTest {
     doNothing().when(permissionsClient).addPermission(anyString(), any());
     when(consortiumRepository.existsById(any())).thenReturn(true);
     when(tenantRepository.existsById(any())).thenReturn(false);
-    when(tenantRepository.save(any(TenantEntity.class))).thenReturn(new TenantEntity());
+    when(tenantRepository.save(any(TenantEntity.class))).thenReturn(tenantEntity);
     when(tenantRepository.findCentralTenant()).thenReturn(Optional.of(centralTenant));
+    doNothing().when(syncPrimaryAffiliationClient).syncPrimaryAffiliations(anyString(), anyString());//.thenReturn(new SyncPrimaryAffiliationBody());
     doNothing().when(configurationClient).saveConfiguration(createConsortiaConfiguration(CENTRAL_TENANT_ID));
 
     this.mockMvc.perform(
@@ -346,5 +371,45 @@ class TenantControllerTest extends BaseTest {
       .andExpectAll(
         status().is4xxClientError(),
         jsonPath("$.errors[0].code", is("VALIDATION_ERROR")));
+  }
+
+  @Test
+  void syncPrimaryAffiliations() throws Exception {
+    var headers = defaultHeaders();
+    var consortiumId = UUID.randomUUID();
+    var tenantId = "ABC1";
+
+    this.mockMvc
+      .perform(post(String.format(SYNC_PRIMARY_AFFILIATIONS_URL, consortiumId, tenantId)).headers(headers))
+      .andExpectAll(status().isNoContent());
+  }
+
+  @Test
+  void primaryAffiliation() throws Exception {
+    TenantService tenantService = mock(TenantService.class);
+    var headers = defaultHeaders();
+    var consortiumId = UUID.randomUUID();
+    var tenantId = "ABC1";
+
+    TenantEntity tenantEntity1 = createTenantEntity(tenantId, "TestName1");
+    tenantEntity1.setConsortiumId(consortiumId);
+    UserTenantEntity userTenantEntity = createUserTenantEntity(UUID.randomUUID());
+    Tenant tenant = createTenant("TestID", "Test");
+
+    var syncUser = new SyncUser().id(UUID.randomUUID()
+        .toString())
+      .username("test_user");
+    var spab = new SyncPrimaryAffiliationBody()
+      .users(Collections.singletonList(syncUser))
+      .tenantId(tenantId);
+    var spabString = new ObjectMapper().writeValueAsString(spab);
+
+    when(tenantService.getCentralTenantId()).thenReturn(tenant.getId());
+    when(tenantService.getByTenantId(anyString())).thenReturn(tenantEntity1);
+    when(userTenantRepository.findByUserIdAndTenantId(any(), anyString())).thenReturn(Optional.of(userTenantEntity));
+
+    this.mockMvc.perform(post(String.format(PRIMARY_AFFILIATIONS_URL, consortiumId, tenantId)).headers(headers)
+      .content(spabString))
+      .andExpectAll(status().isNoContent());
   }
 }

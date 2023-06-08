@@ -51,7 +51,6 @@ paths:
       parameters:
         - $ref: "#/components/parameters/consortiumId"
         - $ref: "#/components/parameters/tenantId"
-        - $ref: "#/components/parameters/create_primary_affiliations"
       requestBody:
         $ref: "#/components/requestBodies/TenantBody"
       responses:
@@ -78,6 +77,48 @@ paths:
           $ref: "#/components/responses/NotFound"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /tenants/{tenantId}/sync-primary-affiliations:
+    post:
+      summary: Sync Primary Affiliations
+      operationId: syncPrimaryAffiliations
+      parameters:
+        - $ref: "#/components/parameters/consortiumId"
+        - $ref: "#/components/parameters/tenantId"
+      responses:
+        "201":
+          $ref: "#/components/responses/NoContent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /tenants/{tenantId}/create-primary-affiliations:
+    post:
+      summary: Create Primary Affiliations
+      operationId: createPrimaryAffiliations
+      parameters:
+        - $ref: "#/components/parameters/consortiumId"
+        - $ref: "#/components/parameters/tenantId"
+      requestBody:
+        $ref: "#/components/requestBodies/SyncPrimaryAffiliationsRequest"
+      responses:
+        "201":
+          $ref: "#/components/responses/NoContent"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 components:
   requestBodies:
     TenantBody:
@@ -87,6 +128,13 @@ components:
         application/json:
           schema:
             $ref: "schemas/tenant.yaml#/Tenant"
+    SyncPrimaryAffiliationsRequest:
+      description: SyncPrimaryAffiliationsRequest object
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "schemas/primaryAffiliationBody.yaml#/SyncPrimaryAffiliationBody"
   responses:
     Tenant:
       description: Returns a tenant object
@@ -178,10 +226,3 @@ components:
         minimum: 0
         maximum: 2147483647
         type: integer
-    create_primary_affiliations:
-      name: forceCreatePrimaryAffiliations
-      in: query
-      description: Force create primary affiliations even if tenant exists in consortia
-      schema:
-        default: false
-        type: boolean

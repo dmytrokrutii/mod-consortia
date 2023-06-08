@@ -119,6 +119,29 @@
         },
         {
           "methods": [
+            "POST"
+          ],
+          "pathPattern": "/consortia/{consortiumId}/tenants/{tenantId}/sync-primary-affiliations",
+          "permissionsRequired": [
+            "consortia.sync-primary-affiliations.item.post"
+          ],
+          "modulePermissions": [
+            "users.collection.get",
+            "consortia.create-primary-affiliations.item.post"
+          ]
+        },
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/consortia/{consortiumId}/tenants/{tenantId}/create-primary-affiliations",
+          "permissionsRequired": [
+            "consortia.create-primary-affiliations.item.post"
+          ],
+          "modulePermissions": []
+        },
+        {
+          "methods": [
             "GET"
           ],
           "pathPattern": "/consortia/{consortiumId}/user-tenants",
@@ -228,7 +251,9 @@
         "consortia.consortium.item.get",
         "consortia.user-tenants.item.post",
         "consortia.user-tenants.item.delete",
-        "consortia.consortia-configuration.item.post"
+        "consortia.consortia-configuration.item.post",
+        "consortia.sync-primary-affiliations.item.post",
+        "consortia.create-primary-affiliations.item.post"
       ]
     },
     {
@@ -250,6 +275,16 @@
       "permissionName": "consortia.tenants.item.delete",
       "displayName": "delete tenant",
       "description": "Delete tenant"
+    },
+    {
+      "permissionName": "consortia.sync-primary-affiliations.item.post",
+      "displayName": "synchronize consortia primary affiliations",
+      "description": "Synchronize consortia primary affiliations"
+    },
+    {
+      "permissionName": "consortia.create-primary-affiliations.item.post",
+      "displayName": "create consortia primary affiliation",
+      "description": "create consortia primary affiliation"
     },
     {
       "permissionName": "consortia.user-tenants.collection.get",
