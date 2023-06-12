@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.folio.consortia.config.FolioExecutionContextHelper;
 import org.folio.consortia.domain.dto.User;
 import org.folio.consortia.domain.dto.UserTenant;
 import org.folio.consortia.domain.dto.UserTenantCollection;
@@ -56,6 +57,7 @@ public class UserTenantServiceImpl implements UserTenantService {
   private final UserService userService;
   private final FolioModuleMetadata folioModuleMetadata;
   private final PermissionUserService permissionUserService;
+  private final FolioExecutionContextHelper contextHelper;
 
   @Override
   public UserTenantCollection get(UUID consortiumId, Integer offset, Integer limit) {
@@ -105,7 +107,7 @@ public class UserTenantServiceImpl implements UserTenantService {
 
   @Override
   @Transactional
-  public UserTenant save(UUID consortiumId, UserTenant userTenantDto) {
+  public UserTenant save(UUID consortiumId, UserTenant userTenantDto, boolean isSystemUserContextRequired) {
     log.debug("Going to save user with id: {} into tenant: {}", userTenantDto.getUserId(), userTenantDto.getTenantId());
     FolioExecutionContext currentTenantContext = (FolioExecutionContext) folioExecutionContext.getInstance();
     String currentTenantId = folioExecutionContext.getTenantId();
@@ -118,7 +120,11 @@ public class UserTenantServiceImpl implements UserTenantService {
     }
 
     User shadowUser = userService.prepareShadowUser(userTenantDto.getUserId(), userTenant.get().getTenant().getId());
-    createOrUpdateShadowUser(userTenantDto.getUserId(), shadowUser, userTenantDto, currentTenantContext);
+    if (isSystemUserContextRequired) {
+      createOrUpdateShadowUserWithSystemUserContext(userTenantDto.getUserId(), shadowUser, userTenantDto);
+    } else {
+      createOrUpdateShadowUserWithRequestedContext(userTenantDto.getUserId(), shadowUser, userTenantDto, currentTenantContext);
+    }
 
     try (var context = new FolioExecutionContextSetter(prepareContextForTenant(currentTenantId, folioModuleMetadata, currentTenantContext))) {
       UserTenantEntity userTenantEntity = toEntity(userTenantDto, consortiumId, shadowUser);
@@ -191,15 +197,26 @@ public class UserTenantServiceImpl implements UserTenantService {
     return new UserTenant();
   }
 
-  private void createOrUpdateShadowUser(UUID userId, User shadowUser, UserTenant userTenantDto, FolioExecutionContext folioExecutionContext) {
-    log.info("Going to create or update shadow user with id: {} in the desired tenant: {}", userId.toString(), userTenantDto.getTenantId());
-    try (var context = new FolioExecutionContextSetter(prepareContextForTenant(userTenantDto.getTenantId(), folioModuleMetadata, folioExecutionContext))) {
-      User user = userService.getById(userId);
-      if (Objects.nonNull(user.getActive())) {
-        activateUser(user);
-      } else {
-        createActiveUserWithPermissions(shadowUser);
-      }
+  private void createOrUpdateShadowUser(UUID userId, User shadowUser, UserTenant userTenantDto) {
+    log.info("createOrUpdateShadowUser:: Going to create or update shadow user with id: {} in the desired tenant: {}", userId.toString(), userTenantDto.getTenantId());
+    User user = userService.getById(userId);
+    if (Objects.nonNull(user.getActive())) {
+      activateUser(user);
+    } else {
+      createActiveUserWithPermissions(shadowUser);
+    }
+  }
+
+  private void createOrUpdateShadowUserWithRequestedContext(UUID userId, User shadowUser, UserTenant userTenantDto,
+    FolioExecutionContext folioExecutionContext) {
+    try (var ignored = new FolioExecutionContextSetter(prepareContextForTenant(userTenantDto.getTenantId(), folioModuleMetadata, folioExecutionContext))) {
+      createOrUpdateShadowUser(userId, shadowUser, userTenantDto);
+    }
+  }
+
+  private void createOrUpdateShadowUserWithSystemUserContext(UUID userId, User shadowUser, UserTenant userTenantDto) {
+    try (var ignored = new FolioExecutionContextSetter(contextHelper.getSystemUserFolioExecutionContext(userTenantDto.getTenantId()))) {
+      createOrUpdateShadowUser(userId, shadowUser, userTenantDto);
     }
   }
 

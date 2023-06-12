@@ -2,13 +2,16 @@ package org.folio.consortia.service.impl;
 
 import java.util.UUID;
 
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.consortia.config.kafka.KafkaService;
 import org.folio.consortia.domain.dto.PrimaryAffiliationEvent;
 import org.folio.consortia.domain.dto.UserEvent;
+import org.folio.consortia.domain.dto.UserTenant;
 import org.folio.consortia.service.TenantService;
 import org.folio.consortia.service.UserAffiliationService;
 import org.folio.consortia.service.UserTenantService;
+import org.folio.spring.FolioExecutionContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +29,7 @@ public class UserAffiliationServiceImpl implements UserAffiliationService {
   private final UserTenantService userTenantService;
   private final TenantService tenantService;
   private final KafkaService kafkaService;
+  private final FolioExecutionContext folioExecutionContext;
   private final ObjectMapper objectMapper = new ObjectMapper();
 
   @Override
@@ -48,7 +52,11 @@ public class UserAffiliationServiceImpl implements UserAffiliationService {
         log.warn("Primary affiliation already exists for tenant/user: {}/{}", userEvent.getTenantId(), userEvent.getUserDto().getUsername());
         return;
       } else {
+        String centralTenantId = folioExecutionContext.getTenantId();
         userTenantService.createPrimaryUserTenantAffiliation(consortiaTenant.getConsortiumId(), consortiaTenant, userEvent.getUserDto().getId(), userEvent.getUserDto().getUsername());
+        if (ObjectUtils.notEqual(centralTenantId, consortiaTenant.getId())) {
+          userTenantService.save(consortiaTenant.getConsortiumId(), createUserTenant(centralTenantId, userEvent), false);
+        }
       }
 
       PrimaryAffiliationEvent affiliationEvent = createPrimaryAffiliationEvent(userEvent);
@@ -75,8 +83,8 @@ public class UserAffiliationServiceImpl implements UserAffiliationService {
         return;
       }
 
-      userTenantService.deletePrimaryUserTenantAffiliation(UUID.fromString(userEvent.getUserDto().getId()));
-      userTenantService.deleteShadowUsers(UUID.fromString(userEvent.getUserDto().getId()));
+      userTenantService.deletePrimaryUserTenantAffiliation(getUserId(userEvent));
+      userTenantService.deleteShadowUsers(getUserId(userEvent));
 
       PrimaryAffiliationEvent affiliationEvent = createPrimaryAffiliationEvent(userEvent);
       String data = objectMapper.writeValueAsString(affiliationEvent);
@@ -86,6 +94,21 @@ public class UserAffiliationServiceImpl implements UserAffiliationService {
     } catch (Exception e) {
       log.error("Exception occurred while deleting primary affiliation", e);
     }
+  }
+
+  private UUID getUserId(UserEvent userEvent) {
+    if (StringUtils.isBlank(userEvent.getUserDto().getId())) {
+      throw new IllegalArgumentException("User id is empty");
+    }
+    return UUID.fromString(userEvent.getUserDto().getId());
+  }
+
+  private UserTenant createUserTenant(String tenantId, UserEvent userEvent) {
+    UserTenant userTenant = new UserTenant();
+    userTenant.setTenantId(tenantId);
+    userTenant.setUserId(UUID.fromString(userEvent.getUserDto().getId()));
+    userTenant.setUsername(userEvent.getUserDto().getUsername());
+    return userTenant;
   }
 
   private PrimaryAffiliationEvent createPrimaryAffiliationEvent(UserEvent userEvent) {

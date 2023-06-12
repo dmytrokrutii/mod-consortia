@@ -61,7 +61,7 @@ public interface UserTenantService {
    * @param userTenantDto the tenantDto
    * @return userTenantDto
    */
-  UserTenant save(UUID consortiumId, UserTenant userTenantDto);
+  UserTenant save(UUID consortiumId, UserTenant userTenantDto, boolean isSystemUserContextRequired);
 
   /**
    * Inserts single user_tenant based on kafka userEventDto.

@@ -106,6 +106,7 @@ public class TenantServiceImpl implements TenantService {
     if (tenantDto.getIsCentral()) {
       centralTenantId = tenantDto.getId();
     } else {
+      checkAdminUserIdPresentOrThrow(adminUserId);
       centralTenantId = getCentralTenantId();
       shadowAdminUser = userService.prepareShadowUser(adminUserId, currentTenantContext.getTenantId());
       userTenantRepository.save(createUserTenantEntity(consortiumId, shadowAdminUser, tenantDto));
@@ -185,6 +186,13 @@ public class TenantServiceImpl implements TenantService {
   private void checkCentralTenantExistsOrThrow() {
     if (tenantRepository.existsByIsCentralTrue()) {
       throw new ResourceAlreadyExistException("isCentral", "true");
+    }
+  }
+
+  private void checkAdminUserIdPresentOrThrow(UUID adminUserId) {
+    if (Objects.isNull(adminUserId)) {
+      log.warn("checkAdminUserIdPresentOrThrow:: adminUserId is not present");
+      throw new IllegalArgumentException("Required request parameter 'adminUserId' for method parameter type UUID is not present");
     }
   }
 

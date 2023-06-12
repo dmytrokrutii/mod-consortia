@@ -32,7 +32,7 @@ public class TenantController implements TenantsApi {
   }
 
   @Override
-  public ResponseEntity<Tenant> saveTenant(UUID consortiumId, UUID adminUserId, @Validated Tenant tenant) {
+  public ResponseEntity<Tenant> saveTenant(UUID consortiumId, @Validated Tenant tenant, UUID adminUserId) {
     return ResponseEntity.status(CREATED).body(service.save(consortiumId, adminUserId, tenant));
   }
 

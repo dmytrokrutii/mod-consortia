@@ -6,6 +6,7 @@ import org.folio.consortia.domain.dto.UserTenant;
 import org.folio.consortia.domain.dto.UserTenantCollection;
 import org.folio.consortia.rest.resource.UserTenantsApi;
 import org.folio.consortia.service.UserTenantService;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -44,11 +45,11 @@ public class UserTenantController implements UserTenantsApi {
 
   @Override
   public ResponseEntity<UserTenant> postUserTenants(UUID consortiumId, UserTenant userTenant) {
-    return ResponseEntity.ok(userTenantService.save(consortiumId, userTenant));
+    return ResponseEntity.ok(userTenantService.save(consortiumId, userTenant, false));
   }
 
   @Override
-  public ResponseEntity<Void> deleteUserTenant(UUID consortiumId, String tenantId, UUID userId) {
+  public ResponseEntity<Void> deleteUserTenant(UUID consortiumId, @NotNull String tenantId, UUID userId) {
     userTenantService.deleteByUserIdAndTenantId(consortiumId, tenantId, userId);
     return ResponseEntity.noContent().build();
   }

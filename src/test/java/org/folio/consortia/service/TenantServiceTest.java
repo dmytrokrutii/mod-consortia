@@ -281,6 +281,20 @@ class TenantServiceTest {
   }
 
   @Test
+  void shouldThrowExceptionWhileSavingLocalTenantWithoutAdminUserId() {
+    TenantEntity tenantEntity1 = createTenantEntity("TestID", "TestName1");
+    Tenant tenant = createTenant("TestID", "TestName2");
+
+    when(consortiumRepository.existsById(any())).thenReturn(true);
+    when(tenantRepository.existsById(any())).thenReturn(true);
+    when(tenantRepository.save(any(TenantEntity.class))).thenReturn(tenantEntity1);
+    when(conversionService.convert(tenantEntity1, Tenant.class)).thenReturn(tenant);
+
+    assertThrows(java.lang.IllegalArgumentException.class, () ->
+      tenantService.save(UUID.fromString(CONSORTIUM_ID), UUID.fromString(""), tenant));
+  }
+
+  @Test
   void shouldThrowExceptionWhileUpdateTenant() {
     TenantEntity tenantEntity1 = createTenantEntity("TestID", "TestName1");
     Tenant tenant = createTenant("TestID", "TestName2");
