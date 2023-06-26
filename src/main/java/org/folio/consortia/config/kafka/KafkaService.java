@@ -25,8 +25,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static org.folio.consortia.messaging.listener.ConsortiaEventListener.USER_CREATED_LISTENER_ID;
-import static org.folio.consortia.messaging.listener.ConsortiaEventListener.USER_DELETED_LISTENER_ID;
+import static org.folio.consortia.messaging.listener.ConsortiaUserEventListener.USER_CREATED_LISTENER_ID;
+import static org.folio.consortia.messaging.listener.ConsortiaUserEventListener.USER_DELETED_LISTENER_ID;
 
 @Component
 @Log4j2
