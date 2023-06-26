@@ -9,7 +9,6 @@ Metadata:
   properties:
     createdDate:
       type: string
-      format: date-time
       description: Date and time when the record was created
     createdByUserId:
       $ref: '#/uuid'
@@ -22,7 +21,6 @@ Metadata:
       description: Additional information of the user who created the record (when available)
     updatedDate:
       type: string
-      format: date-time
       description: Date and time when the record was last updated
     updatedByUserId:
       $ref: '#/uuid'

@@ -58,4 +58,9 @@ public interface TenantService {
    * @return central tenant id
    */
   String getCentralTenantId();
+
+  /**
+   * Check whether tenant exists or throw ResourceNotFound exception
+   */
+  void checkTenantExistsOrThrow(String tenantId);
 }

@@ -1,0 +1,25 @@
+SharingInstance:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    instanceIdentifier:
+      type: string
+      format: uuid
+    sourceTenantId:
+      type: string
+    targetTenantId:
+      type: string
+    status:
+      type: string
+    error:
+      type: string
+    metadata:
+      type: object
+      $ref: "common.yaml#/Metadata"
+  additionalProperties: false
+  required:
+    - instanceIdentifier
+    - sourceTenantId
+    - targetTenantId

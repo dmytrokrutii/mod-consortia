@@ -207,6 +207,26 @@
             "consortia.consortia-configuration.item.post"
           ],
           "modulePermissions": []
+        },
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/consortia/{consortiumId}/sharing/instances",
+          "permissionsRequired": [
+            "consortia.sharing-instances.item.post"
+          ],
+          "modulePermissions": []
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/consortia/{consortiumId}/sharing/instances/{actionId}",
+          "permissionsRequired": [
+            "consortia.sharing-instances.item.get"
+          ],
+          "modulePermissions": []
         }
       ]
     },
@@ -253,7 +273,9 @@
         "consortia.user-tenants.item.delete",
         "consortia.consortia-configuration.item.post",
         "consortia.sync-primary-affiliations.item.post",
-        "consortia.create-primary-affiliations.item.post"
+        "consortia.create-primary-affiliations.item.post",
+        "consortia.sharing-instances.item.post",
+        "consortia.sharing-instances.item.get"
       ]
     },
     {
@@ -320,8 +342,17 @@
       "permissionName": "consortia.consortia-configuration.item.post",
       "displayName": "create consortia configuration",
       "description": "Create consortia configuration"
+    },
+    {
+      "permissionName": "consortia.sharing-instances.item.post",
+      "displayName": "create sharing instance",
+      "description": "Create sharing instance"
+    },
+    {
+      "permissionName": "consortia.sharing-instances.item.get",
+      "displayName": "get sharing instance",
+      "description": "Get sharing instance"
     }
-
   ],
   "launchDescriptor": {
     "dockerImage": "@artifactId@:@version@",
