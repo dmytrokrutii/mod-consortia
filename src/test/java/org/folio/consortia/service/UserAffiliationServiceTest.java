@@ -87,6 +87,7 @@ class UserAffiliationServiceTest {
     verify(kafkaService, times(1)).send(any(), anyString(), any());
 
   }
+
   @Test
   void primaryAffiliationAddedSuccessfullyTestToCentralTenant() {
     var te = createTenantEntity();
@@ -140,6 +141,7 @@ class UserAffiliationServiceTest {
     when(tenantService.getByTenantId(anyString())).thenReturn(te);
     doNothing().when(consortiumService).checkConsortiumExistsOrThrow(any());
     when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
+    when(folioExecutionContext.getTenantId()).thenReturn("diku");
     Map<String, Collection<String>> map = createOkapiHeaders();
     when(folioExecutionContext.getOkapiHeaders()).thenReturn(map);
 
@@ -159,6 +161,7 @@ class UserAffiliationServiceTest {
     doNothing().when(consortiumService).checkConsortiumExistsOrThrow(any());
     doThrow(new RuntimeException("Unable to send message to Kafka")).when(kafkaService).send(any(), anyString(), any());
     when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
+    when(folioExecutionContext.getTenantId()).thenReturn("diku");
     Map<String, Collection<String>> map = createOkapiHeaders();
     when(folioExecutionContext.getOkapiHeaders()).thenReturn(map);
 

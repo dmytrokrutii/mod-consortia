@@ -5,8 +5,13 @@ Tenant:
       type: string
     code:
       type: string
+      minLength: 3
+      maxLength: 3
+      pattern: "^[a-zA-Z0-9]*$"
     name:
       type: string
+      minLength: 2
+      maxLength: 150
     isCentral:
       type: boolean
   additionalProperties: false

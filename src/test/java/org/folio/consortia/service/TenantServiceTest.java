@@ -286,12 +286,27 @@ class TenantServiceTest {
     Tenant tenant = createTenant("TestID", "TestName2");
 
     when(consortiumRepository.existsById(any())).thenReturn(true);
-    when(tenantRepository.existsById(any())).thenReturn(true);
+    when(tenantRepository.existsById(any())).thenReturn(false);
     when(tenantRepository.save(any(TenantEntity.class))).thenReturn(tenantEntity1);
     when(conversionService.convert(tenantEntity1, Tenant.class)).thenReturn(tenant);
 
     assertThrows(java.lang.IllegalArgumentException.class, () ->
-      tenantService.save(UUID.fromString(CONSORTIUM_ID), UUID.fromString(""), tenant));
+      tenantService.save(UUID.fromString(CONSORTIUM_ID), null, tenant));
+  }
+
+  @Test
+  void shouldThrowExceptionWhileSavingWithDuplicateCodeOrName() {
+    TenantEntity tenantEntity1 = createTenantEntity("TestID", "TestName1");
+    Tenant tenant = createTenant("TestID", "TestName2");
+
+    when(consortiumRepository.existsById(any())).thenReturn(true);
+    when(tenantRepository.existsById(any())).thenReturn(false);
+    when(tenantRepository.save(any(TenantEntity.class))).thenReturn(tenantEntity1);
+    when(tenantRepository.existsByCode(any())).thenReturn(true);
+    when(conversionService.convert(tenantEntity1, Tenant.class)).thenReturn(tenant);
+
+    assertThrows(org.folio.consortia.exception.ResourceAlreadyExistException.class, () ->
+      tenantService.save(UUID.fromString(CONSORTIUM_ID), UUID.randomUUID(), tenant));
   }
 
   @Test

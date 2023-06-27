@@ -251,13 +251,13 @@ class TenantControllerTest extends BaseTest {
         .contentType(MediaType.APPLICATION_JSON)
         .content(contentString))
       .andExpect(status().isUnprocessableEntity())
-      .andExpect(jsonPath("$.errors.size()", is(1)))
+      .andExpect(jsonPath("$.errors.size()", is(2)))
       .andExpect(jsonPath("$.errors[0].code", is("tenantValidationError")));
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"{\"id\": \"123123123123123123\",\"code\":\"TST\", \"name\": \"\", \"isCentral\":false}"})
-  void shouldThrownConstraintViolationException(String contentString) throws Exception {
+  @ValueSource(strings = {"{\"id\": \"123123123123123123\",\"code\":\"@ST\", \"name\": \"\", \"isCentral\":false}"})
+  void shouldThrownMethodArgumentNotValidException(String contentString) throws Exception {
     var headers = defaultHeaders();
     TenantEntity centralTenant = createTenantEntity(CENTRAL_TENANT_ID, CENTRAL_TENANT_ID, "TTA", true);
 
@@ -288,9 +288,9 @@ class TenantControllerTest extends BaseTest {
         .content(contentString))
       .andExpect(status().isUnprocessableEntity())
       .andExpect(jsonPath("$.errors.size()", is(2)))
-      .andExpect(jsonPath("$.errors[0].code", is("ValidationError")))
+      .andExpect(jsonPath("$.errors[0].code", is("tenantValidationError")))
       .andExpect(jsonPath("$.errors[0].type", is("-1")))
-      .andExpect(jsonPath("$.errors[1].code", is("ValidationError")))
+      .andExpect(jsonPath("$.errors[1].code", is("tenantValidationError")))
       .andExpect(jsonPath("$.errors[1].type", is("-1")));
   }
 

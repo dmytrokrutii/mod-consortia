@@ -19,4 +19,6 @@ public interface TenantRepository extends JpaRepository<TenantEntity, String> {
   Optional<TenantEntity> findCentralTenant();
 
   boolean existsByIsCentralTrue();
+  boolean existsByCode(String code);
+  boolean existsByName(String name);
 }

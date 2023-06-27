@@ -1,6 +1,5 @@
 package org.folio.consortia.controller;
 
-import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.folio.consortia.utils.ErrorHelper.ErrorCode.*;
 import static org.folio.consortia.utils.ErrorHelper.createExternalError;
 import static org.folio.consortia.utils.ErrorHelper.createInternalError;
@@ -28,7 +27,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-import jakarta.validation.ConstraintViolationException;
 import lombok.extern.log4j.Log4j2;
 
 @RestControllerAdvice
@@ -122,23 +120,4 @@ public class ErrorHandlingController {
     return new Errors().errors(errorList);
   }
 
-  @ExceptionHandler(ConstraintViolationException.class)
-  @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
-  public Errors handleConstraintViolation(ConstraintViolationException ex) {
-    log.error("Handle constraint violation", ex);
-
-    List<Error> errorList = ex.getConstraintViolations()
-      .stream()
-      .map(violation -> {
-        var customCode = (violation.getRootBeanClass() != null ? violation.getRootBeanClass().getSimpleName() : EMPTY) + "ValidationError";
-        return new Error()
-          // Extract the error message and validation errors from the ConstraintViolationException
-          .message(String.format("'%s' validation failed. %s", violation.getPropertyPath(), violation.getMessage()))
-          .type(ErrorHelper.ErrorType.EXTERNAL.getTypeCode())
-          .code(customCode);
-      })
-      .toList();
-
-    return new Errors().errors(errorList);
-  }
 }
