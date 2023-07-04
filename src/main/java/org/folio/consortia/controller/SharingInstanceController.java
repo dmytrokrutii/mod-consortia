@@ -5,6 +5,8 @@ import static org.springframework.http.HttpStatus.CREATED;
 import java.util.UUID;
 
 import org.folio.consortia.domain.dto.SharingInstance;
+import org.folio.consortia.domain.dto.SharingInstanceCollection;
+import org.folio.consortia.domain.dto.Status;
 import org.folio.consortia.rest.resource.SharingApi;
 import org.folio.consortia.service.SharingInstanceService;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +21,7 @@ import lombok.extern.log4j.Log4j2;
 @RequestMapping("/consortia/{consortiumId}")
 @Log4j2
 @RequiredArgsConstructor
-public class SharingInstanceController implements  SharingApi{
+public class SharingInstanceController implements SharingApi {
 
   private final SharingInstanceService sharingInstanceService;
 
@@ -31,5 +33,12 @@ public class SharingInstanceController implements  SharingApi{
   @Override
   public ResponseEntity<SharingInstance> getSharingInstanceById(UUID consortiumId, UUID actionId) {
     return ResponseEntity.ok(sharingInstanceService.getById(consortiumId, actionId));
+  }
+
+  @Override
+  public ResponseEntity<SharingInstanceCollection> getSharingInstances(UUID consortiumId, UUID instanceIdentifier,
+      String sourceTenantId, String targetTenantId, Status status, Integer offset, Integer limit) {
+    return ResponseEntity.ok(sharingInstanceService.getSharingInstances(consortiumId, instanceIdentifier, sourceTenantId,
+      targetTenantId, status, offset, limit));
   }
 }

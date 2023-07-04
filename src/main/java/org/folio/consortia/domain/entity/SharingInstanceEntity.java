@@ -3,6 +3,7 @@ package org.folio.consortia.domain.entity;
 import java.util.Objects;
 import java.util.UUID;
 
+import org.folio.consortia.domain.dto.Status;
 import org.folio.consortia.domain.entity.base.AuditableEntity;
 
 import jakarta.persistence.Entity;
@@ -28,14 +29,8 @@ public class SharingInstanceEntity extends AuditableEntity {
   private String sourceTenantId;
   private String targetTenantId;
   @Enumerated(EnumType.STRING)
-  private StatusType status;
+  private Status status;
   private String error;
-
-  public enum StatusType{
-    IN_PROGRESS,
-    COMPLETE,
-    ERROR
-  }
 
   @Override
   public boolean equals(Object o) {

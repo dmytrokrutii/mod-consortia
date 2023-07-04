@@ -227,6 +227,16 @@
             "consortia.sharing-instances.item.get"
           ],
           "modulePermissions": []
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/consortia/{consortiumId}/sharing/instances",
+          "permissionsRequired": [
+            "consortia.sharing-instances.collection.get"
+          ],
+          "modulePermissions": []
         }
       ]
     },
@@ -275,7 +285,8 @@
         "consortia.sync-primary-affiliations.item.post",
         "consortia.create-primary-affiliations.item.post",
         "consortia.sharing-instances.item.post",
-        "consortia.sharing-instances.item.get"
+        "consortia.sharing-instances.item.get",
+        "consortia.sharing-instances.collection.get"
       ]
     },
     {
@@ -352,6 +363,11 @@
       "permissionName": "consortia.sharing-instances.item.get",
       "displayName": "get sharing instance",
       "description": "Get sharing instance"
+    },
+    {
+      "permissionName": "consortia.sharing-instances.collection.get",
+      "displayName": "get sharing instances",
+      "description": "Get List of sharing instances"
     }
   ],
   "launchDescriptor": {

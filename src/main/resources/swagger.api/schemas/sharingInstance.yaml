@@ -1,4 +1,5 @@
 SharingInstance:
+  description: "A JSON schema for the Sharing Instance"
   type: object
   properties:
     id:
@@ -13,6 +14,7 @@ SharingInstance:
       type: string
     status:
       type: string
+      $ref: "status.yaml#/Status"
     error:
       type: string
     metadata:
@@ -23,3 +25,20 @@ SharingInstance:
     - instanceIdentifier
     - sourceTenantId
     - targetTenantId
+
+SharingInstanceCollection:
+  description: "A JSON schema for the Sharing Instances Collection"
+  type: object
+  properties:
+    sharingInstances:
+      type: array
+      description: "The list of sharing instances"
+      items:
+        type: object
+        $ref: "sharingInstance.yaml#/SharingInstance"
+    totalRecords:
+      type: integer
+  additionalProperties: false
+  required:
+    - sharingInstances
+    - totalRecords

@@ -18,7 +18,7 @@ public class SharingInstanceConverter implements Converter<SharingInstanceEntity
     sharingInstance.setInstanceIdentifier(source.getInstanceId());
     sharingInstance.setSourceTenantId(source.getSourceTenantId());
     sharingInstance.setTargetTenantId(source.getTargetTenantId());
-    sharingInstance.setStatus(String.valueOf(source.getStatus()));
+    sharingInstance.setStatus(source.getStatus());
     sharingInstance.setError(source.getError());
     Metadata metadata = new Metadata();
     metadata.setCreatedByUserId(source.getCreatedBy());
