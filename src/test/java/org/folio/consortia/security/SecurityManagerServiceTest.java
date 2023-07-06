@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.folio.consortia.support.BaseTest;
+import org.folio.consortia.support.BaseIT;
 import org.folio.spring.DefaultFolioExecutionContext;
 import org.folio.spring.FolioModuleMetadata;
 import org.folio.spring.integration.XOkapiHeaders;
@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
-class SecurityManagerServiceTest extends BaseTest {
+class SecurityManagerServiceTest extends BaseIT {
 
   @Autowired private SecurityManagerService securityManagerService;
   @Autowired private FolioModuleMetadata folioModuleMetadata;

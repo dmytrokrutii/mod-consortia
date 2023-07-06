@@ -19,14 +19,14 @@ import org.folio.consortia.repository.ConsortiumRepository;
 import org.folio.consortia.repository.SharingInstanceRepository;
 import org.folio.consortia.repository.TenantRepository;
 import org.folio.consortia.service.SharingInstanceService;
-import org.folio.consortia.support.BaseTest;
+import org.folio.consortia.support.BaseIT;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 
-class SharingInstanceControllerTest extends BaseTest {
+class SharingInstanceControllerTest extends BaseIT {
 
   @MockBean
   private SharingInstanceService sharingInstanceService;

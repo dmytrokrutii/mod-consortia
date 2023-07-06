@@ -1,21 +1,27 @@
 package org.folio.consortia.controller;
 
-import static org.folio.consortia.utils.ErrorHelper.ErrorCode.*;
 import static org.folio.consortia.utils.ErrorHelper.createExternalError;
 import static org.folio.consortia.utils.ErrorHelper.createInternalError;
 import static org.folio.consortia.utils.ErrorHelper.createPermissionError;
+import static org.folio.consortia.utils.ErrorHelper.ErrorCode.BAD_GATEWAY;
+import static org.folio.consortia.utils.ErrorHelper.ErrorCode.DUPLICATE_ERROR;
+import static org.folio.consortia.utils.ErrorHelper.ErrorCode.NOT_FOUND_ERROR;
+import static org.folio.consortia.utils.ErrorHelper.ErrorCode.PERMISSION_REQUIRED;
+import static org.folio.consortia.utils.ErrorHelper.ErrorCode.PUBLICATION_ERROR;
+import static org.folio.consortia.utils.ErrorHelper.ErrorCode.UNAUTHORIZED;
+import static org.folio.consortia.utils.ErrorHelper.ErrorCode.VALIDATION_ERROR;
 
 import java.util.List;
 import java.util.Objects;
 
-import feign.FeignException;
 import org.folio.consortia.domain.dto.Error;
 import org.folio.consortia.domain.dto.Errors;
 import org.folio.consortia.exception.ConsortiumClientException;
+import org.folio.consortia.exception.InvalidTokenException;
 import org.folio.consortia.exception.PrimaryAffiliationException;
+import org.folio.consortia.exception.PublicationException;
 import org.folio.consortia.exception.ResourceAlreadyExistException;
 import org.folio.consortia.exception.ResourceNotFoundException;
-import org.folio.consortia.exception.InvalidTokenException;
 import org.folio.consortia.utils.ErrorHelper;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -27,6 +33,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import feign.FeignException;
 import lombok.extern.log4j.Log4j2;
 
 @RestControllerAdvice
@@ -82,7 +89,13 @@ public class ErrorHandlingController {
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   @ExceptionHandler(PrimaryAffiliationException.class)
   public Errors handlePrimaryAffiliationException(Exception e) {
-    return createExternalError(e.getMessage(), HAS_PRIMARY_AFFILIATION_ERROR);
+    return createExternalError(e.getMessage(), VALIDATION_ERROR);
+  }
+
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  @ExceptionHandler(PublicationException.class)
+  public Errors handlePublicationException(PublicationException e) {
+    return createInternalError(e.getMessage(), PUBLICATION_ERROR);
   }
 
   @ResponseStatus(HttpStatus.FORBIDDEN)

@@ -1,20 +1,5 @@
 package org.folio.consortia.controller;
 
-import org.folio.consortia.domain.dto.UserTenant;
-import org.folio.consortia.domain.dto.UserTenantCollection;
-import org.folio.consortia.repository.ConsortiumRepository;
-import org.folio.consortia.service.UserTenantService;
-import org.folio.consortia.support.BaseTest;
-import org.folio.spring.FolioExecutionContext;
-import org.folio.spring.integration.XOkapiHeaders;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.HttpHeaders;
-
-import java.util.List;
-import java.util.UUID;
-
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -22,7 +7,22 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-public class SelfControllerTest extends BaseTest {
+
+import java.util.List;
+import java.util.UUID;
+
+import org.folio.consortia.domain.dto.UserTenant;
+import org.folio.consortia.domain.dto.UserTenantCollection;
+import org.folio.consortia.repository.ConsortiumRepository;
+import org.folio.consortia.service.UserTenantService;
+import org.folio.consortia.support.BaseIT;
+import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.integration.XOkapiHeaders;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpHeaders;
+public class SelfControllerTest extends BaseIT {
 
   @Autowired
   FolioExecutionContext folioExecutionContext;

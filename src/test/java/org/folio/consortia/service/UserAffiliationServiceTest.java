@@ -1,6 +1,23 @@
 package org.folio.consortia.service;
 
-import org.apache.kafka.common.header.internals.RecordHeader;
+import static org.folio.consortia.utils.EntityUtils.createTenantEntity;
+import static org.folio.consortia.utils.InputOutputTestUtils.getMockDataAsString;
+import static org.folio.spring.integration.XOkapiHeaders.TENANT;
+import static org.folio.spring.integration.XOkapiHeaders.TOKEN;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.folio.consortia.config.kafka.KafkaService;
 import org.folio.consortia.repository.TenantRepository;
 import org.folio.consortia.service.impl.UserAffiliationServiceImpl;
@@ -16,25 +33,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import static org.folio.consortia.utils.EntityUtils.createTenantEntity;
-import static org.folio.consortia.utils.InputOutputTestUtils.getMockData;
-import static org.folio.spring.integration.XOkapiHeaders.TENANT;
-import static org.folio.spring.integration.XOkapiHeaders.TOKEN;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
-
 
 class UserAffiliationServiceTest {
-  private static final String userCreatedEventSample = getMockData("mockdata/kafka/create_primary_affiliation_request.json");
-  private static final String userDeletedEventSample = getMockData("mockdata/kafka/delete_primary_affiliation_request.json");
+  private static final String userCreatedEventSample = getMockDataAsString("mockdata/kafka/create_primary_affiliation_request.json");
+  private static final String userDeletedEventSample = getMockDataAsString("mockdata/kafka/delete_primary_affiliation_request.json");
   @Mock
   private FolioModuleMetadata folioModuleMetadata;
   @InjectMocks
@@ -52,10 +54,6 @@ class UserAffiliationServiceTest {
   @Mock
   FolioExecutionContext folioExecutionContext;
   AutoCloseable mockitoMocks;
-
-  private RecordHeader createKafkaHeader(String headerName, String headerValue) {
-    return new RecordHeader(headerName, headerValue.getBytes(StandardCharsets.UTF_8));
-  }
 
   @BeforeEach
   public void beforeEach() {

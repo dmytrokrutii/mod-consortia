@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 import org.folio.consortia.repository.ConsortiumRepository;
 import org.folio.consortia.repository.TenantRepository;
 import org.folio.consortia.service.TenantService;
-import org.folio.consortia.support.BaseTest;
+import org.folio.consortia.support.BaseIT;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -25,10 +25,11 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+
 import lombok.SneakyThrows;
 import wiremock.net.minidev.json.JSONObject;
 
-class SharingInstanceControllerIntegrationTests extends BaseTest {
+class SharingInstanceControllerIntegrationTests extends BaseIT {
 
   private static boolean INITIALIZED = false;
   private static final String UNIVERSITY = "university";

@@ -1,0 +1,37 @@
+PublicationRequest:
+  type: object
+  title: Publication request
+  properties:
+    url:
+      description: URL for publishing requests for consortia tenants
+      type: string
+    method:
+      description: HTTP method
+      type: string
+    tenants:
+      description: Set of tenants to be requested
+      type: array
+      uniqueItems: true
+      items:
+        type: string
+    payload:
+      description: Http request body
+      type: object
+  additionalProperties: false
+
+PublicationResponse:
+  type: object
+  title: Publication response
+  properties:
+    id:
+      description: id of publication record
+      type: string
+    status:
+      type: string
+      $ref: "publication_schema.yaml#/PublicationStatus"
+
+  additionalProperties: false
+
+PublicationStatus:
+  description: publication status
+  enum: [ "IN_PROGRESS", "ERROR", "COMPLETE" ]

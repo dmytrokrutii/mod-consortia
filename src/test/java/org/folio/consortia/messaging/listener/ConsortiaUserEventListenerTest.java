@@ -1,10 +1,17 @@
 package org.folio.consortia.messaging.listener;
 
-import static org.folio.consortia.support.BaseTest.TENANT;
-import static org.folio.consortia.utils.InputOutputTestUtils.getMockData;
+import static org.folio.consortia.support.BaseIT.TENANT;
+import static org.folio.consortia.utils.InputOutputTestUtils.getMockDataAsString;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.folio.consortia.service.ConsortiaConfigurationService;
 import org.folio.consortia.service.UserAffiliationService;
 import org.folio.spring.integration.XOkapiHeaders;
@@ -14,15 +21,12 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.messaging.MessageHeaders;
-import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
 
 @SpringBootTest
 class ConsortiaUserEventListenerTest {
 
-  private static final String USER_CREATED_EVENT_SAMPLE = getMockData("mockdata/kafka/create_primary_affiliation_request.json");
-  private static final String USER_DELETED_EVENT_SAMPLE = getMockData("mockdata/kafka/delete_primary_affiliation_request.json");
+  private static final String USER_CREATED_EVENT_SAMPLE = getMockDataAsString("mockdata/kafka/create_primary_affiliation_request.json");
+  private static final String USER_DELETED_EVENT_SAMPLE = getMockDataAsString("mockdata/kafka/delete_primary_affiliation_request.json");
 
   @InjectMocks
   private ConsortiaUserEventListener eventListener;

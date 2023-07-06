@@ -142,6 +142,16 @@
         },
         {
           "methods": [
+            "POST"
+          ],
+          "pathPattern": "/consortia/{consortiumId}/publications",
+          "permissionsRequired": [
+            "consortia.publications.item.post"
+          ],
+          "modulePermissions": []
+        },
+        {
+          "methods": [
             "GET"
           ],
           "pathPattern": "/consortia/{consortiumId}/user-tenants",
@@ -318,6 +328,11 @@
       "permissionName": "consortia.create-primary-affiliations.item.post",
       "displayName": "create consortia primary affiliation",
       "description": "create consortia primary affiliation"
+    },
+    {
+      "permissionName": "consortia.publications.item.post",
+      "displayName": "publish coordinator post request",
+      "description": "publish coordinator post request"
     },
     {
       "permissionName": "consortia.user-tenants.collection.get",

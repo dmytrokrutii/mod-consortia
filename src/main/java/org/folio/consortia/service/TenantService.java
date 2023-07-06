@@ -1,10 +1,12 @@
 package org.folio.consortia.service;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.folio.consortia.domain.dto.Tenant;
 import org.folio.consortia.domain.dto.TenantCollection;
 import org.folio.consortia.domain.entity.TenantEntity;
+import org.folio.consortia.exception.ResourceNotFoundException;
 
 public interface TenantService {
 
@@ -58,6 +60,12 @@ public interface TenantService {
    * @return central tenant id
    */
   String getCentralTenantId();
+
+  /**
+   * Check for tenant existence in consortia
+   * @throws ResourceNotFoundException in case if tenants absence in consortia
+   */
+  void checkTenantsAndConsortiumExistsOrThrow(UUID consortiumId, List<String> tenantIds);
 
   /**
    * Check whether tenant exists or throw ResourceNotFound exception

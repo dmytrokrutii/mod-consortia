@@ -2,10 +2,12 @@ package org.folio.consortia.service.impl;
 
 import static org.folio.consortia.utils.HelperUtils.checkIdenticalOrThrow;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.folio.consortia.client.ConsortiaConfigurationClient;
 import org.folio.consortia.client.SyncPrimaryAffiliationClient;
 import org.folio.consortia.client.UserTenantsClient;
@@ -191,6 +193,22 @@ public class TenantServiceImpl implements TenantService {
   public void checkTenantExistsOrThrow(String tenantId) {
     if (!tenantRepository.existsById(tenantId)) {
       throw new ResourceNotFoundException("id", tenantId);
+    }
+  }
+
+  @Override
+  public void checkTenantsAndConsortiumExistsOrThrow(UUID consortiumId, List<String> tenantIds) {
+    consortiumService.checkConsortiumExistsOrThrow(consortiumId);
+    var tenantEntities = tenantRepository.findAllById(tenantIds);
+
+    if (tenantEntities.size() != tenantIds.size()) {
+      var foundTenantIds = tenantEntities.stream()
+        .map(TenantEntity::getId)
+        .toList();
+      String absentTenants = String.join(", ", CollectionUtils.subtract(tenantIds, foundTenantIds));
+      log.warn("Tenants with ids {} not found", absentTenants);
+
+      throw new ResourceNotFoundException("ids", absentTenants);
     }
   }
 

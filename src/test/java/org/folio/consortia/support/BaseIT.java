@@ -37,12 +37,12 @@ import lombok.SneakyThrows;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@ContextConfiguration(initializers = BaseTest.DockerPostgresDataSourceInitializer.class)
+@ContextConfiguration(initializers = BaseIT.DockerPostgresDataSourceInitializer.class)
 @AutoConfigureMockMvc
 @Testcontainers
 @EmbeddedKafka
 @EnableKafkaExtension
-public abstract class BaseTest {
+public abstract class BaseIT {
 
   @Autowired
   protected MockMvc mockMvc;

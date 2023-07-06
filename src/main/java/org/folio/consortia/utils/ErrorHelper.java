@@ -1,11 +1,12 @@
 package org.folio.consortia.utils;
 
-import feign.FeignException;
-import lombok.experimental.UtilityClass;
+import java.util.List;
+
 import org.folio.consortia.domain.dto.Error;
 import org.folio.consortia.domain.dto.Errors;
 
-import java.util.List;
+import feign.FeignException;
+import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class ErrorHelper {
@@ -70,6 +71,7 @@ public class ErrorHelper {
     NOT_FOUND_ERROR,
     DUPLICATE_ERROR,
     HAS_PRIMARY_AFFILIATION_ERROR,
+    PUBLICATION_ERROR,
     PERMISSION_REQUIRED,
     BAD_GATEWAY,
     UNAUTHORIZED

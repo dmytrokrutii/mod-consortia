@@ -2,6 +2,7 @@ package org.folio.consortia.controller;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static org.folio.consortia.exception.ResourceNotFoundException.NOT_FOUND_MSG_TEMPLATE;
 import static org.folio.consortia.utils.EntityUtils.createConsortiaConfiguration;
 import static org.folio.consortia.utils.EntityUtils.createTenant;
 import static org.folio.consortia.utils.EntityUtils.createTenantEntity;
@@ -51,7 +52,7 @@ import org.folio.consortia.service.TenantService;
 import org.folio.consortia.service.UserService;
 import org.folio.consortia.service.UserTenantService;
 import org.folio.consortia.service.impl.ConsortiaConfigurationServiceImpl;
-import org.folio.consortia.support.BaseTest;
+import org.folio.consortia.support.BaseIT;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.FolioModuleMetadata;
 import org.folio.spring.integration.XOkapiHeaders;
@@ -73,7 +74,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 
 @EntityScan(basePackageClasses = TenantEntity.class)
-class TenantControllerTest extends BaseTest {
+class TenantControllerTest extends BaseIT {
   private static final String TENANT_REQUEST_BODY = "{\"id\":\"diku1234\",\"code\":\"TST\",\"name\":\"diku_tenant_name1234\", \"isCentral\":false}";
   private static final String CONSORTIUM_ID = "7698e46-c3e3-11ed-afa1-0242ac120002";
   private static final String CENTRAL_TENANT_ID = "diku";
@@ -215,7 +216,7 @@ class TenantControllerTest extends BaseTest {
       .andExpectAll(
         status().is4xxClientError(),
         content().contentType(MediaType.APPLICATION_JSON_VALUE),
-        jsonPath("$.errors[0].message", is("Object with consortiumId [07698e46-c3e3-11ed-afa1-0242ac120002] was not found")));
+        jsonPath("$.errors[0].message", is(String.format(NOT_FOUND_MSG_TEMPLATE, "consortiumId","07698e46-c3e3-11ed-afa1-0242ac120002"))));
   }
 
   @ParameterizedTest
@@ -236,7 +237,7 @@ class TenantControllerTest extends BaseTest {
         .headers(headers).content(contentString))
       .andExpectAll(
         status().is4xxClientError(),
-        jsonPath("$.errors[0].message", is("Object with consortiumId [07698e46-c3e3-11ed-afa1-0242ac120002] was not found")),
+        jsonPath("$.errors[0].message", is(String.format(NOT_FOUND_MSG_TEMPLATE, "consortiumId","07698e46-c3e3-11ed-afa1-0242ac120002"))),
         jsonPath("$.errors[0].code", is("NOT_FOUND_ERROR")));
   }
 

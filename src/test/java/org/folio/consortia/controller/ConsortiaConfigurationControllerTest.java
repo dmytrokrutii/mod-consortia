@@ -1,17 +1,5 @@
 package org.folio.consortia.controller;
 
-import org.folio.consortia.domain.entity.ConsortiaConfigurationEntity;
-import org.folio.consortia.repository.ConsortiaConfigurationRepository;
-import org.folio.consortia.support.BaseTest;
-import org.folio.spring.integration.XOkapiHeaders;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.boot.test.mock.mockito.MockBean;
-
-import java.util.List;
-import java.util.UUID;
-
 import static org.folio.consortia.utils.EntityUtils.createConsortiaConfigurationEntity;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -21,7 +9,19 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-class ConsortiaConfigurationControllerTest extends BaseTest {
+import java.util.List;
+import java.util.UUID;
+
+import org.folio.consortia.domain.entity.ConsortiaConfigurationEntity;
+import org.folio.consortia.repository.ConsortiaConfigurationRepository;
+import org.folio.consortia.support.BaseIT;
+import org.folio.spring.integration.XOkapiHeaders;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.boot.test.mock.mockito.MockBean;
+
+class ConsortiaConfigurationControllerTest extends BaseIT {
 
   @MockBean
   ConsortiaConfigurationRepository configurationRepository;

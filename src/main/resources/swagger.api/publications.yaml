@@ -1,0 +1,87 @@
+openapi: 3.0.0
+info:
+  title: Publish coordinator API
+  description: "Publish coordinator API"
+  version: 0.0.1
+
+servers:
+  - url: /consortia/{consortiumId}/
+
+paths:
+  /publications:
+    post:
+      summary: Send post requests to the tenants
+      operationId: publishRequests
+      parameters:
+        - $ref: "#/components/parameters/consortiumId"
+      responses:
+        '201':
+          $ref: '#/components/responses/Publication'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      requestBody:
+        $ref: '#/components/requestBodies/Publication'
+
+components:
+  requestBodies:
+    Publication:
+      description: Publish coordinator request
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "schemas/publication_schema.yaml#/PublicationRequest"
+  responses:
+    Publication:
+      description: Returns a publish coordinator object
+      content:
+        application/json:
+          schema:
+            $ref: "schemas/publication_schema.yaml#/PublicationResponse"
+    Conflict:
+      description: Validation errors
+      content:
+        application/json:
+          schema:
+            $ref: "schemas/common.yaml#/Errors"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "schemas/common.yaml#/Errors"
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "schemas/common.yaml#/Errors"
+    Unauthorized:
+      description: Not authorized to perform requested action
+      content:
+        text/plain:
+          example: unable to perform action -- unauthorized
+    UnprocessableEntity:
+      description: Validation errors
+      content:
+        application/json:
+          schema:
+            $ref: 'schemas/common.yaml#/Errors'
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "schemas/common.yaml#/Error"
+  parameters:
+    consortiumId:
+      in: path
+      name: consortiumId
+      schema:
+        $ref: "schemas/common.yaml#/uuid"
+      required: true
+      description: The ID of consortium

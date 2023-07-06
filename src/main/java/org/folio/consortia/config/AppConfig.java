@@ -11,6 +11,7 @@ import org.springframework.core.task.TaskExecutor;
 import org.springframework.format.FormatterRegistry;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -32,8 +33,8 @@ public class AppConfig implements WebMvcConfigurer {
   @Bean("asyncTaskExecutor")
   public TaskExecutor asyncTaskExecutor() {
     ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-    executor.setCorePoolSize(Runtime.getRuntime().availableProcessors());
-    executor.setMaxPoolSize(Runtime.getRuntime().availableProcessors());
+    executor.setCorePoolSize(Math.max(1, Runtime.getRuntime().availableProcessors() / 2));
+    executor.setMaxPoolSize(Runtime.getRuntime().availableProcessors() * 2);
     executor.setQueueCapacity(500);
     executor.setThreadNamePrefix("ConsortiaAsync-");
     executor.setTaskDecorator(FolioExecutionScopeExecutionContextManager::getRunnableWithCurrentFolioContext);
@@ -50,5 +51,10 @@ public class AppConfig implements WebMvcConfigurer {
       .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
       .setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
     return objectMapper;
+  }
+
+  @Bean
+  public RestTemplate restTemplate() {
+    return new RestTemplate();
   }
 }

@@ -3,7 +3,7 @@ package org.folio.consortia.service;
 import static org.folio.consortia.utils.EntityUtils.createConsortiaConfiguration;
 import static org.folio.consortia.utils.EntityUtils.createTenant;
 import static org.folio.consortia.utils.EntityUtils.createTenantEntity;
-import static org.folio.consortia.utils.InputOutputTestUtils.getMockData;
+import static org.folio.consortia.utils.InputOutputTestUtils.getMockDataAsString;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -180,7 +180,7 @@ class TenantServiceTest {
     permissionUserCollection.setPermissionUsers(List.of(permissionUser));
     User user = new User();
     user.setId(UUID.randomUUID().toString());
-    var userCollectionString = getMockData("mockdata/user_collection.json");
+    var userCollectionString = getMockDataAsString("mockdata/user_collection.json");
     UserCollection userCollection = new ObjectMapper().readValue(userCollectionString, UserCollection.class);
 
     when(consortiumRepository.existsById(consortiumId)).thenReturn(true);

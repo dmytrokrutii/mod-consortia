@@ -23,7 +23,7 @@ public class JsonTestUtils {
 
   @SneakyThrows
   public static org.folio.consortia.domain.dto.UserEvent readUserEventMockFile(String filename) {
-    return MAPPER.readValue(InputOutputTestUtils.getMockData(filename), org.folio.consortia.domain.dto.UserEvent.class);
+    return MAPPER.readValue(InputOutputTestUtils.getMockDataAsString(filename), org.folio.consortia.domain.dto.UserEvent.class);
   }
 
   @SneakyThrows
@@ -38,12 +38,12 @@ public class JsonTestUtils {
 
   @SneakyThrows
   public static <T> T getMockAsObject(String mockPath, Class<T> entityClass) {
-    return getObjectFromJson(InputOutputTestUtils.getMockData(mockPath), entityClass);
+    return getObjectFromJson(InputOutputTestUtils.getMockDataAsString(mockPath), entityClass);
   }
 
   @SneakyThrows
   public static ObjectNode getMockAsJsonNode(String fullPath) {
-    return (ObjectNode) MAPPER.readTree(InputOutputTestUtils.getMockData(fullPath));
+    return (ObjectNode) MAPPER.readTree(InputOutputTestUtils.getMockDataAsString(fullPath));
   }
 
   @SneakyThrows

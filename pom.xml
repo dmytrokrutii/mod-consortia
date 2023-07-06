@@ -41,6 +41,7 @@
     <user_tenants.yaml.file>${project.basedir}/src/main/resources/swagger.api/user_tenants.yaml</user_tenants.yaml.file>
     <user_events.yaml.file>${project.basedir}/src/main/resources/swagger.api/kafka_message_schemas.yaml</user_events.yaml.file>
     <consortia_configuration.yaml.file>${project.basedir}/src/main/resources/swagger.api/consortia_configuration.yaml</consortia_configuration.yaml.file>
+    <publish_coordinator.yaml.file>${project.basedir}/src/main/resources/swagger.api/publications.yaml</publish_coordinator.yaml.file>
     <sharing_instances.yaml.file>${project.basedir}/src/main/resources/swagger.api/sharing_instance.yaml</sharing_instances.yaml.file>
     <!-- runtime dependencies -->
     <folio-spring-base.version>7.1.0</folio-spring-base.version>
@@ -468,6 +469,32 @@
               </configOptions>
             </configuration>
           </execution>
+          <execution>
+            <id>publish_coordinator</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <inputSpec>${publish_coordinator.yaml.file}</inputSpec>
+              <output>${project.build.directory}/generated-sources</output>
+              <generatorName>spring</generatorName>
+              <modelPackage>${project.groupId}.consortia.domain.dto</modelPackage>
+              <apiPackage>${project.groupId}.consortia.rest.resource</apiPackage>
+              <generateApis>true</generateApis>
+              <generateApiTests>true</generateApiTests>
+              <generateApiDocumentation>true</generateApiDocumentation>
+              <generateModels>true</generateModels>
+              <generateModelTests>false</generateModelTests>
+              <generateSupportingFiles>true</generateSupportingFiles>
+              <supportingFilesToGenerate>ApiUtil.java</supportingFilesToGenerate>
+              <generateModelDocumentation>true</generateModelDocumentation>
+              <configOptions>
+                <dateLibrary>java</dateLibrary>
+                <interfaceOnly>true</interfaceOnly>
+                <useSpringBoot3>true</useSpringBoot3>
+              </configOptions>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
 
@@ -477,7 +504,7 @@
         <version>3.0.0-M7</version>
         <configuration>
           <useSystemClassLoader>false</useSystemClassLoader>
-          <argLine>@{argLine} -Dfile.encoding=UTF-8</argLine>
+          <argLine>@{argLine} -Dfile.encoding=UTF-8 -Duser.language=en -Duser.region=US</argLine>
         </configuration>
       </plugin>
 

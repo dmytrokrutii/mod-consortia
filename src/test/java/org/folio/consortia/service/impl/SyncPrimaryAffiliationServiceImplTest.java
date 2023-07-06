@@ -1,7 +1,7 @@
 package org.folio.consortia.service.impl;
 
 import static org.folio.consortia.utils.EntityUtils.createTenantEntity;
-import static org.folio.consortia.utils.InputOutputTestUtils.getMockData;
+import static org.folio.consortia.utils.InputOutputTestUtils.getMockDataAsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -83,7 +83,7 @@ class SyncPrimaryAffiliationServiceImplTest {
     TenantEntity tenantEntity1 = createTenantEntity(tenantId, "TestName1");
     tenantEntity1.setConsortiumId(consortiumId);
 
-    var userCollectionString = getMockData("mockdata/user_collection.json");
+    var userCollectionString = getMockDataAsString("mockdata/user_collection.json");
     List<User> userCollection = new ObjectMapper().readValue(userCollectionString, UserCollection.class).getUsers();
 
     var syncUser = new SyncUser().id(UUID.randomUUID()
@@ -118,7 +118,7 @@ class SyncPrimaryAffiliationServiceImplTest {
     TenantEntity tenantEntity1 = createTenantEntity(tenantId, "TestName1");
     tenantEntity1.setConsortiumId(consortiumId);
 
-    var userCollectionString = getMockData("mockdata/user_collection.json");
+    var userCollectionString = getMockDataAsString("mockdata/user_collection.json");
     List<User> userCollection = new ObjectMapper().readValue(userCollectionString, UserCollection.class).getUsers();
 
     var syncUser = new SyncUser().id(UUID.randomUUID()

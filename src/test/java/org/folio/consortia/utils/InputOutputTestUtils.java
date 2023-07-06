@@ -9,6 +9,9 @@ import java.util.stream.Stream;
 import org.apache.commons.io.IOUtils;
 import org.folio.consortia.FolioConsortiaApplication;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import lombok.extern.log4j.Log4j2;
@@ -18,7 +21,7 @@ import lombok.extern.log4j.Log4j2;
 public class InputOutputTestUtils {
 
   @SneakyThrows
-  public static String getMockData(String path) {
+  public static String getMockDataAsString(String path) {
 
     try (InputStream resourceAsStream = FolioConsortiaApplication.class.getClassLoader().getResourceAsStream(path)) {
       if (resourceAsStream != null) {
@@ -31,5 +34,10 @@ public class InputOutputTestUtils {
         return sb.toString();
       }
     }
+  }
+
+  public static <T> T getMockDataObject(String path, Class<T> clazz) throws JsonProcessingException {
+    var data = getMockDataAsString(path);
+    return new ObjectMapper().readValue(data, clazz);
   }
 }

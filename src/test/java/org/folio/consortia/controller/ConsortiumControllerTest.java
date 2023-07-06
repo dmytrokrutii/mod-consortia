@@ -1,20 +1,5 @@
 package org.folio.consortia.controller;
 
-import org.folio.consortia.domain.entity.ConsortiumEntity;
-import org.folio.consortia.exception.ResourceAlreadyExistException;
-import org.folio.consortia.repository.ConsortiumRepository;
-import org.folio.consortia.support.BaseTest;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
 import static org.folio.consortia.utils.EntityUtils.createConsortiumEntity;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -25,7 +10,22 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-class ConsortiumControllerTest extends BaseTest {
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import org.folio.consortia.domain.entity.ConsortiumEntity;
+import org.folio.consortia.exception.ResourceAlreadyExistException;
+import org.folio.consortia.repository.ConsortiumRepository;
+import org.folio.consortia.support.BaseIT;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+
+class ConsortiumControllerTest extends BaseIT {
   private static final String CONSORTIUM_RESOURCE_EXIST_MSG_TEMPLATE = "System can not have more than one consortium record";
 
   @MockBean
