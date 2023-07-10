@@ -25,13 +25,50 @@ PublicationResponse:
   properties:
     id:
       description: id of publication record
-      type: string
+      $ref: "common.yaml#/uuid"
     status:
       type: string
       $ref: "publication_schema.yaml#/PublicationStatus"
+  additionalProperties: false
 
+
+PublicationDetailsResponse:
+  type: object
+  title: Publication details response
+  properties:
+    id:
+      description: id of publication record
+      $ref: "common.yaml#/uuid"
+    status:
+      type: string
+      $ref: "publication_schema.yaml#/PublicationStatus"
+    dateTime:
+      description: the date of publication was created
+      type: string
+    request:
+      description: tenant request payload
+      type: string
+    errors:
+      description: "List of errors"
+      type: array
+      items:
+        type: object
+        $ref: "publication_schema.yaml#/PublicationStatusError"
   additionalProperties: false
 
 PublicationStatus:
   description: publication status
   enum: [ "IN_PROGRESS", "ERROR", "COMPLETE" ]
+
+PublicationStatusError:
+  description: publication status error
+  properties:
+    tenantId:
+      description: tenant name which failed to execute request
+      type: string
+    errorMessage:
+      description: error message of failed request
+      type: string
+    errorCode:
+      description: error code of failed request
+      type: integer

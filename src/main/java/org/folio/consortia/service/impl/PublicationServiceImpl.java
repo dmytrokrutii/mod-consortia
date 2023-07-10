@@ -13,14 +13,18 @@ import java.util.concurrent.Semaphore;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.http.HttpException;
+import org.folio.consortia.domain.dto.PublicationDetailsResponse;
 import org.folio.consortia.domain.dto.PublicationRequest;
 import org.folio.consortia.domain.dto.PublicationResponse;
 import org.folio.consortia.domain.dto.PublicationStatus;
+import org.folio.consortia.domain.dto.PublicationStatusError;
 import org.folio.consortia.domain.entity.PublicationStatusEntity;
 import org.folio.consortia.domain.entity.PublicationTenantRequestEntity;
 import org.folio.consortia.exception.PublicationException;
+import org.folio.consortia.exception.ResourceNotFoundException;
 import org.folio.consortia.repository.PublicationStatusRepository;
 import org.folio.consortia.repository.PublicationTenantRequestRepository;
+import org.folio.consortia.service.ConsortiumService;
 import org.folio.consortia.service.HttpRequestService;
 import org.folio.consortia.service.PublicationService;
 import org.folio.consortia.service.TenantService;
@@ -29,6 +33,8 @@ import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.FolioModuleMetadata;
 import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.springframework.core.task.TaskExecutor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -56,6 +62,7 @@ public class PublicationServiceImpl implements PublicationService {
   private final PublicationStatusRepository publicationStatusRepository;
   private final PublicationTenantRequestRepository publicationTenantRequestRepository;
   private final ObjectMapper objectMapper;
+  private final ConsortiumService consortiumService;
   private static final int MAX_ACTIVE_THREADS = 5;
 
   @Override
@@ -69,6 +76,50 @@ public class PublicationServiceImpl implements PublicationService {
 
     return buildPublicationResponse(createdPublicationEntity.getId());
   }
+
+  @Override
+  public PublicationDetailsResponse getPublicationDetails(UUID consortiumId, UUID publicationId) {
+    log.debug("getPublicationDetails:: Trying to retrieve publicationDetails by consortiumId: {} and publicationId id: {}", consortiumId, publicationId);
+
+    consortiumService.checkConsortiumExistsOrThrow(consortiumId);
+    var publicationStatusEntity = publicationStatusRepository.findById(publicationId)
+      .orElseThrow(() -> new ResourceNotFoundException("publicationId", String.valueOf(publicationId)));
+
+    var ptrEntities = publicationTenantRequestRepository.findByPcStateId(publicationId, PageRequest.of(0, Integer.MAX_VALUE));
+    log.info("getPublicationDetails:: Found {} of {} expected tenant request records", ptrEntities.getTotalElements(), publicationStatusEntity.getTotalRecords());
+
+    var errorList = buildErrorListFromPublicationTenantRequestEntities(ptrEntities);
+    var tenantRequestPayload = getPayloadFromPublicationTenantRequestEntities(ptrEntities);
+
+    var pdr = new PublicationDetailsResponse()
+      .id(publicationStatusEntity.getId())
+      .status(publicationStatusEntity.getStatus())
+      .dateTime(publicationStatusEntity.getCreatedDate().toString())
+      .request(tenantRequestPayload)
+      .errors(errorList);
+    log.info("getPublicationDetails:: Prepared publication details response {}", pdr);
+    return pdr;
+  }
+
+  private String getPayloadFromPublicationTenantRequestEntities(Page<PublicationTenantRequestEntity> publicationTenantRequestEntity) {
+    return publicationTenantRequestEntity.getContent()
+      .stream()
+      .map(PublicationTenantRequestEntity::getRequestPayload)
+      .findFirst()
+      .orElse(null);
+  }
+
+  private List<PublicationStatusError> buildErrorListFromPublicationTenantRequestEntities(Page<PublicationTenantRequestEntity> publicationTenantRequestEntity) {
+    return publicationTenantRequestEntity.getContent()
+      .stream()
+      .filter(ptrEntity -> ptrEntity.getStatus() == PublicationStatus.ERROR)
+      .map(ptrEntity -> new PublicationStatusError()
+        .errorMessage(ptrEntity.getResponse())
+        .errorCode(ptrEntity.getResponseStatusCode())
+      .tenantId(ptrEntity.getTenantId()))
+      .toList();
+  }
+
   void processTenantRequests(PublicationRequest publicationRequest, PublicationStatusEntity createdPublicationEntity) {
     List<CompletableFuture<PublicationTenantRequestEntity>> futures = new ArrayList<>();
     Semaphore semaphore = new Semaphore(MAX_ACTIVE_THREADS);
@@ -210,7 +261,7 @@ public class PublicationServiceImpl implements PublicationService {
 
   private PublicationResponse buildPublicationResponse(UUID publicationId) {
     return new PublicationResponse()
-      .id(publicationId.toString())
+      .id(publicationId)
       .status(PublicationStatus.IN_PROGRESS);
   }
 

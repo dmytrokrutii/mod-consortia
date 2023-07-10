@@ -3,14 +3,18 @@ package org.folio.consortia.utils;
 import lombok.experimental.UtilityClass;
 import org.folio.consortia.domain.dto.ConsortiaConfiguration;
 import org.folio.consortia.domain.dto.Consortium;
+import org.folio.consortia.domain.dto.PublicationStatus;
 import org.folio.consortia.domain.dto.SharingInstance;
 import org.folio.consortia.domain.dto.Tenant;
 import org.folio.consortia.domain.dto.UserTenant;
 import org.folio.consortia.domain.entity.ConsortiaConfigurationEntity;
 import org.folio.consortia.domain.entity.ConsortiumEntity;
+import org.folio.consortia.domain.entity.PublicationStatusEntity;
+import org.folio.consortia.domain.entity.PublicationTenantRequestEntity;
 import org.folio.consortia.domain.entity.SharingInstanceEntity;
 import org.folio.consortia.domain.entity.TenantEntity;
 import org.folio.consortia.domain.entity.UserTenantEntity;
+import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -155,5 +159,19 @@ public class EntityUtils {
     sharingInstance.setCreatedDate(LocalDateTime.now());
     sharingInstance.setCreatedBy(UUID.fromString("dcfc317b-0d7c-4334-8656-596105fa6c99"));
     return sharingInstance;
+  }
+
+  public static PublicationTenantRequestEntity createPublicationTenantRequestEntity(PublicationStatusEntity publicationStatusEntity,
+      String tenant, PublicationStatus status, int statusCode) {
+    PublicationTenantRequestEntity entity = new PublicationTenantRequestEntity();
+    entity.setId(UUID.randomUUID());
+    entity.setTenantId(tenant);
+    entity.setStatus(status);
+    entity.setPcState(publicationStatusEntity);
+    entity.setResponse(RandomStringUtils.random(10));
+    entity.setRequestPayload(RandomStringUtils.random(10));
+    entity.setResponseStatusCode(statusCode);
+    entity.setCreatedDate(LocalDateTime.now());
+    return entity;
   }
 }

@@ -25,7 +25,20 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       requestBody:
         $ref: '#/components/requestBodies/Publication'
-
+  /publications/{publicationId}:
+    get:
+      summary: Get publication details
+      operationId: getPublicationDetails
+      parameters:
+        - $ref: "#/components/parameters/consortiumId"
+        - $ref: "#/components/parameters/publicationId"
+      responses:
+        '200':
+          $ref: '#/components/responses/PublicationDetails'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 components:
   requestBodies:
     Publication:
@@ -42,6 +55,12 @@ components:
         application/json:
           schema:
             $ref: "schemas/publication_schema.yaml#/PublicationResponse"
+    PublicationDetails:
+      description: Returns a publish coordinator object
+      content:
+        application/json:
+          schema:
+            $ref: "schemas/publication_schema.yaml#/PublicationDetailsResponse"
     Conflict:
       description: Validation errors
       content:
@@ -85,3 +104,10 @@ components:
         $ref: "schemas/common.yaml#/uuid"
       required: true
       description: The ID of consortium
+    publicationId:
+      in: path
+      name: publicationId
+      schema:
+        $ref: "schemas/common.yaml#/uuid"
+      required: true
+      description: The ID of the publication
