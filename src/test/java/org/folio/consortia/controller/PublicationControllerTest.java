@@ -42,6 +42,7 @@ import org.springframework.http.ResponseEntity;
 public class PublicationControllerTest extends BaseIT {
   public static final String PUBLICATIONS_URL = "/consortia/%s/publications";
   public static final String GET_PUBLICATION_BY_ID_URL = "/consortia/%s/publications/%s";
+  public static final String GET_PUBLICATION_RESULTS_BY_ID_URL = "/consortia/%s/publications/%s/results";
   @MockBean
   TenantService tenantService;
   @MockBean
@@ -130,6 +131,34 @@ public class PublicationControllerTest extends BaseIT {
         status().is2xxSuccessful(),
         jsonPath("$.status", is(PublicationStatus.ERROR.getValue())),
         jsonPath("$.errors", is(not(empty())))
+      );
+  }
+
+  @Test
+  void getPublicationResultsSuccessful() throws Exception {
+    var headers = defaultHeaders();
+    var consortiumId = UUID.randomUUID();
+    var publicationId = UUID.randomUUID();
+
+    var publicationStatusEntity = getMockDataObject("mockdata/publications/publication_status_entity.json", PublicationStatusEntity.class);
+    publicationStatusEntity.setStatus(PublicationStatus.ERROR);
+    publicationStatusEntity.setCreatedDate(LocalDateTime.now());
+
+    doNothing().when(consortiumService).checkConsortiumExistsOrThrow(any(UUID.class));
+    when(publicationStatusRepository.findById(publicationId)).thenReturn(Optional.of(publicationStatusEntity));
+
+    var tenantRequest1 = createPublicationTenantRequestEntity(publicationStatusEntity, TENANT, PublicationStatus.COMPLETE, 201);
+    var tenantRequest2 = createPublicationTenantRequestEntity(publicationStatusEntity, TENANT, PublicationStatus.ERROR, 400);
+    List<PublicationTenantRequestEntity> ptrEntityMockResponse = List.of(tenantRequest1, tenantRequest2);
+
+    Page<PublicationTenantRequestEntity> ptrEntities  = new PageImpl<>(ptrEntityMockResponse);
+    when(publicationTenantRequestRepository.findByPcStateId(eq(publicationId), any())).thenReturn(ptrEntities);
+
+    this.mockMvc.perform(get(String.format(GET_PUBLICATION_RESULTS_BY_ID_URL, consortiumId, publicationId)).headers(headers))
+      .andExpectAll(
+        status().is2xxSuccessful(),
+        jsonPath("$.publicationResults", is(not(empty()))),
+        jsonPath("$.totalRecords", is(ptrEntityMockResponse.size()))
       );
   }
 

@@ -39,6 +39,20 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /publications/{publicationId}/results:
+    get:
+      summary: Get publication results
+      operationId: getPublicationResults
+      parameters:
+        - $ref: "#/components/parameters/consortiumId"
+        - $ref: "#/components/parameters/publicationId"
+      responses:
+        '200':
+          $ref: '#/components/responses/PublicationResultCollection'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 components:
   requestBodies:
     Publication:
@@ -56,11 +70,17 @@ components:
           schema:
             $ref: "schemas/publication_schema.yaml#/PublicationResponse"
     PublicationDetails:
-      description: Returns a publish coordinator object
+      description: Returns a publish coordinator request details
       content:
         application/json:
           schema:
             $ref: "schemas/publication_schema.yaml#/PublicationDetailsResponse"
+    PublicationResultCollection:
+      description: Returns a publish coordinator results
+      content:
+        application/json:
+          schema:
+            $ref: "schemas/publication_schema.yaml#/PublicationResultCollection"
     Conflict:
       description: Validation errors
       content:

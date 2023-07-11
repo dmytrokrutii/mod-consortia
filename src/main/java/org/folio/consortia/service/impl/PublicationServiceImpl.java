@@ -16,6 +16,8 @@ import org.apache.http.HttpException;
 import org.folio.consortia.domain.dto.PublicationDetailsResponse;
 import org.folio.consortia.domain.dto.PublicationRequest;
 import org.folio.consortia.domain.dto.PublicationResponse;
+import org.folio.consortia.domain.dto.PublicationResult;
+import org.folio.consortia.domain.dto.PublicationResultCollection;
 import org.folio.consortia.domain.dto.PublicationStatus;
 import org.folio.consortia.domain.dto.PublicationStatusError;
 import org.folio.consortia.domain.entity.PublicationStatusEntity;
@@ -79,7 +81,7 @@ public class PublicationServiceImpl implements PublicationService {
 
   @Override
   public PublicationDetailsResponse getPublicationDetails(UUID consortiumId, UUID publicationId) {
-    log.debug("getPublicationDetails:: Trying to retrieve publicationDetails by consortiumId: {} and publicationId id: {}", consortiumId, publicationId);
+    log.debug("getPublicationDetails:: Trying to retrieve publication details by consortiumId: {} and publicationId id: {}", consortiumId, publicationId);
 
     consortiumService.checkConsortiumExistsOrThrow(consortiumId);
     var publicationStatusEntity = publicationStatusRepository.findById(publicationId)
@@ -263,6 +265,30 @@ public class PublicationServiceImpl implements PublicationService {
     return new PublicationResponse()
       .id(publicationId)
       .status(PublicationStatus.IN_PROGRESS);
+  }
+
+
+  @Override
+  public PublicationResultCollection getPublicationResults(UUID consortiumId, UUID publicationId){
+    log.info("getPublicationResults:: Trying to retrieve publication results by consortiumId: {} and publicationId id: {}", consortiumId, publicationId);
+
+    consortiumService.checkConsortiumExistsOrThrow(consortiumId);
+    var publicationStatusEntity = publicationStatusRepository.findById(publicationId)
+      .orElseThrow(() -> new ResourceNotFoundException("publicationId", String.valueOf(publicationId)));
+
+    var ptrEntities = publicationTenantRequestRepository.findByPcStateId(publicationId, PageRequest.of(0, Integer.MAX_VALUE));
+    log.info("getPublicationResults:: Found {} of {} expected tenant request records for publication {}", ptrEntities.getTotalElements(), publicationStatusEntity.getTotalRecords(), publicationId);
+
+    var resultList = ptrEntities.stream()
+      .map(entity -> new PublicationResult()
+        .tenantId(entity.getTenantId())
+        .statusCode(entity.getResponseStatusCode())
+        .response(entity.getResponse()))
+      .toList();
+
+    return new PublicationResultCollection()
+      .publicationResults(resultList)
+      .totalRecords(ptrEntities.getSize());
   }
 
 }

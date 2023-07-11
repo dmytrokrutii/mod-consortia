@@ -164,6 +164,16 @@
           "methods": [
             "GET"
           ],
+          "pathPattern": "/consortia/{consortiumId}/publications/{publicationId}/results",
+          "permissionsRequired": [
+            "consortia.publications-results.item.get"
+          ],
+          "modulePermissions": []
+        },
+        {
+          "methods": [
+            "GET"
+          ],
           "pathPattern": "/consortia/{consortiumId}/user-tenants",
           "permissionsRequired": [
             "consortia.user-tenants.collection.get"
@@ -308,7 +318,8 @@
         "consortia.sharing-instances.item.get",
         "consortia.sharing-instances.collection.get",
         "consortia.publications.item.post",
-        "consortia.publications.item.get"
+        "consortia.publications.item.get",
+        "consortia.publications-results.item.get"
       ]
     },
     {
@@ -350,6 +361,11 @@
       "permissionName": "consortia.publications.item.get",
       "displayName": "publish coordinator get publication details request",
       "description": "publish coordinator get publication details request"
+    },
+    {
+      "permissionName": "consortia.publications-results.item.get",
+      "displayName": "publish coordinator results",
+      "description": "publish coordinator results"
     },
     {
       "permissionName": "consortia.user-tenants.collection.get",
