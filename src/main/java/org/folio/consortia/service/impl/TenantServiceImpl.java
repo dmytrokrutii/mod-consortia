@@ -120,7 +120,7 @@ public class TenantServiceImpl implements TenantService {
         createUserTenantWithDummyUser(tenantDto.getId());
         createShadowAdminUserWithPermissions(shadowAdminUser); //NOSONAR
       }
-      syncPrimaryAffiliationClient.syncPrimaryAffiliations(consortiumId.toString(), tenantDto.getId());
+      syncPrimaryAffiliationClient.syncPrimaryAffiliations(consortiumId.toString(), tenantDto.getId(), centralTenantId);
     }
     log.info("save:: saved consortia configuration with centralTenantId={} by tenantId={} context", centralTenantId, tenantDto.getId());
     return savedTenant;

@@ -5,14 +5,20 @@ import org.folio.consortia.domain.dto.SyncPrimaryAffiliationBody;
 import java.util.UUID;
 
 public interface SyncPrimaryAffiliationService {
-  void syncPrimaryAffiliations(UUID consortiumId, String syncPrimaryAffiliationBody);
-
 
   /**
-   * Create primary affiliation for user
-   *
+   * Sync primary affiliation for user
+   * @param consortiumId               - consortium unique identifier
+   * @param centralTenantId            - central tenant unique identifier
+   * @param syncPrimaryAffiliationBody - consortia tenant record
+   */
+  void syncPrimaryAffiliations(UUID consortiumId, String centralTenantId, String syncPrimaryAffiliationBody);
+
+  /**
+   * Create affiliations between central tenant and user
+   *        primary affiliation between local tenant and its user
    * @param consortiumId               - consortium unique identifier
    * @param syncPrimaryAffiliationBody - consortia tenant record
    */
-  void createPrimaryUserAffiliations(UUID consortiumId, SyncPrimaryAffiliationBody syncPrimaryAffiliationBody);
+  void createPrimaryUserAffiliations(UUID consortiumId, String centralTenantId, SyncPrimaryAffiliationBody syncPrimaryAffiliationBody);
 }

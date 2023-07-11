@@ -3,7 +3,6 @@ package org.folio.consortia.config;
 import org.folio.consortia.domain.converter.ConsortiumConverter;
 import org.folio.consortia.domain.converter.TenantConverter;
 import org.folio.consortia.domain.converter.UserTenantConverter;
-import org.folio.spring.scope.FolioExecutionScopeExecutionContextManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -37,7 +36,6 @@ public class AppConfig implements WebMvcConfigurer {
     executor.setMaxPoolSize(Runtime.getRuntime().availableProcessors() * 2);
     executor.setQueueCapacity(500);
     executor.setThreadNamePrefix("ConsortiaAsync-");
-    executor.setTaskDecorator(FolioExecutionScopeExecutionContextManager::getRunnableWithCurrentFolioContext);
     executor.initialize();
     return executor;
   }

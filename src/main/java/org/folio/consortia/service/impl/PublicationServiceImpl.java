@@ -3,6 +3,7 @@ package org.folio.consortia.service.impl;
 import static org.folio.consortia.exception.PublicationException.PRIMARY_AFFILIATION_NOT_EXISTS;
 import static org.folio.consortia.exception.PublicationException.TENANT_LIST_EMPTY;
 import static org.folio.consortia.utils.TenantContextUtils.prepareContextForTenant;
+import static org.folio.spring.scope.FolioExecutionScopeExecutionContextManager.getRunnableWithCurrentFolioContext;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -74,7 +75,8 @@ public class PublicationServiceImpl implements PublicationService {
 
     PublicationStatusEntity createdPublicationEntity = savePublicationStatusRecord(publicationRequest.getTenants().size());
 
-    asyncTaskExecutor.execute(() -> processTenantRequests(publicationRequest, createdPublicationEntity));
+    asyncTaskExecutor.execute(getRunnableWithCurrentFolioContext(
+      () -> processTenantRequests(publicationRequest, createdPublicationEntity)));
 
     return buildPublicationResponse(createdPublicationEntity.getId());
   }

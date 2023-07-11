@@ -78,8 +78,8 @@ class TenantControllerTest extends BaseIT {
   private static final String TENANT_REQUEST_BODY = "{\"id\":\"diku1234\",\"code\":\"TST\",\"name\":\"diku_tenant_name1234\", \"isCentral\":false}";
   private static final String CONSORTIUM_ID = "7698e46-c3e3-11ed-afa1-0242ac120002";
   private static final String CENTRAL_TENANT_ID = "diku";
-  public static final String SYNC_PRIMARY_AFFILIATIONS_URL = "/consortia/%s/tenants/%s/sync-primary-affiliations";
-  public static final String PRIMARY_AFFILIATIONS_URL = "/consortia/%s/tenants/%s/create-primary-affiliations";
+  public static final String SYNC_PRIMARY_AFFILIATIONS_URL = "/consortia/%s/tenants/%s/sync-primary-affiliations?centralTenantId=%s";
+  public static final String PRIMARY_AFFILIATIONS_URL = "/consortia/%s/tenants/%s/create-primary-affiliations?centralTenantId=%s";
 
   @MockBean
   ConsortiumRepository consortiumRepository;
@@ -166,8 +166,7 @@ class TenantControllerTest extends BaseIT {
     when(tenantRepository.existsById(any())).thenReturn(false);
     when(tenantRepository.save(any(TenantEntity.class))).thenReturn(tenantEntity);
     when(tenantRepository.findCentralTenant()).thenReturn(Optional.of(centralTenant));
-    doNothing().when(syncPrimaryAffiliationClient).syncPrimaryAffiliations(anyString(), anyString());//.thenReturn(new SyncPrimaryAffiliationBody());
-    doNothing().when(configurationClient).saveConfiguration(createConsortiaConfiguration(CENTRAL_TENANT_ID));
+    doNothing().when(syncPrimaryAffiliationClient).syncPrimaryAffiliations(anyString(), anyString(), anyString());    doNothing().when(configurationClient).saveConfiguration(createConsortiaConfiguration(CENTRAL_TENANT_ID));
 
     this.mockMvc.perform(
         post("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/tenants?adminUserId=111841e3-e6fb-4191-9fd8-5674a5107c34")
@@ -379,9 +378,10 @@ class TenantControllerTest extends BaseIT {
     var headers = defaultHeaders();
     var consortiumId = UUID.randomUUID();
     var tenantId = "ABC1";
+    var centralTenantId = "mobius";
 
     this.mockMvc
-      .perform(post(String.format(SYNC_PRIMARY_AFFILIATIONS_URL, consortiumId, tenantId)).headers(headers))
+      .perform(post(String.format(SYNC_PRIMARY_AFFILIATIONS_URL, consortiumId, tenantId, centralTenantId)).headers(headers))
       .andExpectAll(status().isNoContent());
   }
 
@@ -391,6 +391,7 @@ class TenantControllerTest extends BaseIT {
     var headers = defaultHeaders();
     var consortiumId = UUID.randomUUID();
     var tenantId = "ABC1";
+    var centralTenantId = "mobius";
 
     TenantEntity tenantEntity1 = createTenantEntity(tenantId, "TestName1");
     tenantEntity1.setConsortiumId(consortiumId);
@@ -409,7 +410,7 @@ class TenantControllerTest extends BaseIT {
     when(tenantService.getByTenantId(anyString())).thenReturn(tenantEntity1);
     when(userTenantRepository.findByUserIdAndTenantId(any(), anyString())).thenReturn(Optional.of(userTenantEntity));
 
-    this.mockMvc.perform(post(String.format(PRIMARY_AFFILIATIONS_URL, consortiumId, tenantId)).headers(headers)
+    this.mockMvc.perform(post(String.format(PRIMARY_AFFILIATIONS_URL, consortiumId, tenantId, centralTenantId)).headers(headers)
       .content(spabString))
       .andExpectAll(status().isNoContent());
   }

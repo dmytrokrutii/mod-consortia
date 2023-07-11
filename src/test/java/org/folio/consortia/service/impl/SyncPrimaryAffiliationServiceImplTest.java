@@ -10,14 +10,12 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.folio.consortia.client.SyncPrimaryAffiliationClient;
 import org.folio.consortia.config.kafka.KafkaService;
 import org.folio.consortia.domain.dto.SyncPrimaryAffiliationBody;
 import org.folio.consortia.domain.dto.SyncUser;
@@ -32,9 +30,6 @@ import org.folio.consortia.service.ConsortiaConfigurationService;
 import org.folio.consortia.service.TenantService;
 import org.folio.consortia.service.UserService;
 import org.folio.consortia.service.UserTenantService;
-import org.folio.spring.FolioExecutionContext;
-import org.folio.spring.FolioModuleMetadata;
-import org.folio.spring.integration.XOkapiHeaders;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -62,11 +57,9 @@ class SyncPrimaryAffiliationServiceImplTest {
   @Mock
   private UserTenantRepository userTenantRepository;
   @Mock
-  private FolioModuleMetadata folioModuleMetadata;
-  @Mock
-  private FolioExecutionContext folioExecutionContext;
-  @Mock
   private ConsortiaConfigurationService consortiaConfigurationService;
+  @Mock
+  private SyncPrimaryAffiliationClient syncClient;
 
   @Mock
   UserService userService;
@@ -80,6 +73,7 @@ class SyncPrimaryAffiliationServiceImplTest {
   void createPrimaryUserAffiliationsWhenCentralTenantSaving() throws JsonProcessingException {
     var consortiumId = UUID.randomUUID();
     var tenantId = "ABC1";
+    var centralTenantId = "diku";
     TenantEntity tenantEntity1 = createTenantEntity(tenantId, "TestName1");
     tenantEntity1.setConsortiumId(consortiumId);
 
@@ -100,13 +94,8 @@ class SyncPrimaryAffiliationServiceImplTest {
     when(userService.getUsersByQuery(anyString(), anyInt(), anyInt())).thenReturn(userCollection);
     when(userTenantService.createPrimaryUserTenantAffiliation(any(), any(), anyString(), anyString())).thenReturn(new UserTenant());
     when(consortiaConfigurationService.getCentralTenantId(anyString())).thenReturn(tenantId);
-    when(folioExecutionContext.getTenantId()).thenReturn(tenantId);
-    when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
-    Map<String, Collection<String>> okapiHeaders = new HashMap<>();
-    okapiHeaders.put(XOkapiHeaders.TENANT, List.of(tenantId));
-    when(folioExecutionContext.getOkapiHeaders()).thenReturn(okapiHeaders);
 
-    syncPrimaryAffiliationService.createPrimaryUserAffiliations(consortiumId, spab);
+    syncPrimaryAffiliationService.createPrimaryUserAffiliations(consortiumId, centralTenantId, spab);
 
     verify(kafkaService, timeout(2000)).send(any(), anyString(), anyString());
   }
@@ -136,14 +125,36 @@ class SyncPrimaryAffiliationServiceImplTest {
     when(userTenantService.createPrimaryUserTenantAffiliation(any(), any(), anyString(), anyString())).thenReturn(new UserTenant());
     when(consortiaConfigurationService.getCentralTenantId(anyString())).thenReturn(centralTenantId);
     when(userTenantService.save(any(), any(), anyBoolean())).thenReturn(new UserTenant());
-    when(folioExecutionContext.getTenantId()).thenReturn(centralTenantId);
-    when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
-    Map<String, Collection<String>> okapiHeaders = new HashMap<>();
-    okapiHeaders.put(XOkapiHeaders.TENANT, List.of(centralTenantId));
-    when(folioExecutionContext.getOkapiHeaders()).thenReturn(okapiHeaders);
 
-    syncPrimaryAffiliationService.createPrimaryUserAffiliations(consortiumId, spab);
+    syncPrimaryAffiliationService.createPrimaryUserAffiliations(consortiumId, centralTenantId, spab);
 
     verify(kafkaService, timeout(2000)).send(any(), anyString(), anyString());
   }
+
+  @Test
+  void syncPrimaryUserAffiliationsWhenTenantSaving() throws JsonProcessingException {
+    var consortiumId = UUID.randomUUID();
+    var tenantId = "ABC1";
+    var centralTenantId = "diku";
+    TenantEntity tenantEntity1 = createTenantEntity(tenantId, "TestName1");
+    tenantEntity1.setConsortiumId(consortiumId);
+
+    var userCollectionString = getMockDataAsString("mockdata/user_collection.json");
+    List<User> userCollection = new ObjectMapper().readValue(userCollectionString, UserCollection.class).getUsers();
+
+    var syncUser = new SyncUser().id("88888888-8888-4888-8888-888888888888").username("mockuser8");
+    var syncUser2 = new SyncUser().id("99999999-9999-4999-9999-999999999999").username("mockuser9");
+    var spab = new SyncPrimaryAffiliationBody()
+      .users(List.of(syncUser, syncUser2))
+      .tenantId(tenantId);
+
+    // stub collection of 2 users
+    when(userService.getUsersByQuery(anyString(), anyInt(), anyInt())).thenReturn(userCollection);
+    when(userTenantService.createPrimaryUserTenantAffiliation(any(), any(), anyString(), anyString())).thenReturn(new UserTenant());
+
+    syncPrimaryAffiliationService.syncPrimaryAffiliations(consortiumId, tenantId, centralTenantId);
+
+    verify(syncClient, timeout(2000)).savePrimaryAffiliations(spab, String.valueOf(consortiumId), tenantId, centralTenantId);
+  }
+
 }
