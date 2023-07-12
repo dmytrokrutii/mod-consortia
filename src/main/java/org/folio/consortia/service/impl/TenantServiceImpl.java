@@ -117,7 +117,7 @@ public class TenantServiceImpl implements TenantService {
     try (var context = new FolioExecutionContextSetter(contextHelper.getSystemUserFolioExecutionContext(tenantDto.getId()))) {
       configurationClient.saveConfiguration(createConsortiaConfigurationBody(centralTenantId));
       if (!tenantDto.getIsCentral()) {
-        createUserTenantWithDummyUser(tenantDto.getId());
+        createUserTenantWithDummyUser(tenantDto.getId(), centralTenantId);
         createShadowAdminUserWithPermissions(shadowAdminUser); //NOSONAR
       }
       syncPrimaryAffiliationClient.syncPrimaryAffiliations(consortiumId.toString(), tenantDto.getId(), centralTenantId);
@@ -160,13 +160,15 @@ public class TenantServiceImpl implements TenantService {
     this tenant and will allow cross-tenant request.
 
     @param tenantId tenant id
+    @param centralTenantId central tenant id
   */
-  private UserTenant createUserTenantWithDummyUser(String tenantId) {
+  private UserTenant createUserTenantWithDummyUser(String tenantId, String centralTenantId) {
     UserTenant userTenant = new UserTenant();
     userTenant.setId(UUID.randomUUID());
     userTenant.setTenantId(tenantId);
     userTenant.setUserId(UUID.randomUUID());
     userTenant.setUsername(DUMMY_USERNAME);
+    userTenant.setCentralTenantId(centralTenantId);
 
     log.info("Creating userTenant with dummy user with id {}.", userTenant.getId());
     userTenantsClient.postUserTenant(userTenant);

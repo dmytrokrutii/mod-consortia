@@ -26,6 +26,7 @@ import org.springframework.messaging.MessageHeaders;
 class ConsortiaUserEventListenerTest {
 
   private static final String USER_CREATED_EVENT_SAMPLE = getMockDataAsString("mockdata/kafka/create_primary_affiliation_request.json");
+  private static final String USER_UPDATED_EVENT_SAMPLE = getMockDataAsString("mockdata/kafka/update_primary_affiliation_request.json");
   private static final String USER_DELETED_EVENT_SAMPLE = getMockDataAsString("mockdata/kafka/delete_primary_affiliation_request.json");
 
   @InjectMocks
@@ -40,6 +41,13 @@ class ConsortiaUserEventListenerTest {
     when(configurationService.getCentralTenantId(TENANT)).thenReturn(TENANT);
     eventListener.handleUserCreating(USER_CREATED_EVENT_SAMPLE, getMessageHeaders());
     verify(userAffiliationService).createPrimaryUserAffiliation(anyString());
+  }
+
+  @Test
+  void shouldUpdatePrimaryAffiliationWhenConfigurationExists() {
+    when(configurationService.getCentralTenantId(TENANT)).thenReturn(TENANT);
+    eventListener.handleUserUpdating(USER_UPDATED_EVENT_SAMPLE, getMessageHeaders());
+    verify(userAffiliationService).updatePrimaryUserAffiliation(anyString());
   }
 
   @Test

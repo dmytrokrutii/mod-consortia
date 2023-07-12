@@ -88,7 +88,7 @@ public class SyncPrimaryAffiliationServiceImpl implements SyncPrimaryAffiliation
           if (ObjectUtils.notEqual(centralTenantId, tenantEntity.getId())) {
             userTenantService.save(consortiumId, createUserTenant(centralTenantId, user), true);
           }
-          sendCreatePrimaryAffiliationEvent(tenantEntity, user);
+          sendCreatePrimaryAffiliationEvent(tenantEntity, user, centralTenantId);
         }
 
       });
@@ -99,8 +99,8 @@ public class SyncPrimaryAffiliationServiceImpl implements SyncPrimaryAffiliation
   }
 
   @SneakyThrows
-  private void sendCreatePrimaryAffiliationEvent(TenantEntity consortiaTenant, SyncUser user) {
-    PrimaryAffiliationEvent affiliationEvent = createPrimaryAffiliationEvent(user, consortiaTenant.getId());
+  private void sendCreatePrimaryAffiliationEvent(TenantEntity consortiaTenant, SyncUser user, String centralTenantId) {
+    PrimaryAffiliationEvent affiliationEvent = createPrimaryAffiliationEvent(user, consortiaTenant.getId(), centralTenantId);
     String data = objectMapper.writeValueAsString(affiliationEvent);
     kafkaService.send(KafkaService.Topic.CONSORTIUM_PRIMARY_AFFILIATION_CREATED, consortiaTenant.getConsortiumId().toString(), data);
   }
@@ -113,12 +113,16 @@ public class SyncPrimaryAffiliationServiceImpl implements SyncPrimaryAffiliation
     return userTenant;
   }
 
-  private PrimaryAffiliationEvent createPrimaryAffiliationEvent(SyncUser user, String tenantId) {
+  private PrimaryAffiliationEvent createPrimaryAffiliationEvent(SyncUser user, String tenantId, String centralTenantId) {
     PrimaryAffiliationEvent event = new PrimaryAffiliationEvent();
     event.setId(UUID.randomUUID());
     event.setUserId(UUID.fromString(user.getId()));
     event.setUsername(user.getUsername());
     event.setTenantId(tenantId);
+    event.setEmail(user.getEmail());
+    event.setPhoneNumber(user.getPhoneNumber());
+    event.setMobilePhoneNumber(user.getMobilePhoneNumber());
+    event.setCentralTenantId(centralTenantId);
     return event;
   }
 }

@@ -8,8 +8,10 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.consortia.config.kafka.KafkaService;
 import org.folio.consortia.domain.dto.PrimaryAffiliationEvent;
+import org.folio.consortia.domain.dto.User;
 import org.folio.consortia.domain.dto.UserEvent;
 import org.folio.consortia.domain.dto.UserTenant;
+import org.folio.consortia.domain.entity.UserTenantEntity;
 import org.folio.consortia.service.TenantService;
 import org.folio.consortia.service.UserAffiliationService;
 import org.folio.consortia.service.UserTenantService;
@@ -29,6 +31,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @AllArgsConstructor
 public class UserAffiliationServiceImpl implements UserAffiliationService {
+  private static final String TENANT_NOT_EXISTS_IN_CONSORTIA = "Tenant {} not exists in consortia";
 
   private final UserTenantService userTenantService;
   private final TenantService tenantService;
@@ -49,9 +52,10 @@ public class UserAffiliationServiceImpl implements UserAffiliationService {
 
       var consortiaTenant = tenantService.getByTenantId(userEvent.getTenantId());
       if (consortiaTenant == null) {
-        log.warn("Tenant {} not exists in consortia", userEvent.getTenantId());
+        log.warn(TENANT_NOT_EXISTS_IN_CONSORTIA, userEvent.getTenantId());
         return;
       }
+
 
       boolean isPrimaryAffiliationExists = userTenantService
         .checkUserIfHasPrimaryAffiliationByUserId(consortiaTenant.getConsortiumId(), userEvent.getUserDto().getId());
@@ -65,7 +69,7 @@ public class UserAffiliationServiceImpl implements UserAffiliationService {
         }
       }
 
-      PrimaryAffiliationEvent affiliationEvent = createPrimaryAffiliationEvent(userEvent);
+      PrimaryAffiliationEvent affiliationEvent = createPrimaryAffiliationEvent(userEvent, centralTenantId);
       String data = objectMapper.writeValueAsString(affiliationEvent);
 
       // context is changed in save() method and context is empty after save() method, so we need to set context again.
@@ -81,6 +85,40 @@ public class UserAffiliationServiceImpl implements UserAffiliationService {
   @Override
   @SneakyThrows
   @Transactional
+  public void updatePrimaryUserAffiliation(String eventPayload) {
+    String centralTenantId = folioExecutionContext.getTenantId();
+    try {
+      var userEvent = objectMapper.readValue(eventPayload, UserEvent.class);
+      log.info("Received event for update primary affiliation for user: {} and tenant: {}", userEvent.getUserDto().getId(), userEvent.getTenantId());
+
+      var consortiaTenant = tenantService.getByTenantId(userEvent.getTenantId());
+      if (consortiaTenant == null) {
+        log.warn(TENANT_NOT_EXISTS_IN_CONSORTIA, userEvent.getTenantId());
+        return;
+      }
+      UUID userId = getUserId(userEvent);
+      String newUsername = userEvent.getUserDto().getUsername();
+
+      UserTenantEntity userTenant = userTenantService.getByUserIdAndTenantId(userId, userEvent.getTenantId());
+      boolean isUsernameChanged = ObjectUtils.notEqual(userTenant.getUsername(), newUsername);
+
+      if (isUsernameChanged) {
+        userTenantService.updateUsernameInPrimaryUserTenantAffiliation(userId, newUsername, userEvent.getTenantId());
+        log.info("Username in primary affiliation has been updated for the user: {}", userEvent.getUserDto().getId());
+      }
+
+      PrimaryAffiliationEvent affiliationEvent = createPrimaryAffiliationEvent(userEvent, centralTenantId);
+      String data = objectMapper.writeValueAsString(affiliationEvent);
+
+      kafkaService.send(KafkaService.Topic.CONSORTIUM_PRIMARY_AFFILIATION_UPDATED, consortiaTenant.getConsortiumId().toString(), data);
+    } catch (Exception e) {
+      log.error("Exception occurred while updating primary affiliation", e);
+    }
+  }
+
+  @Override
+  @SneakyThrows
+  @Transactional
   public void deletePrimaryUserAffiliation(String eventPayload) {
     FolioExecutionContext currentContext = (FolioExecutionContext) folioExecutionContext.getInstance();
     String centralTenantId = folioExecutionContext.getTenantId();
@@ -90,14 +128,14 @@ public class UserAffiliationServiceImpl implements UserAffiliationService {
 
       var consortiaTenant = tenantService.getByTenantId(userEvent.getTenantId());
       if (consortiaTenant == null) {
-        log.warn("Tenant {} not exists in consortia", userEvent.getTenantId());
+        log.warn(TENANT_NOT_EXISTS_IN_CONSORTIA, userEvent.getTenantId());
         return;
       }
 
       userTenantService.deletePrimaryUserTenantAffiliation(getUserId(userEvent));
       userTenantService.deleteShadowUsers(getUserId(userEvent));
 
-      PrimaryAffiliationEvent affiliationEvent = createPrimaryAffiliationEvent(userEvent);
+      PrimaryAffiliationEvent affiliationEvent = createPrimaryAffiliationEvent(userEvent, centralTenantId);
       String data = objectMapper.writeValueAsString(affiliationEvent);
 
       // context is changed in deleteShadowUsers() method and context is empty after deleteShadowUsers() method, so we need to set context again.
@@ -125,14 +163,22 @@ public class UserAffiliationServiceImpl implements UserAffiliationService {
     return userTenant;
   }
 
-  private PrimaryAffiliationEvent createPrimaryAffiliationEvent(UserEvent userEvent) {
+  private PrimaryAffiliationEvent createPrimaryAffiliationEvent(UserEvent userEvent, String centralTenantId) {
     PrimaryAffiliationEvent event = new PrimaryAffiliationEvent();
     event.setId(userEvent.getId());
     event.setUserId(UUID.fromString(userEvent.getUserDto().getId()));
-    if (StringUtils.isNotBlank(userEvent.getUserDto().getUsername())) { // for delete event username will be empty
+
+    User userDto = userEvent.getUserDto();
+    if (StringUtils.isNotBlank(userDto.getUsername())) { // for delete event username will be empty
       event.setUsername(userEvent.getUserDto().getUsername());
+      if (ObjectUtils.isNotEmpty(userDto.getPersonal())) {
+        event.setEmail(userDto.getPersonal().getEmail());
+        event.setPhoneNumber(userDto.getPersonal().getPhone());
+        event.setMobilePhoneNumber(userDto.getPersonal().getMobilePhone());
+      }
     }
     event.setTenantId(userEvent.getTenantId());
+    event.setCentralTenantId(centralTenantId);
     return event;
   }
 }

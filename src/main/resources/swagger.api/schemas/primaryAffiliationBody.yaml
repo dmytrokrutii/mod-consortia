@@ -24,6 +24,15 @@ SyncUser:
     username:
       description: "The name of the user"
       type: string
+    email:
+      description: "The email of the user"
+      type: string
+    mobilePhoneNumber:
+      description: "The mobile phone number of the user"
+      type: string
+    phoneNumber:
+      description: "The phone number of the user"
+      type: string
   additionalProperties: false
 
 

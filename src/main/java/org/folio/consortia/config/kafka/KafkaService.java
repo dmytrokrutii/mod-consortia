@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static org.folio.consortia.messaging.listener.ConsortiaUserEventListener.USER_CREATED_LISTENER_ID;
+import static org.folio.consortia.messaging.listener.ConsortiaUserEventListener.USER_UPDATED_LISTENER_ID;
 import static org.folio.consortia.messaging.listener.ConsortiaUserEventListener.USER_DELETED_LISTENER_ID;
 
 @Component
@@ -47,8 +48,10 @@ public class KafkaService {
   @Getter
   public enum Topic {
     USER_CREATED("USER_CREATED"),
+    USER_UPDATED("USER_UPDATED"),
     USER_DELETED("USER_DELETED"),
     CONSORTIUM_PRIMARY_AFFILIATION_CREATED("Default", "CONSORTIUM_PRIMARY_AFFILIATION_CREATED"),
+    CONSORTIUM_PRIMARY_AFFILIATION_UPDATED("Default", "CONSORTIUM_PRIMARY_AFFILIATION_UPDATED"),
     CONSORTIUM_PRIMARY_AFFILIATION_DELETED("Default", "CONSORTIUM_PRIMARY_AFFILIATION_DELETED");
     private String nameSpace;
     private final String topicName;
@@ -78,6 +81,7 @@ public class KafkaService {
    */
   public void restartEventListeners() {
     restartEventListener(USER_CREATED_LISTENER_ID);
+    restartEventListener(USER_UPDATED_LISTENER_ID);
     restartEventListener(USER_DELETED_LISTENER_ID);
   }
 
@@ -98,6 +102,7 @@ public class KafkaService {
       eventsNameStreamBuilder.add(consEventType);
     }
     eventsNameStreamBuilder.add(ConsortiaOutputEventType.CONSORTIUM_PRIMARY_AFFILIATION_CREATED);
+    eventsNameStreamBuilder.add(ConsortiaOutputEventType.CONSORTIUM_PRIMARY_AFFILIATION_UPDATED);
     eventsNameStreamBuilder.add(ConsortiaOutputEventType.CONSORTIUM_PRIMARY_AFFILIATION_DELETED);
     return eventsNameStreamBuilder.build()
       .map(Enum::name)

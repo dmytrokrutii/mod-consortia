@@ -24,6 +24,7 @@ import lombok.extern.log4j.Log4j2;
 public class ConsortiaUserEventListener {
 
   public static final String USER_CREATED_LISTENER_ID = "user-created-listener-id";
+  public static final String USER_UPDATED_LISTENER_ID = "user-updated-listener-id";
   public static final String USER_DELETED_LISTENER_ID = "user-deleted-listener-id";
   private final UserAffiliationService userAffiliationService;
   private final ConsortiaConfigurationService configurationService;
@@ -40,6 +41,20 @@ public class ConsortiaUserEventListener {
     if (StringUtils.isNotBlank(centralTenantId)) {
       runInFolioContext(createFolioExecutionContext(messageHeaders, folioMetadata, centralTenantId), () ->
         userAffiliationService.createPrimaryUserAffiliation(data));
+    }
+  }
+
+  @KafkaListener(
+    id = USER_UPDATED_LISTENER_ID,
+    topicPattern = "#{folioKafkaProperties.listener['user-updated'].topicPattern}",
+    concurrency = "#{folioKafkaProperties.listener['user-updated'].concurrency}",
+    containerFactory = "kafkaListenerContainerFactory")
+  public void handleUserUpdating(String data, MessageHeaders messageHeaders) {
+    // to update affiliation in central tenant schema
+    String centralTenantId = getCentralTenantByIdByHeader(messageHeaders);
+    if (StringUtils.isNotBlank(centralTenantId)) {
+      runInFolioContext(createFolioExecutionContext(messageHeaders, folioMetadata, centralTenantId), () ->
+        userAffiliationService.updatePrimaryUserAffiliation(data));
     }
   }
 

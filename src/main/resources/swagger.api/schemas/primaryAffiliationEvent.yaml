@@ -14,6 +14,18 @@ properties:
   tenantId:
     description: "The name of the user's tenant"
     type: string
+  centralTenantId:
+    description: "The name of the user's central tenant"
+    type: string
+  email:
+    description: "The user's email"
+    type: string
+  mobilePhoneNumber:
+    description: "The user's mobile phone number"
+    type: string
+  phoneNumber:
+    description: "The user's phone number"
+    type: string
 additionalProperties: false
 required:
   - id
