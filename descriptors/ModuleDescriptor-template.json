@@ -17,6 +17,10 @@
     {
       "id": "permissions",
       "version": "5.3"
+    },
+    {
+      "id": "inventory",
+      "version": "13.0"
     }
   ],
   "provides": [
@@ -246,7 +250,10 @@
           "permissionsRequired": [
             "consortia.sharing-instances.item.post"
           ],
-          "modulePermissions": []
+          "modulePermissions": [
+            "inventory.instances.item.get",
+            "inventory.instances.item.post"
+          ]
         },
         {
           "methods": [

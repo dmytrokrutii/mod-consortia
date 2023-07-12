@@ -8,18 +8,26 @@ import static org.folio.consortia.utils.EntityUtils.createSharingInstanceEntity;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.folio.consortia.domain.dto.SharingInstance;
+import org.folio.consortia.domain.dto.Status;
 import org.folio.consortia.domain.entity.SharingInstanceEntity;
 import org.folio.consortia.repository.ConsortiumRepository;
 import org.folio.consortia.repository.SharingInstanceRepository;
 import org.folio.consortia.service.impl.SharingInstanceServiceImpl;
+import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.integration.XOkapiHeaders;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -29,11 +37,16 @@ import org.springframework.boot.autoconfigure.batch.BatchAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.convert.ConversionService;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 @SpringBootTest
 @EnableAutoConfiguration(exclude = BatchAutoConfiguration.class)
 class SharingInstanceServiceTest {
 
   private static final UUID instanceIdentifier = UUID.fromString("5b157ec2-8134-4363-a7b1-c9531a7c6a54");
+  private static final Map<String, Collection<String>> headers = new HashMap<>();
   @InjectMocks
   private SharingInstanceServiceImpl sharingInstanceService;
   @Mock
@@ -46,6 +59,14 @@ class SharingInstanceServiceTest {
   private SharingInstanceRepository sharingInstanceRepository;
   @Mock
   private ConversionService conversionService;
+  @Mock
+  private FolioExecutionContext folioExecutionContext;
+  @Mock
+  private InventoryService inventoryService;
+
+  static {
+    headers.put(XOkapiHeaders.TENANT, List.of("mobius"));
+  }
 
   @Test
   void shouldGetSharingInstanceById() {
@@ -65,14 +86,14 @@ class SharingInstanceServiceTest {
   }
 
   @Test
-  void shouldSaveSharingInstance() {
+  void shouldSaveSharingInstanceWhenSourceTenantNotEqualCentralTenant() {
     SharingInstance sharingInstance = createSharingInstance(instanceIdentifier, "college", "mobius");
     SharingInstanceEntity savedSharingInstance = createSharingInstanceEntity(instanceIdentifier, "college", "mobius");
 
     when(consortiumRepository.existsById(any())).thenReturn(true);
     when(conversionService.convert(any(), any())).thenReturn(toDto(savedSharingInstance));
     doNothing().when(tenantService).checkTenantExistsOrThrow(anyString());
-    when(tenantService.getCentralTenantId()).thenReturn("college");
+    when(tenantService.getCentralTenantId()).thenReturn("mobius");
     when(sharingInstanceRepository.save(any())).thenReturn(savedSharingInstance);
 
     var expectedSharingInstance = createSharingInstance(instanceIdentifier, "college", "mobius");
@@ -85,6 +106,91 @@ class SharingInstanceServiceTest {
     verify(sharingInstanceRepository, times(1)).save(any());
   }
 
+  @Test
+  void shouldSaveSharingInstanceWhenSourceTenantEqualsCentralTenantAndGetInstanceThrowsException() {
+    SharingInstance sharingInstance = createSharingInstance(instanceIdentifier, "mobius", "college");
+    SharingInstanceEntity sharingInstanceEntity = new SharingInstanceEntity();
+
+    // skip validation part
+    when(consortiumRepository.existsById(any())).thenReturn(true);
+    doNothing().when(tenantService).checkTenantExistsOrThrow(anyString());
+    when(folioExecutionContext.getOkapiHeaders()).thenReturn(headers);
+
+    when(tenantService.getCentralTenantId()).thenReturn("mobius");
+    when(conversionService.convert(any(), any())).thenReturn(toDto(sharingInstanceEntity));
+    when(sharingInstanceRepository.save(any())).thenReturn(sharingInstanceEntity);
+
+    // throw exception when getting inventory instance
+    doThrow(RuntimeException.class).when(inventoryService).getById(any());
+
+    // verify status field gets updated and save() method gets called
+    sharingInstanceService.start(UUID.randomUUID(), sharingInstance);
+
+    assertThat(sharingInstance.getStatus()).isEqualTo(Status.ERROR);
+    verify(sharingInstanceRepository, times(1)).save(any());
+  }
+
+  @Test
+  void shouldSaveSharingInstanceWhenSourceTenantEqualsCentralTenantAndPostInstanceThrowsException() throws JsonProcessingException {
+    SharingInstance sharingInstance = createSharingInstance(instanceIdentifier, "mobius", "college");
+    SharingInstanceEntity sharingInstanceEntity = new SharingInstanceEntity();
+
+    // skip validation part
+    when(consortiumRepository.existsById(any())).thenReturn(true);
+    doNothing().when(tenantService).checkTenantExistsOrThrow(anyString());
+    when(folioExecutionContext.getOkapiHeaders()).thenReturn(headers);
+
+    when(tenantService.getCentralTenantId()).thenReturn("mobius");
+    when(conversionService.convert(any(), any())).thenReturn(toDto(sharingInstanceEntity));
+    when(sharingInstanceRepository.save(any())).thenReturn(sharingInstanceEntity);
+
+    // return instance as JsonNode when getting
+    ObjectMapper objectMapper = new ObjectMapper();
+    JsonNode inventoryInstance = objectMapper.readTree("{ \"source\" : \"folio\" } ");
+
+    when(inventoryService.getById(any())).thenReturn(inventoryInstance);
+
+    // throw exception when posting inventory instance
+    doThrow(RuntimeException.class).when(inventoryService).saveInstance(any());
+
+    // verify status field gets updated and save() method gets called
+    sharingInstanceService.start(UUID.randomUUID(), sharingInstance);
+
+    assertThat(sharingInstance.getStatus()).isEqualTo(Status.ERROR);
+    verify(sharingInstanceRepository, times(1)).save(any());
+  }
+
+  @Test
+  void shouldSaveSharingInstanceWhenSourceTenantEqualsCentralTenantAndAllRequestsSuccessful() throws JsonProcessingException {
+    SharingInstance sharingInstance = createSharingInstance(instanceIdentifier, "mobius", "college");
+    SharingInstanceEntity sharingInstanceEntity = new SharingInstanceEntity();
+
+    // skip validation part
+    when(consortiumRepository.existsById(any())).thenReturn(true);
+    doNothing().when(tenantService).checkTenantExistsOrThrow(anyString());
+    when(folioExecutionContext.getOkapiHeaders()).thenReturn(headers);
+
+    when(tenantService.getCentralTenantId()).thenReturn("mobius");
+    when(conversionService.convert(any(), any())).thenReturn(toDto(sharingInstanceEntity));
+    when(sharingInstanceRepository.save(any())).thenReturn(sharingInstanceEntity);
+
+    // return instance as JsonNode when getting
+    ObjectMapper objectMapper = new ObjectMapper();
+    JsonNode inventoryInstance = objectMapper.readTree("{ \"source\" : \"folio\" } ");
+
+    when(inventoryService.getById(any())).thenReturn(inventoryInstance);
+
+    // do nothing when posting inventory instance
+    doNothing().when(inventoryService).saveInstance(anyString());
+
+    // verify status field gets updated and save() method gets called
+    sharingInstanceService.start(UUID.randomUUID(), sharingInstance);
+
+    assertThat(sharingInstance.getError()).isNull();
+    assertThat(sharingInstance.getStatus()).isEqualTo(Status.COMPLETE);
+    verify(sharingInstanceRepository, times(1)).save(any());
+  }
+
   /* Negative cases */
   @Test
   void shouldThrowResourceNotFoundExceptionWhenTryingToGetSharingInstanceById() {
@@ -93,6 +199,17 @@ class SharingInstanceServiceTest {
 
     Assertions.assertThrows(org.folio.consortia.exception.ResourceNotFoundException.class,
       () -> sharingInstanceService.getById(CONSORTIUM_ID, ACTION_ID));
+  }
+
+  @Test
+  void shouldThrowExceptionWhenTryingToPostSharingInstanceWithMemberTenants() {
+    SharingInstance sharingInstance = createSharingInstance(instanceIdentifier, "university", "college");
+    when(consortiumRepository.existsById(any())).thenReturn(true);
+    doNothing().when(tenantService).checkTenantExistsOrThrow(anyString());
+    when(tenantService.getCentralTenantId()).thenReturn("mobius");
+
+    Assertions.assertThrows(IllegalArgumentException.class,
+      () -> sharingInstanceService.start(CONSORTIUM_ID, sharingInstance));
   }
 
   private SharingInstance toDto(SharingInstanceEntity entity) {

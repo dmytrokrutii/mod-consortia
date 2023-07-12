@@ -40,7 +40,7 @@ class SharingInstanceControllerIntegrationTests extends BaseIT {
     {"8673c2b0-dfe6-447b-bb6e-a1d7eb2e3572", TENANT, UNIVERSITY, STATUS},
     {"8673c2b0-dfe6-447b-bb6e-a1d7eb2e3572", TENANT, COLLEGE, STATUS},
     {"d5649ef9-231d-4293-8657-c86b01d46ccc", TENANT, UNIVERSITY, STATUS},
-    {"1eb8fc73-24aa-424e-9487-24c178313783", TENANT, TENANT, STATUS},
+    {"1eb8fc73-24aa-424e-9487-24c178313783", UNIVERSITY, TENANT, STATUS},
     {"ac9865a8-8e17-4351-adb6-eb0a18cdcf9b", UNIVERSITY, TENANT, STATUS},
     {"c3291fa4-b7f0-40c9-ab93-68eec638d9eb", COLLEGE, TENANT, STATUS}
   };
@@ -88,7 +88,7 @@ class SharingInstanceControllerIntegrationTests extends BaseIT {
       // to skip the validation part
       when(consortiumRepository.existsById(any())).thenReturn(true);
       when(tenantRepository.existsById(any())).thenReturn(true);
-      when(tenantService.getCentralTenantId()).thenReturn(TENANT);
+      when(tenantService.getCentralTenantId()).thenReturn(fields[2]);
 
       // create payload
       String body = new JSONObject()
@@ -144,7 +144,7 @@ class SharingInstanceControllerIntegrationTests extends BaseIT {
         Arguments.of(null, TENANT, UNIVERSITY, STATUS, "2"),
         Arguments.of(null, TENANT, UNIVERSITY, null, "2"),
         Arguments.of(null, COLLEGE, null, STATUS, "1"),
-        Arguments.of(null, TENANT, null, null, "4"),
+        Arguments.of(null, TENANT, null, null, "3"),
         Arguments.of(null, null, UNIVERSITY, STATUS, "2"),
         Arguments.of(null, null, UNIVERSITY, null, "2"),
         Arguments.of(null, null, null, STATUS, "6"),
