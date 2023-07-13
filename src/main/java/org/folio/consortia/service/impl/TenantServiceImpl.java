@@ -89,7 +89,6 @@ public class TenantServiceImpl implements TenantService {
   public Tenant save(UUID consortiumId, UUID adminUserId, Tenant tenantDto) {
     log.info("save:: Trying to save a tenant by consortiumId '{}', tenant object with id '{}' and isCentral={}", consortiumId,
         tenantDto.getId(), tenantDto.getIsCentral());
-    FolioExecutionContext currentTenantContext = (FolioExecutionContext) folioExecutionContext.getInstance();
 
     // validation part
     checkTenantNotExistsAndConsortiumExistsOrThrow(consortiumId, tenantDto.getId());
@@ -109,7 +108,7 @@ public class TenantServiceImpl implements TenantService {
     } else {
       checkAdminUserIdPresentOrThrow(adminUserId);
       centralTenantId = getCentralTenantId();
-      shadowAdminUser = userService.prepareShadowUser(adminUserId, currentTenantContext.getTenantId());
+      shadowAdminUser = userService.prepareShadowUser(adminUserId, folioExecutionContext.getTenantId());
       userTenantRepository.save(createUserTenantEntity(consortiumId, shadowAdminUser, tenantDto));
     }
 

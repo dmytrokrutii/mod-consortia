@@ -63,7 +63,6 @@ class ConsortiaConfigurationServiceTest {
     when(conversionService.convert(configuration, ConsortiaConfiguration.class))
       .thenReturn(createConsortiaConfiguration(CENTRAL_TENANT_ID));
     when(folioExecutionContext.getTenantId()).thenReturn("testtenant1");
-    when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
     Map<String, Collection<String>> okapiHeaders = new HashMap<>();
     okapiHeaders.put(XOkapiHeaders.TENANT, List.of("testtenant1"));
     when(folioExecutionContext.getOkapiHeaders()).thenReturn(okapiHeaders);

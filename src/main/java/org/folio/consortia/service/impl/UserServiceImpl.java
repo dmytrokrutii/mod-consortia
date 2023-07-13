@@ -81,7 +81,7 @@ public class UserServiceImpl implements UserService {
   }
 
   public User prepareShadowUser(UUID userId, String tenantId) {
-    try (var context = new FolioExecutionContextSetter(prepareContextForTenant(tenantId, folioModuleMetadata, (FolioExecutionContext) folioExecutionContext.getInstance()))) {
+    try (var context = new FolioExecutionContextSetter(prepareContextForTenant(tenantId, folioModuleMetadata, folioExecutionContext))) {
       log.info("prepareShadowUser:: Try to get user of tenant={} ", folioExecutionContext.getTenantId());
       User user = new User();
       User userOptional = usersClient.getUsersByUserId(userId.toString());

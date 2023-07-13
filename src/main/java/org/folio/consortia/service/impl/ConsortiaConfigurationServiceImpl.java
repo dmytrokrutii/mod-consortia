@@ -28,8 +28,7 @@ public class ConsortiaConfigurationServiceImpl implements ConsortiaConfiguration
 
   @Override
   public ConsortiaConfiguration getConsortiaConfiguration() {
-    FolioExecutionContext currentContext = (FolioExecutionContext) folioExecutionContext.getInstance();
-    String requestedTenantId = getTenantIdFromHeader(currentContext);
+    String requestedTenantId = getTenantIdFromHeader(folioExecutionContext);
     ConsortiaConfigurationEntity configuration = getConfiguration(requestedTenantId);
     return converter.convert(configuration, ConsortiaConfiguration.class);
   }
