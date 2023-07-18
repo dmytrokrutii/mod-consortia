@@ -9,7 +9,6 @@ import java.util.stream.Stream;
 import org.apache.commons.io.IOUtils;
 import org.folio.consortia.FolioConsortiaApplication;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.SneakyThrows;
@@ -36,8 +35,14 @@ public class InputOutputTestUtils {
     }
   }
 
-  public static <T> T getMockDataObject(String path, Class<T> clazz) throws JsonProcessingException {
+  @SneakyThrows
+  public static <T> T getMockDataObject(String path, Class<T> clazz) {
     var data = getMockDataAsString(path);
     return new ObjectMapper().readValue(data, clazz);
+  }
+
+  @SneakyThrows
+  public static String writeValueAsString(Object object) {
+    return new ObjectMapper().writeValueAsString(object);
   }
 }

@@ -61,6 +61,7 @@ folio:
   system:
     username: consortia-system-user
     password: ${SYSTEM_USER_PASSWORD:consortia-system-user}
+    max-active-threads: 5
 feign:
   client:
     config:

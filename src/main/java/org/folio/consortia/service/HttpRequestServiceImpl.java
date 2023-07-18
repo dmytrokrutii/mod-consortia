@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.integration.XOkapiHeaders;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -27,7 +28,7 @@ public class HttpRequestServiceImpl implements HttpRequestService {
     var headers = convertHeadersToMultiMap(folioExecutionContext.getAllHeaders());
     HttpEntity<Object> httpEntity = new HttpEntity<>(payload, headers);
     var absUrl = folioExecutionContext.getOkapiUrl() + url;
-
+    log.debug("performRequest:: folio context header TENANT = {}" , folioExecutionContext.getOkapiHeaders().get(XOkapiHeaders.TENANT).iterator().next());
     return restTemplate.exchange(absUrl, httpMethod, httpEntity, String.class);
   }
 

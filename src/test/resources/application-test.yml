@@ -19,6 +19,7 @@ folio:
   system:
     username: consortia-system-user
     password: ${SYSTEM_USER_PASSWORD:consortia-system-user}
+    max-active-threads: 5
   kafka:
     numberOfPartitions: ${NUMBER_OF_PARTITIONS:1}
     replicationFactor: ${REPLICATION_FACTOR:1}
