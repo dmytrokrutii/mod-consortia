@@ -1,24 +1,28 @@
 package org.folio.consortia.service.impl;
 
 import static org.folio.consortia.utils.InputOutputTestUtils.getMockDataObject;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 import java.util.concurrent.CompletionException;
 
 import org.folio.consortia.domain.dto.PublicationRequest;
 import org.folio.consortia.domain.dto.PublicationStatus;
 import org.folio.consortia.domain.entity.PublicationStatusEntity;
 import org.folio.consortia.domain.entity.PublicationTenantRequestEntity;
+import org.folio.consortia.exception.ResourceNotFoundException;
 import org.folio.consortia.repository.PublicationStatusRepository;
 import org.folio.consortia.repository.PublicationTenantRequestRepository;
+import org.folio.consortia.service.ConsortiumService;
 import org.folio.consortia.service.HttpRequestService;
 import org.folio.consortia.support.BaseUnitTest;
 import org.junit.jupiter.api.Assertions;
@@ -27,6 +31,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -51,6 +56,8 @@ class PublicationServiceImplTest extends BaseUnitTest {
   HttpRequestService httpRequestService;
   @Mock
   ObjectMapper objectMapper;
+  @Mock
+  ConsortiumService consortiumService;
   @Captor
   ArgumentCaptor<PublicationTenantRequestEntity> ptreCaptor;
 
@@ -144,6 +151,32 @@ class PublicationServiceImplTest extends BaseUnitTest {
     Assertions.assertEquals(PublicationStatus.ERROR, capturedPtre.getStatus());
     Assertions.assertEquals(HttpStatus.BAD_REQUEST.getReasonPhrase(), capturedPtre.getResponse());
     Assertions.assertEquals(HttpStatus.BAD_REQUEST.value(), capturedPtre.getResponseStatusCode());
+  }
+
+  @Test
+  void deletePublicationByIdSuccessful() {
+    var consortiumId = UUID.randomUUID();
+    var publicationId = UUID.randomUUID();
+
+    doNothing().when(consortiumService).checkConsortiumExistsOrThrow(consortiumId);
+    when(publicationStatusRepository.existsById(publicationId)).thenReturn(true);
+
+    publicationService.deletePublicationById(consortiumId, publicationId);
+
+    Mockito.verify(publicationStatusRepository).deleteById(publicationId);
+    Mockito.verify(publicationTenantRequestRepository).deleteByPcStateId(publicationId);
+  }
+
+  @Test
+  void deletePublicationByIdThrowsExceptionIfResourceDoesNotExist() {
+    var consortiumId = UUID.randomUUID();
+    var publicationId = UUID.randomUUID();
+
+    doNothing().when(consortiumService).checkConsortiumExistsOrThrow(consortiumId);
+    when(publicationStatusRepository.existsById(publicationId)).thenReturn(false);
+
+    assertThrows(ResourceNotFoundException.class, () ->
+      publicationService.deletePublicationById(consortiumId, publicationId));
   }
 
 }

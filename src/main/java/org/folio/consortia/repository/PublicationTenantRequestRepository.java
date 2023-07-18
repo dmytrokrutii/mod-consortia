@@ -12,5 +12,5 @@ import org.springframework.stereotype.Repository;
 public interface PublicationTenantRequestRepository extends JpaRepository<PublicationTenantRequestEntity, UUID> {
 
   Page<PublicationTenantRequestEntity> findByPcStateId(UUID publicationId, Pageable pageable);
-
+  void deleteByPcStateId(UUID publicationId);
 }

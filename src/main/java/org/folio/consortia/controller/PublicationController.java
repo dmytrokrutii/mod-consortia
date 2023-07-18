@@ -1,5 +1,7 @@
 package org.folio.consortia.controller;
 
+import static org.springframework.http.HttpStatus.NO_CONTENT;
+
 import java.util.UUID;
 
 import org.folio.consortia.domain.dto.PublicationDetailsResponse;
@@ -33,5 +35,11 @@ public class PublicationController implements org.folio.consortia.rest.resource.
   @Override
   public ResponseEntity<PublicationResultCollection> getPublicationResults(UUID consortiumId, UUID publicationId) {
     return ResponseEntity.ok(publishCoordinatorService.getPublicationResults(consortiumId, publicationId));
+  }
+
+  @Override
+  public ResponseEntity<Void> deletePublicationById(UUID consortiumId, UUID publicationId) {
+    publishCoordinatorService.deletePublicationById(consortiumId, publicationId);
+    return ResponseEntity.status(NO_CONTENT).build();
   }
 }

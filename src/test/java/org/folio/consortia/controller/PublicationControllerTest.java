@@ -15,6 +15,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -187,6 +188,20 @@ public class PublicationControllerTest extends BaseIT {
       );
   }
 
+  @Test
+  void deletePublicationByIdSuccessful() throws Exception {
+    var headers = defaultHeaders();
+    var consortiumId = UUID.randomUUID();
+    var publicationId = UUID.randomUUID();
+
+    doNothing().when(consortiumService).checkConsortiumExistsOrThrow(any(UUID.class));
+    when(publicationStatusRepository.existsById(publicationId)).thenReturn(true);
+    String url = String.format("/consortia/%s/publications/%s", consortiumId, publicationId);
+
+    this.mockMvc.perform(delete(url).headers(headers))
+      .andExpect(status().isNoContent());
+  }
+  
   @ParameterizedTest
   @CsvSource(value = {"100, 12"})
   void parallelTenantRequestsTest(int tenantsAmount, int chunkSize) throws JsonProcessingException {

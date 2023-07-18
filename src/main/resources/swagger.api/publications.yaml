@@ -39,6 +39,19 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
+    delete:
+      summary: Delete publication by Id
+      operationId: deletePublicationById
+      parameters:
+        - $ref: "#/components/parameters/consortiumId"
+        - $ref: "#/components/parameters/publicationId"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /publications/{publicationId}/results:
     get:
       summary: Get publication results
@@ -81,6 +94,8 @@ components:
         application/json:
           schema:
             $ref: "schemas/publication_schema.yaml#/PublicationResultCollection"
+    NoContent:
+      description: No content
     Conflict:
       description: Validation errors
       content:

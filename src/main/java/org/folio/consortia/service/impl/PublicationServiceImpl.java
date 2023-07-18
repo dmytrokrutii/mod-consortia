@@ -47,6 +47,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -323,4 +324,18 @@ public class PublicationServiceImpl implements PublicationService {
       .totalRecords(ptrEntities.getSize());
   }
 
+  @Override
+  @Transactional
+  public void deletePublicationById(UUID consortiumId, UUID publicationId) {
+    log.debug("deletePublicationById:: Trying to delete publication by consortiumId: {} and publicationId id: {}", consortiumId, publicationId);
+
+    consortiumService.checkConsortiumExistsOrThrow(consortiumId);
+    if (!publicationStatusRepository.existsById(publicationId)) {
+      throw new ResourceNotFoundException("publicationId", String.valueOf(publicationId));
+    }
+
+    publicationTenantRequestRepository.deleteByPcStateId(publicationId);
+    publicationStatusRepository.deleteById(publicationId);
+    log.info("deletePublicationById:: Deleted publication by consortiumId: {} and publicationId id: {}", consortiumId, publicationId);
+  }
 }
