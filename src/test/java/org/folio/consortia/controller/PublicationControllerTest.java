@@ -82,20 +82,34 @@ public class PublicationControllerTest extends BaseIT {
   @MockBean
   ConsortiumService consortiumService;
 
-  @Test
-  void publicationSuccessful() throws Exception {
+  @ParameterizedTest
+  @CsvSource(value = { "GET, 200", "POST, 201", "PUT, 204", "DELETE, 204" } )
+  void publicationSuccessful(String httpMethod, int responseCode) throws Exception {
     var headers = defaultHeaders();
     var consortiumId = UUID.randomUUID();
-    var publicationString = getMockDataAsString("mockdata/publications/publication_request.json");
+
+    var publicationRequest = getMockDataObject("mockdata/publications/publication_request.json", PublicationRequest.class);
+    publicationRequest.setMethod(httpMethod);
+    var publicationRequestAsString = writeValueAsString(publicationRequest);
+
     var publicationStatusEntity = getMockDataObject("mockdata/publications/publication_status_entity.json", PublicationStatusEntity.class);
     publicationStatusEntity.setId(UUID.randomUUID());
+
+    var ptre = createPublicationTenantRequestEntity(publicationStatusEntity, TENANT, PublicationStatus.IN_PROGRESS, 200);
+    ptre.setStatus(PublicationStatus.IN_PROGRESS);
+    ptre.setId(UUID.randomUUID());
 
     doNothing().when(tenantService).checkTenantsAndConsortiumExistsOrThrow(any(UUID.class), any());
     when(userTenantService.checkUserIfHasPrimaryAffiliationByUserId(any(UUID.class), any())).thenReturn(true);
     when(publicationStatusRepository.save(any())).thenReturn(publicationStatusEntity);
+    when(publicationTenantRequestRepository.save(any())).thenReturn(ptre);
+
+    ResponseEntity<String> restTemplateResponse = new ResponseEntity<>(new ObjectMapper().writeValueAsString(ptre), HttpStatusCode.valueOf(responseCode));
+    ArgumentCaptor<HttpEntity<Object>> entityCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+    when(restTemplate.exchange(anyString(), eq(HttpMethod.valueOf(httpMethod)), entityCaptor.capture(), eq(String.class))).thenReturn(restTemplateResponse);
 
     this.mockMvc.perform(post(String.format(PUBLICATIONS_URL, consortiumId)).headers(headers)
-      .content(publicationString))
+      .content(publicationRequestAsString))
       .andExpectAll(status().is2xxSuccessful());
   }
 

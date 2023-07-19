@@ -18,6 +18,9 @@ PublicationRequest:
       description: Http request body
       type: object
   additionalProperties: false
+  required:
+    - url
+    - method
 
 PublicationResponse:
   type: object
