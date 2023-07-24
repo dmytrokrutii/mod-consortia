@@ -1,8 +1,8 @@
 package org.folio.consortia.service;
 
+import org.folio.consortia.domain.dto.PublicationHttpResponse;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 
 public interface HttpRequestService {
-  ResponseEntity<String> performRequest(String url, HttpMethod httpMethod, Object payload);
+  PublicationHttpResponse performRequest(String url, HttpMethod httpMethod, Object payload);
 }

@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.http.HttpException;
 import org.folio.consortia.domain.dto.PublicationDetailsResponse;
+import org.folio.consortia.domain.dto.PublicationHttpResponse;
 import org.folio.consortia.domain.dto.PublicationRequest;
 import org.folio.consortia.domain.dto.PublicationResponse;
 import org.folio.consortia.domain.dto.PublicationResult;
@@ -45,7 +46,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
@@ -183,7 +183,7 @@ public class PublicationServiceImpl implements PublicationService {
     }
   }
 
-  ResponseEntity<String> executeHttpRequest(PublicationRequest publicationRequest, String tenantId, FolioExecutionContext centralTenantContext) {
+  PublicationHttpResponse executeHttpRequest(PublicationRequest publicationRequest, String tenantId, FolioExecutionContext centralTenantContext) {
     try (var context = new FolioExecutionContextSetter(prepareContextForTenant(tenantId, folioModuleMetadata, centralTenantContext))) {
       var response = httpRequestService.performRequest(publicationRequest.getUrl(), HttpMethod.valueOf(publicationRequest.getMethod()), publicationRequest.getPayload());
       if (response.getStatusCode().is2xxSuccessful()) {
@@ -200,7 +200,7 @@ public class PublicationServiceImpl implements PublicationService {
     }
   }
 
-  PublicationTenantRequestEntity updateSucceedPublicationTenantRequest(ResponseEntity<String> responseEntity, PublicationTenantRequestEntity ptrEntity, FolioExecutionContext centralTenantContext) {
+  PublicationTenantRequestEntity updateSucceedPublicationTenantRequest(PublicationHttpResponse responseEntity, PublicationTenantRequestEntity ptrEntity, FolioExecutionContext centralTenantContext) {
     var currentLocalDateTime = LocalDateTime.now();
     ptrEntity.setCompletedDate(currentLocalDateTime);
 

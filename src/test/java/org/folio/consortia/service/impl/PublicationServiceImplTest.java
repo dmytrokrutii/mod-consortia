@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.CompletionException;
 
+import org.folio.consortia.domain.dto.PublicationHttpResponse;
 import org.folio.consortia.domain.dto.PublicationRequest;
 import org.folio.consortia.domain.dto.PublicationStatus;
 import org.folio.consortia.domain.entity.PublicationStatusEntity;
@@ -35,7 +36,6 @@ import org.mockito.Mockito;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
@@ -87,7 +87,7 @@ class PublicationServiceImplTest extends BaseUnitTest {
     when(objectMapper.writeValueAsString(anyString())).thenReturn(RandomStringUtils.random(10));
     when(publicationTenantRequestRepository.save(any(PublicationTenantRequestEntity.class))).thenReturn(new PublicationTenantRequestEntity());
 
-    ResponseEntity<String> restTemplateResponse = new ResponseEntity<>(payload, HttpStatusCode.valueOf(201));
+    var restTemplateResponse = new PublicationHttpResponse(payload, HttpStatusCode.valueOf(201));
     when(httpRequestService.performRequest(anyString(), eq(HttpMethod.POST), any())).thenReturn(restTemplateResponse);
     var response = publicationService.executeHttpRequest(pr, CENTRAL_TENANT_NAME, folioExecutionContext);
     Assertions.assertEquals(payload, response.getBody());
@@ -99,7 +99,7 @@ class PublicationServiceImplTest extends BaseUnitTest {
     var publicationStatusEntity = getMockDataObject(PUBLICATION_STATUS_ENTITY_SAMPLE, PublicationStatusEntity.class);
     publicationStatusEntity.setCreatedDate(LocalDateTime.now());
 
-    ResponseEntity<String> restTemplateResponse = new ResponseEntity<>(payload, HttpStatusCode.valueOf(301));
+    var restTemplateResponse = new PublicationHttpResponse(payload, HttpStatusCode.valueOf(301));
     when(httpRequestService.performRequest(anyString(), eq(HttpMethod.POST), any())).thenReturn(restTemplateResponse);
 
     assertThrows(HttpClientErrorException.class, () -> publicationService.executeHttpRequest(pr, CENTRAL_TENANT_NAME, folioExecutionContext));
@@ -126,7 +126,7 @@ class PublicationServiceImplTest extends BaseUnitTest {
     when(publicationStatusRepository.save(any(PublicationStatusEntity.class))).thenReturn(new PublicationStatusEntity());
 
     var payload = RandomStringUtils.random(10);
-    ResponseEntity<String> restTemplateResponse = new ResponseEntity<>(payload, HttpStatusCode.valueOf(201));
+    var restTemplateResponse = new PublicationHttpResponse(payload, HttpStatusCode.valueOf(201));
 
     publicationService.updateSucceedPublicationTenantRequest(restTemplateResponse, ptrEntity, folioExecutionContext);
     verify(publicationTenantRequestRepository).save(ptreCaptor.capture());
