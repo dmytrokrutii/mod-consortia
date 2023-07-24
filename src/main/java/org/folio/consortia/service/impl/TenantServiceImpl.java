@@ -72,6 +72,17 @@ public class TenantServiceImpl implements TenantService {
   }
 
   @Override
+  public TenantCollection getAll(UUID consortiumId) {
+    TenantCollection result = new TenantCollection();
+    List<Tenant> list = tenantRepository.findByConsortiumId(consortiumId)
+      .stream()
+      .map(o -> converter.convert(o, Tenant.class)).toList();
+    result.setTenants(list);
+    result.setTotalRecords(list.size());
+    return result;
+  }
+
+  @Override
   public String getCentralTenantId() {
     TenantEntity tenant = tenantRepository.findCentralTenant()
       .orElseThrow(() -> new ResourceNotFoundException("A central tenant is not found. The central tenant must be created"));

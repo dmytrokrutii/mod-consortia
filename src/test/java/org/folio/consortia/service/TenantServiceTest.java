@@ -131,6 +131,23 @@ class TenantServiceTest {
   }
 
   @Test
+  void shouldGetAllTenantList() {
+    UUID consortiumId = UUID.randomUUID();
+    TenantEntity tenantEntity1 = createTenantEntity("tenant1", "tenant1");
+    TenantEntity tenantEntity2 = createTenantEntity("tenant2", "tenant2");
+    List<TenantEntity> tenantEntityList = new ArrayList<>();
+    tenantEntityList.add(tenantEntity1);
+    tenantEntityList.add(tenantEntity2);
+
+    when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
+    when(tenantRepository.existsById(any())).thenReturn(true);
+    when(tenantRepository.findByConsortiumId(consortiumId)).thenReturn(tenantEntityList);
+
+    var allTenants = tenantService.getAll(consortiumId);
+    Assertions.assertEquals(2, allTenants.getTotalRecords());
+  }
+
+  @Test
   void shouldSaveNotCentralTenantWithNewUserAndPermissions() {
     UUID consortiumId = UUID.fromString(CONSORTIUM_ID);
     TenantEntity tenantEntity1 = createTenantEntity("ABC1", "TestName1");

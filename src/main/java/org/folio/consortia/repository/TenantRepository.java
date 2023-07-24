@@ -1,5 +1,6 @@
 package org.folio.consortia.repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Repository;
 public interface TenantRepository extends JpaRepository<TenantEntity, String> {
 
   Page<TenantEntity> findByConsortiumId(UUID consortiumId, Pageable pageable);
+  List<TenantEntity> findByConsortiumId(UUID consortiumId);
 
   @Query("SELECT t FROM TenantEntity t where t.isCentral = true")
   Optional<TenantEntity> findCentralTenant();

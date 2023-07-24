@@ -1,6 +1,8 @@
 package org.folio.consortia.service.impl;
 
 import static org.folio.consortia.repository.SharingInstanceRepository.Specifications.constructSpecification;
+import static org.folio.consortia.utils.HelperUtils.CONSORTIUM_FOLIO_INSTANCE_SOURCE;
+import static org.folio.consortia.utils.HelperUtils.CONSORTIUM_MARC_INSTANCE_SOURCE;
 import static org.folio.consortia.utils.TenantContextUtils.prepareContextForTenant;
 
 import java.util.Objects;
@@ -26,6 +28,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -35,9 +38,6 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @RequiredArgsConstructor
 public class SharingInstanceServiceImpl implements SharingInstanceService {
-  private static final String FOLIO_SOURCE_VALUE = "folio";
-  private static final String CONSORTIUM_FOLIO = "CONSORTIUM-FOLIO";
-  private static final String CONSORTIUM_MARK = "CONSORTIUM-MARC";
   private static final String GET_INSTANCE_EXCEPTION_MSG = "Failed to get inventory instance with reason: %s";
   private static final String POST_INSTANCE_EXCEPTION_MSG = "Failed to post inventory instance with reason: %s";
 
@@ -80,8 +80,12 @@ public class SharingInstanceServiceImpl implements SharingInstanceService {
       }
 
       try (var context = new FolioExecutionContextSetter(prepareContextForTenant(targetTenantId, folioModuleMetadata, folioExecutionContext))) {
-        String source = FOLIO_SOURCE_VALUE.equalsIgnoreCase(inventoryInstance.get("source").asText()) ? CONSORTIUM_FOLIO : CONSORTIUM_MARK;
-        var updatedInventoryInstance = ((ObjectNode) inventoryInstance).put("source", source);
+        String source = switch (inventoryInstance.get("source").asText().toLowerCase()) {
+          case "folio" -> CONSORTIUM_FOLIO_INSTANCE_SOURCE;
+          case "marc" -> CONSORTIUM_MARC_INSTANCE_SOURCE;
+          default -> throw new IllegalStateException("source is not recognized");
+        };
+        var updatedInventoryInstance = ((ObjectNode) inventoryInstance).set("source", new TextNode(source));
         inventoryService.saveInstance(updatedInventoryInstance);
       } catch (Exception ex) {
         log.error("start:: error when posting instance with id: {}", sharingInstance.getInstanceIdentifier(), ex);

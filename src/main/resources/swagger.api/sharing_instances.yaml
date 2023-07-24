@@ -1,12 +1,12 @@
 openapi: 3.0.0
 info:
-  title: Sharing instance integration API
-  description: "Sharing instance integration API"
+  title: Sharing instance and setting integration API
+  description: "Sharing instance and setting integration API"
   version: 0.0.1
 servers:
-  - url: /consortia/{consortiumId}/
+  - url: /consortia/{consortiumId}/sharing
 paths:
-  /sharing/instances:
+  /instances:
     get:
       description: Sharing instances
       summary: Get list of sharing instances
@@ -30,7 +30,7 @@ paths:
           $ref: "#/components/responses/InternalServerError"
     post:
       summary: start instance sharing
-      operationId: start
+      operationId: startSharingInstance
       parameters:
         - $ref: "#/components/parameters/consortiumId"
       requestBody:
@@ -48,7 +48,7 @@ paths:
           $ref: "#/components/responses/Conflict"
         "500":
           $ref: "#/components/responses/InternalServerError"
-  /sharing/instances/{actionId}:
+  /instances/{actionId}:
     get:
       summary: Get Sharing instance by action ID
       operationId: getSharingInstanceById

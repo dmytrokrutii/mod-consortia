@@ -1,11 +1,18 @@
 package org.folio.consortia.utils;
 
-import lombok.experimental.UtilityClass;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
 import org.folio.consortia.domain.dto.ConsortiaConfiguration;
 import org.folio.consortia.domain.dto.Consortium;
+import org.folio.consortia.domain.dto.PublicationRequest;
 import org.folio.consortia.domain.dto.PublicationStatus;
 import org.folio.consortia.domain.dto.SharingInstance;
+import org.folio.consortia.domain.dto.SharingSettingRequest;
+import org.folio.consortia.domain.dto.SharingSettingResponse;
 import org.folio.consortia.domain.dto.Tenant;
+import org.folio.consortia.domain.dto.TenantCollection;
 import org.folio.consortia.domain.dto.UserTenant;
 import org.folio.consortia.domain.entity.ConsortiaConfigurationEntity;
 import org.folio.consortia.domain.entity.ConsortiumEntity;
@@ -16,8 +23,11 @@ import org.folio.consortia.domain.entity.TenantEntity;
 import org.folio.consortia.domain.entity.UserTenantEntity;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class EntityUtils {
@@ -173,5 +183,28 @@ public class EntityUtils {
     entity.setResponseStatusCode(statusCode);
     entity.setCreatedDate(LocalDateTime.now());
     return entity;
+  }
+
+  public static SharingSettingResponse createSharingSettingResponse(UUID createSettingsPcId, UUID updateSettingsPcId) {
+    return new SharingSettingResponse().createSettingsPCId(createSettingsPcId).updateSettingsPCId(updateSettingsPcId);
+  }
+
+  public static TenantCollection createTenantCollection(List<Tenant> tenants) {
+    TenantCollection tenantCollection = new TenantCollection();
+    tenantCollection.setTenants(tenants);
+    tenantCollection.setTotalRecords(tenants.size());
+    return tenantCollection;
+  }
+
+  public static PublicationRequest createPublicationRequestForSetting(SharingSettingRequest sharingSetting, String method){
+    PublicationRequest publicationRequest = new PublicationRequest();
+    publicationRequest.setUrl(sharingSetting.getUrl());
+    publicationRequest.setMethod(method);
+    final ObjectMapper mapper = new ObjectMapper();
+    final ObjectNode root = mapper.createObjectNode();
+    root.set("name", mapper.convertValue("ORG-NAME", JsonNode.class));
+    root.set("source", mapper.convertValue("consortium", JsonNode.class));
+    publicationRequest.setPayload(root);
+    return publicationRequest;
   }
 }

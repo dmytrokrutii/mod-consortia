@@ -21,6 +21,13 @@ public interface TenantService {
   TenantCollection get(UUID consortiumId, Integer offset, Integer limit);
 
   /**
+   * Gets all tenant collection based on consortiumId.
+   *
+   * @return tenant collection
+   */
+  TenantCollection getAll(UUID consortiumId);
+
+  /**
    * Inserts single tenant based on consortiumId.
    *
    * @param consortiumId  the consortiumId

@@ -42,7 +42,8 @@
     <user_events.yaml.file>${project.basedir}/src/main/resources/swagger.api/kafka_message_schemas.yaml</user_events.yaml.file>
     <consortia_configuration.yaml.file>${project.basedir}/src/main/resources/swagger.api/consortia_configuration.yaml</consortia_configuration.yaml.file>
     <publish_coordinator.yaml.file>${project.basedir}/src/main/resources/swagger.api/publications.yaml</publish_coordinator.yaml.file>
-    <sharing_instances.yaml.file>${project.basedir}/src/main/resources/swagger.api/sharing_instance.yaml</sharing_instances.yaml.file>
+    <sharing_instances.yaml.file>${project.basedir}/src/main/resources/swagger.api/sharing_instances.yaml</sharing_instances.yaml.file>
+    <sharing_settings.yaml.file>${project.basedir}/src/main/resources/swagger.api/sharing_settings.yaml</sharing_settings.yaml.file>
     <!-- runtime dependencies -->
     <folio-spring-base.version>7.1.2</folio-spring-base.version>
     <openapi-generator.version>6.2.1</openapi-generator.version>
@@ -449,12 +450,38 @@
             </configuration>
           </execution>
           <execution>
-            <id>sharing instance</id>
+            <id>sharing instances</id>
             <goals>
               <goal>generate</goal>
             </goals>
             <configuration>
               <inputSpec>${sharing_instances.yaml.file}</inputSpec>
+              <output>${project.build.directory}/generated-sources</output>
+              <generatorName>spring</generatorName>
+              <modelPackage>${project.groupId}.consortia.domain.dto</modelPackage>
+              <apiPackage>${project.groupId}.consortia.rest.resource</apiPackage>
+              <generateApis>true</generateApis>
+              <generateApiTests>true</generateApiTests>
+              <generateApiDocumentation>true</generateApiDocumentation>
+              <generateModels>true</generateModels>
+              <generateModelTests>false</generateModelTests>
+              <generateSupportingFiles>true</generateSupportingFiles>
+              <supportingFilesToGenerate>ApiUtil.java</supportingFilesToGenerate>
+              <generateModelDocumentation>true</generateModelDocumentation>
+              <configOptions>
+                <dateLibrary>java</dateLibrary>
+                <interfaceOnly>true</interfaceOnly>
+                <useSpringBoot3>true</useSpringBoot3>
+              </configOptions>
+            </configuration>
+          </execution>
+          <execution>
+            <id>sharing settings</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <inputSpec>${sharing_settings.yaml.file}</inputSpec>
               <output>${project.build.directory}/generated-sources</output>
               <generatorName>spring</generatorName>
               <modelPackage>${project.groupId}.consortia.domain.dto</modelPackage>

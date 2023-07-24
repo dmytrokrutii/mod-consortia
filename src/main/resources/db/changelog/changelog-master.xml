@@ -10,4 +10,5 @@
   <include file="changes/create-consortia-configuration-table.xml" relativeToChangelogFile="true"/>
   <include file="changes/create-publish-coordinator-tables.xml" relativeToChangelogFile="true"/>
   <include file="changes/create-sharing-instance-action-table.xml" relativeToChangelogFile="true"/>
+  <include file="changes/create-sharing-setting-table.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
