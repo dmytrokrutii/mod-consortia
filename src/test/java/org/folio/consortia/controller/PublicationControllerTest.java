@@ -31,8 +31,10 @@ import java.util.stream.IntStream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.folio.consortia.domain.dto.PublicationRequest;
 import org.folio.consortia.domain.dto.PublicationStatus;
+import org.folio.consortia.domain.entity.ConsortiumEntity;
 import org.folio.consortia.domain.entity.PublicationStatusEntity;
 import org.folio.consortia.domain.entity.PublicationTenantRequestEntity;
+import org.folio.consortia.repository.ConsortiumRepository;
 import org.folio.consortia.repository.PublicationStatusRepository;
 import org.folio.consortia.repository.PublicationTenantRequestRepository;
 import org.folio.consortia.service.ConsortiumService;
@@ -67,6 +69,7 @@ public class PublicationControllerTest extends BaseIT {
   public static final String PUBLICATIONS_URL = "/consortia/%s/publications";
   public static final String GET_PUBLICATION_BY_ID_URL = "/consortia/%s/publications/%s";
   public static final String GET_PUBLICATION_RESULTS_BY_ID_URL = "/consortia/%s/publications/%s/results";
+  public static final String PUBLICATIONS_CLEANUP_URL = "/publications-cleanup";
   @MockBean
   TenantService tenantService;
   @MockBean
@@ -81,6 +84,8 @@ public class PublicationControllerTest extends BaseIT {
   PublicationTenantRequestRepository publicationTenantRequestRepository;
   @MockBean
   ConsortiumService consortiumService;
+  @MockBean
+  ConsortiumRepository consortiumRepository;
 
   @ParameterizedTest
   @CsvSource(value = { "GET, 200", "POST, 201", "PUT, 204", "DELETE, 204" } )
@@ -280,5 +285,21 @@ public class PublicationControllerTest extends BaseIT {
     verify(restTemplate, times(listOfTenantNames.size())).exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(Object.class));
     // check if all 'x-okapi-tenant' values match with the initial list of expected tenant names
     Assertions.assertTrue(CollectionUtils.isEqualCollection(capturedTenantHeaders, listOfTenantNames));
+  }
+
+  @Test
+  void publicationCleanup() throws Exception {
+    var headers = defaultHeaders();
+
+    when(consortiumRepository.findAll()).thenReturn(List.of(new ConsortiumEntity()));
+    when(publicationStatusRepository.deleteAllByCreatedDateBefore(any())).thenReturn(1);
+    when(publicationTenantRequestRepository.deleteAllByCreatedDateBefore(any())).thenReturn(2);
+
+    this.mockMvc.perform(post(String.format(PUBLICATIONS_CLEANUP_URL)).headers(headers))
+      .andExpectAll(status().is2xxSuccessful());
+
+    verify(publicationStatusRepository, times(1)).deleteAllByCreatedDateBefore(any());
+    verify(publicationTenantRequestRepository, times(1)).deleteAllByCreatedDateBefore(any());
+
   }
 }

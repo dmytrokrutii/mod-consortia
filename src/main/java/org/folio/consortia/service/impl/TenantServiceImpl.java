@@ -24,6 +24,7 @@ import org.folio.consortia.exception.ResourceAlreadyExistException;
 import org.folio.consortia.exception.ResourceNotFoundException;
 import org.folio.consortia.repository.TenantRepository;
 import org.folio.consortia.repository.UserTenantRepository;
+import org.folio.consortia.service.CleanupService;
 import org.folio.consortia.service.ConsortiumService;
 import org.folio.consortia.service.PermissionUserService;
 import org.folio.consortia.service.TenantService;
@@ -60,6 +61,7 @@ public class TenantServiceImpl implements TenantService {
   private final FolioExecutionContextHelper contextHelper;
   private final UserTenantsClient userTenantsClient;
   private final SyncPrimaryAffiliationClient syncPrimaryAffiliationClient;
+  private final CleanupService cleanupService;
 
   @Override
   public TenantCollection get(UUID consortiumId, Integer offset, Integer limit) {
@@ -153,6 +155,8 @@ public class TenantServiceImpl implements TenantService {
     if (userTenantRepository.existsByTenantId(tenantId)) {
       throw new IllegalArgumentException(TENANT_HAS_ACTIVE_USER_ASSOCIATIONS_ERROR_MSG);
     }
+    // clean publish coordinator tables first, because after tenant removal it will be ignored by cleanup service
+    cleanupService.clearPublicationTables();
     tenantRepository.deleteById(tenantId);
   }
 

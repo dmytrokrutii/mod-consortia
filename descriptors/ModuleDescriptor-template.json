@@ -320,6 +320,19 @@
           "pathPattern": "/_/tenant/{id}"
         }
       ]
+    },
+    {
+      "id": "_timer",
+      "version": "1.0",
+      "interfaceType": "system",
+      "handlers": [
+        {
+          "methods": [ "POST" ],
+          "pathPattern": "/publications-cleanup",
+          "unit": "day",
+          "delay": "1"
+        }
+      ]
     }
   ],
   "permissionSets": [

@@ -1,5 +1,6 @@
 package org.folio.consortia.repository;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import org.folio.consortia.domain.entity.PublicationTenantRequestEntity;
@@ -13,4 +14,6 @@ public interface PublicationTenantRequestRepository extends JpaRepository<Public
 
   Page<PublicationTenantRequestEntity> findByPcStateId(UUID publicationId, Pageable pageable);
   void deleteByPcStateId(UUID publicationId);
+
+  int deleteAllByCreatedDateBefore(LocalDateTime yesterday);
 }

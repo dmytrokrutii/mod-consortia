@@ -62,6 +62,8 @@ folio:
     username: consortia-system-user
     password: ${SYSTEM_USER_PASSWORD:consortia-system-user}
     max-active-threads: 5
+  timer:
+    publication-records-max-age-in-seconds: 86400
 feign:
   client:
     config:

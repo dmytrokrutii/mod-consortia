@@ -106,7 +106,8 @@ class TenantServiceTest {
   private SyncPrimaryAffiliationClient syncPrimaryAffiliationClient;
   @Mock
   FolioModuleMetadata folioModuleMetadata;
-
+  @Mock
+  CleanupService cleanupService;
   @Mock
   private FolioExecutionContextHelper contextHelper;
 
@@ -257,6 +258,7 @@ class TenantServiceTest {
 
     doNothing().when(consortiumService).checkConsortiumExistsOrThrow(consortiumId);
     when(tenantRepository.existsById(any())).thenReturn(true);
+    doNothing().when(cleanupService).clearPublicationTables();
     doNothing().when(tenantRepository).deleteById(tenantId);
 
     tenantService.delete(consortiumId, tenantId);
