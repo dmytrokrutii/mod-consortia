@@ -37,4 +37,10 @@ public interface SharingInstanceService {
    */
   SharingInstanceCollection getSharingInstances(UUID consortiumId, UUID instanceIdentifier, String sourceTenantId,
       String targetTenantId, Status status, Integer offset, Integer limit);
+
+  /**
+   * Update 'status' and 'error' fields of sharingInstance according to Kafka message payload
+   * @param promotingEvent contains 'instanceIdentifier', 'sourceTenantId', 'targetTenantId', and 'error'
+   */
+  void completePromotingLocalInstance(String promotingEvent);
 }

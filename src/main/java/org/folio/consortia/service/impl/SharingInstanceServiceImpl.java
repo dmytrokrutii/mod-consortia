@@ -8,7 +8,9 @@ import static org.folio.consortia.utils.TenantContextUtils.prepareContextForTena
 import java.util.Objects;
 import java.util.UUID;
 
+import org.apache.commons.lang3.ObjectUtils;
 import org.folio.consortia.client.InventoryClient;
+import org.folio.consortia.config.kafka.KafkaService;
 import org.folio.consortia.domain.dto.SharingInstance;
 import org.folio.consortia.domain.dto.SharingInstanceCollection;
 import org.folio.consortia.domain.dto.Status;
@@ -27,11 +29,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 
 @Service
@@ -40,7 +44,6 @@ import lombok.extern.log4j.Log4j2;
 public class SharingInstanceServiceImpl implements SharingInstanceService {
   private static final String GET_INSTANCE_EXCEPTION_MSG = "Failed to get inventory instance with reason: %s";
   private static final String POST_INSTANCE_EXCEPTION_MSG = "Failed to post inventory instance with reason: %s";
-
   private final SharingInstanceRepository sharingInstanceRepository;
   private final ConsortiumService consortiumService;
   private final TenantService tenantService;
@@ -48,6 +51,8 @@ public class SharingInstanceServiceImpl implements SharingInstanceService {
   private final InventoryService inventoryService;
   private final FolioModuleMetadata folioModuleMetadata;
   private final FolioExecutionContext folioExecutionContext;
+  private final ObjectMapper objectMapper;
+  private final KafkaService kafkaService;
 
   @Override
   public SharingInstance getById(UUID consortiumId, UUID actionId) {
@@ -59,6 +64,7 @@ public class SharingInstanceServiceImpl implements SharingInstanceService {
   }
 
   @Override
+  @SneakyThrows
   @Transactional
   public SharingInstance start(UUID consortiumId, SharingInstance sharingInstance) {
     log.debug("start:: Trying to start instance sharing with instanceIdentifier: {}, consortiumId: {}", sharingInstance.getInstanceIdentifier(), consortiumId);
@@ -94,6 +100,9 @@ public class SharingInstanceServiceImpl implements SharingInstanceService {
 
       sharingInstance.setStatus(Status.COMPLETE);
     } else {
+      String data = objectMapper.writeValueAsString(sharingInstance);
+      kafkaService.send(KafkaService.Topic.CONSORTIUM_INSTANCE_SHARING_INIT, String.valueOf(consortiumId), data);
+
       sharingInstance.setStatus(Status.IN_PROGRESS);
     }
     SharingInstanceEntity savedSharingInstance = sharingInstanceRepository.save(toEntity(sharingInstance));
@@ -116,6 +125,48 @@ public class SharingInstanceServiceImpl implements SharingInstanceService {
     result.setTotalRecords((int) sharingInstancePage.getTotalElements());
     log.info("getSharingInstances:: total number of matched sharingInstances: {}.", result.getTotalRecords());
     return result;
+  }
+
+  @Override
+  @Transactional
+  public void completePromotingLocalInstance(String eventPayload) {
+    log.debug("completePromotingLocalInstance:: parameters eventPayload: {}", eventPayload);
+    try {
+      var promotingEvent = objectMapper.readValue(eventPayload, SharingInstance.class);
+
+      String centralTenantId = tenantService.getCentralTenantId();
+      String sourceTenantId = promotingEvent.getSourceTenantId();
+      String targetTenantId = promotingEvent.getTargetTenantId();
+      checkTenantsExistAndContainCentralTenantOrThrow(sourceTenantId, targetTenantId);
+
+      if (ObjectUtils.notEqual(centralTenantId, targetTenantId)) {
+        log.warn("completePromotingLocalInstance:: promotion failed as targetTenantId: {} does not equal to centralTenantId: {}", targetTenantId, centralTenantId);
+        return;
+      }
+
+      var specification = constructSpecification(promotingEvent.getInstanceIdentifier(), sourceTenantId, targetTenantId, null);
+      var optionalSharingInstance = sharingInstanceRepository.findOne(specification);
+
+      if (optionalSharingInstance.isEmpty()) {
+        log.warn("completePromotingLocalInstance:: sharingInstance with instanceIdentifier: {}, sourceTenantId: {}, targetTenantId: {} does not exist",
+          promotingEvent.getInstanceIdentifier(), sourceTenantId, targetTenantId);
+        return;
+      }
+
+      var promotedSharingInstance = optionalSharingInstance.get();
+      if (ObjectUtils.isNotEmpty(promotingEvent.getError())) {
+        promotedSharingInstance.setStatus(Status.ERROR);
+        promotedSharingInstance.setError(promotingEvent.getError());
+      } else {
+        promotedSharingInstance.setStatus(Status.COMPLETE);
+      }
+
+      sharingInstanceRepository.save(promotedSharingInstance);
+      log.info("completePromotingLocalInstance:: status of sharingInstance with instanceIdentifier: {}, sourceTenantId: {}, targetTenantId: {} " +
+        "has been updated to: {}", promotedSharingInstance.getInstanceId(), sourceTenantId, targetTenantId, promotedSharingInstance.getStatus());
+    } catch (Exception e) {
+      log.error("completePromotingLocalInstance:: exception occurred while promoting local sharing instance", e);
+    }
   }
 
   private void checkTenantsExistAndContainCentralTenantOrThrow(String sourceTenantId, String targetTenantId) {

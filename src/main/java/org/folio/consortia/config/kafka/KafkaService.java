@@ -1,9 +1,14 @@
 package org.folio.consortia.config.kafka;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import static org.folio.consortia.messaging.listener.ConsortiaUserEventListener.USER_CREATED_LISTENER_ID;
+import static org.folio.consortia.messaging.listener.ConsortiaUserEventListener.USER_UPDATED_LISTENER_ID;
+import static org.folio.consortia.messaging.listener.ConsortiaUserEventListener.USER_DELETED_LISTENER_ID;
+import static org.folio.consortia.messaging.listener.ConsortiaSharingInstanceEventListener.CONSORTIUM_INSTANCE_SHARING_COMPLETE_LISTENER_ID;
+
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.stream.Stream;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -21,13 +26,10 @@ import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.stream.Stream;
-
-import static org.folio.consortia.messaging.listener.ConsortiaUserEventListener.USER_CREATED_LISTENER_ID;
-import static org.folio.consortia.messaging.listener.ConsortiaUserEventListener.USER_UPDATED_LISTENER_ID;
-import static org.folio.consortia.messaging.listener.ConsortiaUserEventListener.USER_DELETED_LISTENER_ID;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 
 @Component
 @Log4j2
@@ -50,6 +52,8 @@ public class KafkaService {
     USER_CREATED("USER_CREATED"),
     USER_UPDATED("USER_UPDATED"),
     USER_DELETED("USER_DELETED"),
+    CONSORTIUM_INSTANCE_SHARING_INIT("CONSORTIUM_INSTANCE_SHARING_INIT"),
+    CONSORTIUM_INSTANCE_SHARING_COMPLETE("CONSORTIUM_INSTANCE_SHARING_COMPLETE"),
     CONSORTIUM_PRIMARY_AFFILIATION_CREATED("Default", "CONSORTIUM_PRIMARY_AFFILIATION_CREATED"),
     CONSORTIUM_PRIMARY_AFFILIATION_UPDATED("Default", "CONSORTIUM_PRIMARY_AFFILIATION_UPDATED"),
     CONSORTIUM_PRIMARY_AFFILIATION_DELETED("Default", "CONSORTIUM_PRIMARY_AFFILIATION_DELETED");
@@ -83,6 +87,7 @@ public class KafkaService {
     restartEventListener(USER_CREATED_LISTENER_ID);
     restartEventListener(USER_UPDATED_LISTENER_ID);
     restartEventListener(USER_DELETED_LISTENER_ID);
+    restartEventListener(CONSORTIUM_INSTANCE_SHARING_COMPLETE_LISTENER_ID);
   }
 
   private void restartEventListener(String listenerId) {
@@ -101,9 +106,11 @@ public class KafkaService {
     for (ConsortiaInputEventType consEventType : ConsortiaInputEventType.values()) {
       eventsNameStreamBuilder.add(consEventType);
     }
-    eventsNameStreamBuilder.add(ConsortiaOutputEventType.CONSORTIUM_PRIMARY_AFFILIATION_CREATED);
-    eventsNameStreamBuilder.add(ConsortiaOutputEventType.CONSORTIUM_PRIMARY_AFFILIATION_UPDATED);
-    eventsNameStreamBuilder.add(ConsortiaOutputEventType.CONSORTIUM_PRIMARY_AFFILIATION_DELETED);
+
+    for (ConsortiaOutputEventType consEventType : ConsortiaOutputEventType.values()) {
+      eventsNameStreamBuilder.add(consEventType);
+    }
+
     return eventsNameStreamBuilder.build()
       .map(Enum::name)
       .map(topic -> getTenantTopicName(topic, tenant))

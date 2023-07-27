@@ -9,6 +9,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -20,6 +22,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.folio.consortia.config.kafka.KafkaService;
 import org.folio.consortia.domain.dto.SharingInstance;
 import org.folio.consortia.domain.dto.Status;
 import org.folio.consortia.domain.entity.SharingInstanceEntity;
@@ -36,6 +39,7 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.batch.BatchAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.convert.ConversionService;
+import org.springframework.data.jpa.domain.Specification;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -46,6 +50,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 class SharingInstanceServiceTest {
 
   private static final UUID instanceIdentifier = UUID.fromString("5b157ec2-8134-4363-a7b1-c9531a7c6a54");
+  private static final String EVENT_PAYLOAD = "{\"instanceIdentifier\":\"5b157ec2-8134-4363-a7b1-c9531a7c6a54\",\"sourceTenantId\":\"college\",\"targetTenantId\":\"mobius\"}";
   private static final Map<String, Collection<String>> headers = new HashMap<>();
   @InjectMocks
   private SharingInstanceServiceImpl sharingInstanceService;
@@ -63,6 +68,10 @@ class SharingInstanceServiceTest {
   private FolioExecutionContext folioExecutionContext;
   @Mock
   private InventoryService inventoryService;
+  @Mock
+  private ObjectMapper objectMapper;
+  @Mock
+  private KafkaService kafkaService;
 
   static {
     headers.put(XOkapiHeaders.TENANT, List.of("mobius"));
@@ -86,15 +95,17 @@ class SharingInstanceServiceTest {
   }
 
   @Test
-  void shouldSaveSharingInstanceWhenSourceTenantNotEqualCentralTenant() {
+  void shouldSaveSharingInstanceWhenSourceTenantNotEqualCentralTenant() throws Exception{
     SharingInstance sharingInstance = createSharingInstance(instanceIdentifier, "college", "mobius");
     SharingInstanceEntity savedSharingInstance = createSharingInstanceEntity(instanceIdentifier, "college", "mobius");
+    String event = objectMapper.writeValueAsString(sharingInstance);
 
     when(consortiumRepository.existsById(any())).thenReturn(true);
     when(conversionService.convert(any(), any())).thenReturn(toDto(savedSharingInstance));
     doNothing().when(tenantService).checkTenantExistsOrThrow(anyString());
     when(tenantService.getCentralTenantId()).thenReturn("mobius");
     when(sharingInstanceRepository.save(any())).thenReturn(savedSharingInstance);
+    when(objectMapper.writeValueAsString(any())).thenReturn(event);
 
     var expectedSharingInstance = createSharingInstance(instanceIdentifier, "college", "mobius");
     var actualSharingInstance = sharingInstanceService.start(UUID.randomUUID(), sharingInstance);
@@ -103,6 +114,7 @@ class SharingInstanceServiceTest {
     assertThat(actualSharingInstance.getSourceTenantId()).isEqualTo(expectedSharingInstance.getSourceTenantId());
     assertThat(actualSharingInstance.getTargetTenantId()).isEqualTo(expectedSharingInstance.getTargetTenantId());
 
+    verify(kafkaService, times(1)).send(any(), anyString(), any());
     verify(sharingInstanceRepository, times(1)).save(any());
   }
 
@@ -191,6 +203,41 @@ class SharingInstanceServiceTest {
     verify(sharingInstanceRepository, times(1)).save(any());
   }
 
+  @Test
+  void shouldPromoteSharingInstanceWithCompleteStatus() throws JsonProcessingException {
+    SharingInstance sharingInstance = createSharingInstance(instanceIdentifier, "college", "mobius");
+    SharingInstanceEntity sharingInstanceEntity = new SharingInstanceEntity();
+
+    when(tenantService.getCentralTenantId()).thenReturn("mobius");
+    doNothing().when(tenantService).checkTenantExistsOrThrow(anyString());
+    when(objectMapper.readValue(anyString(), eq(SharingInstance.class))).thenReturn(sharingInstance);
+    when(sharingInstanceRepository.findOne(any(Specification.class))).thenReturn(Optional.of(sharingInstanceEntity));
+
+    sharingInstanceService.completePromotingLocalInstance(EVENT_PAYLOAD);
+
+    assertThat(sharingInstanceEntity.getError()).isNull();
+    assertThat(sharingInstanceEntity.getStatus()).isEqualTo(Status.COMPLETE);
+    verify(sharingInstanceRepository, times(1)).save(any());
+  }
+
+  @Test
+  void shouldPromoteSharingInstanceWithErrorStatus() throws JsonProcessingException {
+    SharingInstance sharingInstance = createSharingInstance(instanceIdentifier, "college", "mobius");
+    sharingInstance.setError("Promotion failed");
+    SharingInstanceEntity sharingInstanceEntity = new SharingInstanceEntity();
+
+    when(tenantService.getCentralTenantId()).thenReturn("mobius");
+    doNothing().when(tenantService).checkTenantExistsOrThrow(anyString());
+    when(objectMapper.readValue(anyString(), eq(SharingInstance.class))).thenReturn(sharingInstance);
+    when(sharingInstanceRepository.findOne(any(Specification.class))).thenReturn(Optional.of(sharingInstanceEntity));
+
+    sharingInstanceService.completePromotingLocalInstance(EVENT_PAYLOAD);
+
+    assertThat(sharingInstanceEntity.getError()).isNotEmpty();
+    assertThat(sharingInstanceEntity.getStatus()).isEqualTo(Status.ERROR);
+    verify(sharingInstanceRepository, times(1)).save(any());
+  }
+
   /* Negative cases */
   @Test
   void shouldThrowResourceNotFoundExceptionWhenTryingToGetSharingInstanceById() {
@@ -210,6 +257,35 @@ class SharingInstanceServiceTest {
 
     Assertions.assertThrows(IllegalArgumentException.class,
       () -> sharingInstanceService.start(CONSORTIUM_ID, sharingInstance));
+  }
+
+  @Test
+  void shouldNotPromoteSharingInstanceWhenTargetTenantDoesNotEqualCentralTenant() throws JsonProcessingException {
+    SharingInstance sharingInstance = createSharingInstance(instanceIdentifier, "college", "mobius");
+
+    when(tenantService.getCentralTenantId()).thenReturn("college");
+    doNothing().when(tenantService).checkTenantExistsOrThrow(anyString());
+    when(objectMapper.readValue(anyString(), eq(SharingInstance.class))).thenReturn(sharingInstance);
+
+    // call the method and verify there was no call to repository
+    sharingInstanceService.completePromotingLocalInstance(EVENT_PAYLOAD);
+
+    verify(sharingInstanceRepository, never()).save(any());
+  }
+
+  @Test
+  void shouldNotPromoteSharingInstanceWhenSharingInstanceDoesNotExist() throws JsonProcessingException {
+    SharingInstance sharingInstance = createSharingInstance(instanceIdentifier, "college", "mobius");
+
+    when(tenantService.getCentralTenantId()).thenReturn("mobius");
+    doNothing().when(tenantService).checkTenantExistsOrThrow(anyString());
+    when(sharingInstanceRepository.findOne(any(Specification.class))).thenReturn(Optional.empty());
+    when(objectMapper.readValue(anyString(), eq(SharingInstance.class))).thenReturn(sharingInstance);
+
+    // call the method and verify there was no call to repository
+    sharingInstanceService.completePromotingLocalInstance(EVENT_PAYLOAD);
+
+    verify(sharingInstanceRepository, never()).save(any());
   }
 
   private SharingInstance toDto(SharingInstanceEntity entity) {
