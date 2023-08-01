@@ -87,7 +87,7 @@ public class UserServiceImpl implements UserService {
 
       if (Objects.nonNull(userOptional.getId())) {
         user.setId(userId.toString());
-        user.setUsername(String.format("shadow_%s_%s", userOptional.getUsername(), HelperUtils.randomString(RANDOM_STRING_COUNT)));
+        user.setUsername(String.format("%s_%s", userOptional.getUsername(), HelperUtils.randomString(RANDOM_STRING_COUNT)));
         user.setType(SHADOW_USER_TYPE);
         user.setActive(true);
       } else {
