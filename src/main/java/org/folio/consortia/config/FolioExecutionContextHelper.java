@@ -43,6 +43,7 @@ public class FolioExecutionContextHelper {
 
     try (var context = new FolioExecutionContextSetter(new DefaultFolioExecutionContext(folioModuleMetadata, tenantOkapiHeaders))) {
       String systemUserToken = authService.getTokenForSystemUser(tenantId, okapiUrl);
+      log.debug("getSystemUserFolioExecutionContext:: {}", systemUserToken);
       if (StringUtils.isNotBlank(systemUserToken)) {
         tenantOkapiHeaders.put(XOkapiHeaders.TOKEN, List.of(systemUserToken));
       } else {
