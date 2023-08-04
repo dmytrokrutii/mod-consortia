@@ -24,6 +24,8 @@ import lombok.extern.log4j.Log4j2;
 @RequiredArgsConstructor
 public class FolioExecutionContextHelper {
 
+  public static final String AUTHTOKEN_REFRESH_CACHE_HEADER = "Authtoken-Refresh-Cache";
+
   private final FolioModuleMetadata folioModuleMetadata;
   private final FolioExecutionContext folioExecutionContext;
   private final AuthService authService;
@@ -37,10 +39,11 @@ public class FolioExecutionContextHelper {
   }
 
   public FolioExecutionContext getSystemUserFolioExecutionContext(String tenantId) {
-    Map<String, Collection<String>> tenantOkapiHeaders = new HashMap<>();
-    tenantOkapiHeaders.put(XOkapiHeaders.TENANT, List.of(tenantId));
-    tenantOkapiHeaders.put(XOkapiHeaders.URL, List.of(okapiUrl));
+    Map<String, Collection<String>> headers = getOkapiHeaders(tenantId);
+    return getSystemUserFolioExecutionContext(tenantId, headers);
+  }
 
+  public FolioExecutionContext getSystemUserFolioExecutionContext(String tenantId, Map<String, Collection<String>> tenantOkapiHeaders) {
     try (var context = new FolioExecutionContextSetter(new DefaultFolioExecutionContext(folioModuleMetadata, tenantOkapiHeaders))) {
       String systemUserToken = authService.getTokenForSystemUser(tenantId, okapiUrl);
       log.debug("getSystemUserFolioExecutionContext:: {}", systemUserToken);
@@ -58,5 +61,26 @@ public class FolioExecutionContextHelper {
       }
     }
     return new DefaultFolioExecutionContext(folioModuleMetadata, tenantOkapiHeaders);
+  }
+
+  /**
+   * Gets headers with header Authtoken-Refresh-Cache = true that allows to invalidate
+   * user permissions cache that lives for 1 minute by default in mod-authtoken.
+   * Added in scope of MODCON-82 with aim to fix Forbidden exceptions thrown by mod-authtoken
+   *
+   * @param tenantId the tenant id
+   * @return map with headers
+   */
+  public Map<String, Collection<String>> getHeadersForSystemUserWithRefreshPermissions(String tenantId) {
+    Map<String, Collection<String>> headers = getOkapiHeaders(tenantId);
+    headers.put(AUTHTOKEN_REFRESH_CACHE_HEADER, List.of(Boolean.TRUE.toString()));
+    return headers;
+  }
+
+  private Map<String, Collection<String>> getOkapiHeaders(String tenantId) {
+    Map<String, Collection<String>> headers = new HashMap<>();
+    headers.put(XOkapiHeaders.TENANT, List.of(tenantId));
+    headers.put(XOkapiHeaders.URL, List.of(okapiUrl));
+    return headers;
   }
 }

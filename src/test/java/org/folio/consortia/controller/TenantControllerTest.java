@@ -10,6 +10,7 @@ import static org.folio.consortia.utils.EntityUtils.createUser;
 import static org.folio.consortia.utils.EntityUtils.createUserTenantEntity;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -161,7 +162,7 @@ class TenantControllerTest extends BaseIT {
     when(userService.prepareShadowUser(UUID.fromString(adminUser.getId()), TENANT)).thenReturn(adminUser);
     when(userService.prepareShadowUser(UUID.fromString(systemUser.getId()), TENANT)).thenReturn(systemUser);
     when(userService.getById(any())).thenReturn(adminUser);
-    doReturn(folioExecutionContext).when(contextHelper).getSystemUserFolioExecutionContext(anyString());
+    doReturn(folioExecutionContext).when(contextHelper).getSystemUserFolioExecutionContext(anyString(), anyMap());
     doReturn(new User()).when(usersClient).getUsersByUserId(any());
     doReturn(permissionUserCollection).when(permissionsClient).get(anyString());
     doNothing().when(permissionsClient).addPermission(anyString(), any());
