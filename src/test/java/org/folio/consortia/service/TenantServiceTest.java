@@ -3,6 +3,7 @@ package org.folio.consortia.service;
 import static org.folio.consortia.utils.EntityUtils.createConsortiaConfiguration;
 import static org.folio.consortia.utils.EntityUtils.createTenant;
 import static org.folio.consortia.utils.EntityUtils.createTenantEntity;
+import static org.folio.consortia.utils.EntityUtils.createUser;
 import static org.folio.consortia.utils.InputOutputTestUtils.getMockDataAsString;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -13,6 +14,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -151,36 +153,40 @@ class TenantServiceTest {
   @Test
   void shouldSaveNotCentralTenantWithNewUserAndPermissions() {
     UUID consortiumId = UUID.fromString(CONSORTIUM_ID);
-    TenantEntity tenantEntity1 = createTenantEntity("ABC1", "TestName1");
+    TenantEntity localTenantEntity = createTenantEntity("ABC1", "TestName1");
     Tenant tenant = createTenant("TestID", "Test");
     TenantEntity centralTenant = createTenantEntity("diku", "diku");
     PermissionUserCollection permissionUserCollection = new PermissionUserCollection();
     permissionUserCollection.setPermissionUsers(List.of());
-    User user = new User();
-    user.setId(UUID.randomUUID().toString());
+    User adminUser = createUser("diku_admin");
+    User systemUser = createUser("consortia-system-user");
 
     when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
-    when(userService.prepareShadowUser(any(), any())).thenReturn(user);
-    when(userService.createUser(any())).thenReturn(user);
+    when(userService.getByUsername(any())).thenReturn(Optional.of(systemUser));
+    when(userService.prepareShadowUser(UUID.fromString(adminUser.getId()), "diku")).thenReturn(adminUser);
+    when(userService.prepareShadowUser(UUID.fromString(systemUser.getId()), "diku")).thenReturn(systemUser);
+    when(userService.createUser(any())).thenReturn(adminUser);
     when(userService.getById(any())).thenReturn(new User());
     when(permissionsClient.get(any())).thenReturn(permissionUserCollection);
-    when(permissionsClient.create(any())).thenReturn(PermissionUser.of(UUID.randomUUID().toString(), user.getId(), List.of("users.collection.get")));
+    when(permissionsClient.create(any())).thenReturn(PermissionUser.of(UUID.randomUUID().toString(), adminUser.getId(), List.of("users.collection.get")));
     when(tenantRepository.existsById(any())).thenReturn(false);
     when(tenantRepository.findCentralTenant()).thenReturn(Optional.of(centralTenant));
-    when(tenantRepository.save(any(TenantEntity.class))).thenReturn(tenantEntity1);
+    when(tenantRepository.save(any(TenantEntity.class))).thenReturn(localTenantEntity);
     doNothing().when(configurationClient).saveConfiguration(createConsortiaConfiguration(CENTRAL_TENANT_ID));
     doNothing().when(userTenantsClient).postUserTenant(any());
-    when(conversionService.convert(tenantEntity1, Tenant.class)).thenReturn(tenant);
+    when(conversionService.convert(localTenantEntity, Tenant.class)).thenReturn(tenant);
     doReturn(folioExecutionContext).when(contextHelper).getSystemUserFolioExecutionContext(anyString());
     when(folioExecutionContext.getTenantId()).thenReturn("diku");
 
-    var tenant1 = tenantService.save(consortiumId, UUID.randomUUID(), tenant);
+    var tenant1 = tenantService.save(consortiumId, UUID.fromString(adminUser.getId()), tenant);
 
-    verify(userService).prepareShadowUser(any(), any());
+    verify(userService, times(1)).prepareShadowUser(UUID.fromString(adminUser.getId()), "diku");
+    verify(userService, times(1)).prepareShadowUser(UUID.fromString(adminUser.getId()), "diku");
     verify(userTenantRepository).save(any());
     verify(configurationClient).saveConfiguration(any());
     verify(userTenantsClient).postUserTenant(any());
-    verify(userService).createUser(any());
+    verify(userService, times(2)).createUser(any());
+    verify(userService, times(1)).getByUsername(any());
 
     Assertions.assertEquals(tenant, tenant1);
   }

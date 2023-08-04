@@ -13,6 +13,7 @@ import org.folio.consortia.domain.dto.SharingSettingRequest;
 import org.folio.consortia.domain.dto.SharingSettingResponse;
 import org.folio.consortia.domain.dto.Tenant;
 import org.folio.consortia.domain.dto.TenantCollection;
+import org.folio.consortia.domain.dto.User;
 import org.folio.consortia.domain.dto.UserTenant;
 import org.folio.consortia.domain.entity.ConsortiaConfigurationEntity;
 import org.folio.consortia.domain.entity.ConsortiumEntity;
@@ -202,9 +203,14 @@ public class EntityUtils {
     publicationRequest.setMethod(method);
     final ObjectMapper mapper = new ObjectMapper();
     final ObjectNode root = mapper.createObjectNode();
+    root.set("id", mapper.convertValue("1844767a-8367-4926-9999-514c35840399", JsonNode.class));
     root.set("name", mapper.convertValue("ORG-NAME", JsonNode.class));
     root.set("source", mapper.convertValue("consortium", JsonNode.class));
     publicationRequest.setPayload(root);
     return publicationRequest;
+  }
+
+  public static User createUser(String username) {
+    return new User().id(UUID.randomUUID().toString()).username(username);
   }
 }

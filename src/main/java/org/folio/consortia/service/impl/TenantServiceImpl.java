@@ -31,6 +31,7 @@ import org.folio.consortia.service.TenantService;
 import org.folio.consortia.service.UserService;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.scope.FolioExecutionContextSetter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -46,10 +47,14 @@ import lombok.extern.log4j.Log4j2;
 public class TenantServiceImpl implements TenantService {
 
   private static final String SHADOW_ADMIN_PERMISSION_FILE_PATH = "permissions/admin-user-permissions.csv";
+  private static final String SHADOW_SYSTEM_USER_PERMISSION_FILE_PATH = "permissions/system-user-permissions.csv";
   private static final String TENANTS_IDS_NOT_MATCHED_ERROR_MSG = "Request body tenantId and path param tenantId should be identical";
   private static final String TENANT_HAS_ACTIVE_USER_ASSOCIATIONS_ERROR_MSG = "Cannot delete tenant with ID {tenantId} because it has an association with a user. "
       + "Please remove the user association before attempting to delete the tenant.";
   private static final String DUMMY_USERNAME = "dummy_user";
+  @Value("${folio.system.username}")
+  private String systemUserUsername;
+
   private final TenantRepository tenantRepository;
   private final UserTenantRepository userTenantRepository;
   private final ConversionService converter;
@@ -116,6 +121,7 @@ public class TenantServiceImpl implements TenantService {
     // save admin user tenant association for non-central tenant
     String centralTenantId;
     User shadowAdminUser = null;
+    User shadowSystemUser = null;
     if (tenantDto.getIsCentral()) {
       centralTenantId = tenantDto.getId();
     } else {
@@ -123,6 +129,10 @@ public class TenantServiceImpl implements TenantService {
       centralTenantId = getCentralTenantId();
       shadowAdminUser = userService.prepareShadowUser(adminUserId, folioExecutionContext.getTenantId());
       userTenantRepository.save(createUserTenantEntity(consortiumId, shadowAdminUser, tenantDto));
+      // creating shadow user of consortia system user of central tenant with same permissions.
+      var centralSystemUser = userService.getByUsername(systemUserUsername)
+        .orElseThrow(() ->  new ResourceNotFoundException("systemUserUsername", systemUserUsername));
+      shadowSystemUser = userService.prepareShadowUser(UUID.fromString(centralSystemUser.getId()), folioExecutionContext.getTenantId());
     }
 
     // switch to context of the desired tenant and apply all necessary setup
@@ -130,7 +140,10 @@ public class TenantServiceImpl implements TenantService {
       configurationClient.saveConfiguration(createConsortiaConfigurationBody(centralTenantId));
       if (!tenantDto.getIsCentral()) {
         createUserTenantWithDummyUser(tenantDto.getId(), centralTenantId);
-        createShadowAdminUserWithPermissions(shadowAdminUser); //NOSONAR
+        createShadowUserWithPermissions(shadowAdminUser, SHADOW_ADMIN_PERMISSION_FILE_PATH); //NOSONAR
+        log.info("save:: shadow admin user '{}' with permissions was created in tenant '{}'", shadowAdminUser.getId(), tenantDto.getId());
+        createShadowUserWithPermissions(shadowSystemUser, SHADOW_SYSTEM_USER_PERMISSION_FILE_PATH);
+        log.info("save:: shadow system user '{}' with permissions was created in tenant '{}'", shadowSystemUser.getId(), tenantDto.getId());
       }
       syncPrimaryAffiliationClient.syncPrimaryAffiliations(consortiumId.toString(), tenantDto.getId(), centralTenantId);
     }
@@ -176,7 +189,7 @@ public class TenantServiceImpl implements TenantService {
     @param tenantId tenant id
     @param centralTenantId central tenant id
   */
-  private UserTenant createUserTenantWithDummyUser(String tenantId, String centralTenantId) {
+  private void createUserTenantWithDummyUser(String tenantId, String centralTenantId) {
     UserTenant userTenant = new UserTenant();
     userTenant.setId(UUID.randomUUID());
     userTenant.setTenantId(tenantId);
@@ -186,7 +199,6 @@ public class TenantServiceImpl implements TenantService {
 
     log.info("Creating userTenant with dummy user with id {}.", userTenant.getId());
     userTenantsClient.postUserTenant(userTenant);
-    return userTenant;
   }
 
   private void checkTenantNotExistsAndConsortiumExistsOrThrow(UUID consortiumId, String tenantId) {
@@ -257,16 +269,16 @@ public class TenantServiceImpl implements TenantService {
     return configuration;
   }
 
-  private void createShadowAdminUserWithPermissions(User user) {
+  private void createShadowUserWithPermissions(User user, String permissionFilePath) {
     User userOptional = userService.getById(UUID.fromString(user.getId()));
     if (Objects.isNull(userOptional.getId())) {
       userOptional = userService.createUser(user);
     }
     Optional<PermissionUser> permissionUserOptional = permissionUserService.getByUserId(userOptional.getId());
     if (permissionUserOptional.isPresent()) {
-      permissionUserService.addPermissions(permissionUserOptional.get(), SHADOW_ADMIN_PERMISSION_FILE_PATH);
+      permissionUserService.addPermissions(permissionUserOptional.get(), permissionFilePath);
     } else {
-      permissionUserService.createWithPermissionsFromFile(user.getId(), SHADOW_ADMIN_PERMISSION_FILE_PATH);
+      permissionUserService.createWithPermissionsFromFile(user.getId(), permissionFilePath);
     }
   }
 

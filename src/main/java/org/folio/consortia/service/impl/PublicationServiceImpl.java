@@ -109,7 +109,7 @@ public class PublicationServiceImpl implements PublicationService {
       .dateTime(publicationStatusEntity.getCreatedDate().toString())
       .request(tenantRequestPayload)
       .errors(errorList);
-    log.info("getPublicationDetails:: Prepared publication details response {}", pdr);
+    log.info("getPublicationDetails:: Prepared publication details response with id={}, status={}", pdr.getId(), pdr.getStatus());
     return pdr;
   }
 

@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.folio.consortia.config.FolioExecutionContextHelper;
 import org.folio.consortia.domain.dto.PublicationRequest;
 import org.folio.consortia.domain.dto.SharingSettingRequest;
@@ -53,10 +54,12 @@ public class SharingSettingServiceImpl implements SharingSettingService {
   public SharingSettingResponse start(UUID consortiumId, SharingSettingRequest sharingSettingRequest) {
     UUID settingId = sharingSettingRequest.getSettingId();
     log.debug("start:: Trying to share setting with consortiumId: {}, sharing settingId: {}", consortiumId, settingId);
+    // validations for consortium id and equals between payload and settingId
     consortiumService.checkConsortiumExistsOrThrow(consortiumId);
+    checkEqualsOfPayloadIdWithSettingId(sharingSettingRequest);
+
     Set<String> settingTenants = sharingSettingRepository.findTenantsBySettingId(settingId);
     TenantCollection allTenants = tenantService.getAll(consortiumId);
-
     PublicationRequest publicationPostRequest = createPublicationRequestForSetting(sharingSettingRequest, HttpMethod.POST.toString());
     PublicationRequest publicationPutRequest = createPublicationRequestForSetting(sharingSettingRequest, HttpMethod.PUT.toString());
 
@@ -96,21 +99,38 @@ public class SharingSettingServiceImpl implements SharingSettingService {
     }
   }
 
-  private PublicationRequest createPublicationRequestForSetting(SharingSettingRequest sharingSettingRequest, String httpMethod) {
-    PublicationRequest publicationRequest = new PublicationRequest();
-    publicationRequest.setMethod(httpMethod);
-    publicationRequest.setUrl(sharingSettingRequest.getUrl());
-    publicationRequest.setPayload(sharingSettingRequest.getPayload());
-    publicationRequest.setTenants(new HashSet<>());
-    return publicationRequest;
-  }
-
   private UUID publishRequest(UUID consortiumId, PublicationRequest publicationRequest) {
     if (CollectionUtils.isNotEmpty(publicationRequest.getTenants())) {
       return publicationService.publishRequest(consortiumId, publicationRequest).getId();
     }
     log.info("publishRequest:: Tenant list of publishing for http method: {} is empty", publicationRequest.getMethod());
     return null;
+  }
+
+  private void checkEqualsOfPayloadIdWithSettingId(SharingSettingRequest sharingSettingRequest) {
+    String sharingSettingId = String.valueOf(sharingSettingRequest.getSettingId());
+    String payloadId = getPayloadId(sharingSettingRequest.getPayload());
+    if (ObjectUtils.notEqual(sharingSettingId, payloadId)) {
+      throw new IllegalArgumentException("id in payload is not equal to settingId");
+    }
+  }
+
+  private String getPayloadId(Object payload) {
+    JsonNode payloadNode = objectMapper.convertValue(payload, JsonNode.class);
+    return payloadNode.get("id").asText();
+  }
+
+  private PublicationRequest createPublicationRequestForSetting(SharingSettingRequest sharingSettingRequest, String httpMethod) {
+    PublicationRequest publicationRequest = new PublicationRequest();
+    publicationRequest.setMethod(httpMethod);
+    String url = sharingSettingRequest.getUrl();
+    if (httpMethod.equals(HttpMethod.PUT.toString())) {
+      url += "/" + getPayloadId(sharingSettingRequest.getPayload());
+    }
+    publicationRequest.setUrl(url);
+    publicationRequest.setPayload(sharingSettingRequest.getPayload());
+    publicationRequest.setTenants(new HashSet<>());
+    return publicationRequest;
   }
 
   private SharingSettingEntity createSharingSettingEntityFromRequest(SharingSettingRequest sharingSettingRequest, String tenantId) {

@@ -6,8 +6,10 @@ import static org.folio.consortia.utils.EntityUtils.createSharingSettingResponse
 import static org.folio.consortia.utils.EntityUtils.createTenant;
 import static org.folio.consortia.utils.EntityUtils.createTenantCollection;
 import static org.folio.consortia.utils.InputOutputTestUtils.getMockDataObject;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -73,6 +75,7 @@ class SharingSettingServiceTest {
     TenantCollection tenantCollection = createTenantCollection(List.of(tenant1, tenant2));
     var sharingSettingRequest = getMockDataObject(SHARING_SETTING_REQUEST_SAMPLE, SharingSettingRequest.class);
     Map<String, String> payload = new LinkedHashMap<>();
+    payload.put("id", "1844767a-8367-4926-9999-514c35840399");
     payload.put("name", "ORG-NAME");
     payload.put("source", "local");
 
@@ -81,6 +84,7 @@ class SharingSettingServiceTest {
     var publicationRequestPut = createPublicationRequestForSetting(sharingSettingRequest, "PUT");
     publicationRequestPut.setMethod("PUT");
     publicationRequestPut.setTenants(Set.of("tenant1"));
+    publicationRequestPut.setUrl("/organizations-storage/organizations/1844767a-8367-4926-9999-514c35840399");
     var publicationRequestPost = createPublicationRequestForSetting(sharingSettingRequest, "POST");
     publicationRequestPost.setMethod("POST");
     publicationRequestPost.setTenants(Set.of("tenant2"));
@@ -107,8 +111,29 @@ class SharingSettingServiceTest {
     verify(publicationService, times(2)).publishRequest(any(), any());
   }
 
+  // Negative cases
+  @Test
+  void shouldThrowErrorForNotEqualSettingIdWithPayloadId() throws JsonProcessingException {
+    UUID consortiumId = UUID.randomUUID();
+    var sharingSettingRequest = getMockDataObject(SHARING_SETTING_REQUEST_SAMPLE, SharingSettingRequest.class);
+    Map<String, String> payload = new LinkedHashMap<>();
+    payload.put("id", "9999999-8367-4926-9999-514c35840399");
+    payload.put("name", "ORG-NAME");
+    payload.put("source", "local");
+    ObjectMapper mapper = new ObjectMapper();
+    String json = mapper.writeValueAsString(payload);
+    JsonNode node = mapper.readTree(json);
+
+    when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
+    when(objectMapper.convertValue(any(), eq(JsonNode.class))).thenReturn(node);
+
+    assertThrows(java.lang.IllegalArgumentException.class, () -> sharingSettingService.start(consortiumId, sharingSettingRequest));
+    verify(publicationService, times(0)).publishRequest(any(), any());
+  }
+
   public JsonNode createJsonNode() throws JsonProcessingException {
     Map<String, String> payload = new HashMap<>();
+    payload.put("id", "1844767a-8367-4926-9999-514c35840399");
     payload.put("name", "ORG-NAME");
     payload.put("source", "local");
     ObjectMapper mapper = new ObjectMapper();
