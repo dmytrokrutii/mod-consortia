@@ -248,10 +248,10 @@ public class PublicationControllerTest extends BaseIT {
       .map(val -> "tenant_" + val)
       .toList();
 
-    ResponseEntity<Object> restTemplateResponse = new ResponseEntity<>(ptreAsString, HttpStatusCode.valueOf(201));
+    ResponseEntity<String> restTemplateResponse = new ResponseEntity<>(ptreAsString, HttpStatusCode.valueOf(201));
 
     ArgumentCaptor<HttpEntity<Object>> entityCaptor = ArgumentCaptor.forClass(HttpEntity.class);
-    when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), entityCaptor.capture(), eq(Object.class))).thenReturn(restTemplateResponse);
+    when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), entityCaptor.capture(), eq(String.class))).thenReturn(restTemplateResponse);
 
     // split list of tenants into chunks and make parallel API calls
     StreamEx.ofSubLists(listOfTenantNames, chunkSize)
@@ -282,7 +282,7 @@ public class PublicationControllerTest extends BaseIT {
       .sorted()
       .toList();
 
-    verify(restTemplate, times(listOfTenantNames.size())).exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(Object.class));
+    verify(restTemplate, times(listOfTenantNames.size())).exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class));
     // check if all 'x-okapi-tenant' values match with the initial list of expected tenant names
     Assertions.assertTrue(CollectionUtils.isEqualCollection(capturedTenantHeaders, listOfTenantNames));
   }

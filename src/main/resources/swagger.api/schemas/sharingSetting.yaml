@@ -14,7 +14,7 @@ SharingSettingRequest:
       type: object
   additionalProperties: false
   required:
-    - id
+    - settingId
     - url
 
 SharingSettingResponse:
@@ -31,3 +31,14 @@ SharingSettingResponse:
   required:
     - createSettingsPCId
     - updateSettingsPCId
+
+SharingSettingDeleteResponse:
+  description: "A JSON schema for the Sharing settings object response for delete request"
+  type: object
+  properties:
+    pcId:
+      type: string
+      format: uuid
+  additionalProperties: false
+  required:
+    - pcId

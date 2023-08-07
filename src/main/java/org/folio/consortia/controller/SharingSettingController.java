@@ -4,6 +4,7 @@ import static org.springframework.http.HttpStatus.CREATED;
 
 import java.util.UUID;
 
+import org.folio.consortia.domain.dto.SharingSettingDeleteResponse;
 import org.folio.consortia.domain.dto.SharingSettingRequest;
 import org.folio.consortia.domain.dto.SharingSettingResponse;
 import org.folio.consortia.rest.resource.SettingsApi;
@@ -24,5 +25,11 @@ public class SharingSettingController implements SettingsApi {
   @Override
   public ResponseEntity<SharingSettingResponse> startSharingSetting(UUID consortiumId, SharingSettingRequest sharingSettingRequest) {
     return ResponseEntity.status(CREATED).body(sharingSettingService.start(consortiumId, sharingSettingRequest));
+  }
+
+  @Override
+  public ResponseEntity<SharingSettingDeleteResponse> deleteSharingSetting(UUID consortiumId, UUID settingId,
+                                                                           SharingSettingRequest sharingSettingRequest) {
+    return ResponseEntity.ok(sharingSettingService.delete(consortiumId, settingId, sharingSettingRequest));
   }
 }

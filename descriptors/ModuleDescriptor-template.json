@@ -294,6 +294,16 @@
             "consortia.sharing-settings.item.post"
           ],
           "modulePermissions": []
+        },
+        {
+          "methods": [
+            "DELETE"
+          ],
+          "pathPattern": "/consortia/{consortiumId}/sharing/settings/{settingId}",
+          "permissionsRequired": [
+            "consortia.sharing-settings.item.delete"
+          ],
+          "modulePermissions": []
         }
       ]
     },
@@ -361,7 +371,8 @@
         "consortia.publications.item.get",
         "consortia.publications.item.delete",
         "consortia.publications-results.item.get",
-        "consortia.sharing-settings.item.post"
+        "consortia.sharing-settings.item.post",
+        "consortia.sharing-settings.item.delete"
       ]
     },
     {
@@ -467,7 +478,12 @@
     {
       "permissionName": "consortia.sharing-settings.item.post",
       "displayName": "post sharing setting",
-      "description": "create sharing setting"
+      "description": "Create sharing setting"
+    },
+    {
+      "permissionName": "consortia.sharing-settings.item.delete",
+      "displayName": "delete sharing setting",
+      "description": "Delete sharing setting"
     }
   ],
   "launchDescriptor": {

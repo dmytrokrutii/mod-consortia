@@ -27,15 +27,30 @@ paths:
           $ref: "#/components/responses/Conflict"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /settings/{settingId}:
+    delete:
+      summary: delete sharing setting
+      operationId: deleteSharingSetting
+      parameters:
+        - $ref: "#/components/parameters/consortiumId"
+        - $ref: "#/components/parameters/settingId"
+      requestBody:
+        $ref: "#/components/requestBodies/SharingSettingBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/SharingSettingDeleteResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 components:
   requestBodies:
-    SharingInstanceBody:
-      description: Sharing Instance object
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: "schemas/sharingInstance.yaml#/SharingInstance"
     SharingSettingBody:
       description: Sharing settings object
       required: true
@@ -44,24 +59,18 @@ components:
           schema:
             $ref: "schemas/sharingSetting.yaml#/SharingSettingRequest"
   responses:
-    SharingInstance:
-      description: Returns a sharing instance object object
-      content:
-        application/json:
-          schema:
-            $ref: "schemas/sharingInstance.yaml#/SharingInstance"
-    SharingInstanceCollection:
-      description: Returns list of sharing instances
-      content:
-        application/json:
-          schema:
-            $ref: "schemas/sharingInstance.yaml#/SharingInstanceCollection"
     SharingSettingResponse:
-      description: Returns a sharing instance object object
+      description: Returns a sharing setting object response for post operation
       content:
         application/json:
           schema:
             $ref: "schemas/sharingSetting.yaml#/SharingSettingResponse"
+    SharingSettingDeleteResponse:
+      description: Returns a sharing setting response for delete operation
+      content:
+        application/json:
+          schema:
+            $ref: "schemas/sharingSetting.yaml#/SharingSettingDeleteResponse"
     NoContent:
       description: No content
     Conflict:
@@ -107,3 +116,10 @@ components:
         $ref: "schemas/common.yaml#/uuid"
       required: true
       description: The ID of consortium
+    settingId:
+      in: path
+      name: settingId
+      schema:
+        $ref: "schemas/common.yaml#/uuid"
+      required: true
+      description: The ID of setting
