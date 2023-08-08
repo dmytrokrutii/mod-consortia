@@ -73,11 +73,10 @@ public class SyncPrimaryAffiliationServiceImpl implements SyncPrimaryAffiliation
     log.info("Start creating user primary affiliation for tenant {}", syncPrimaryAffiliationBody.getTenantId());
     var tenantId = syncPrimaryAffiliationBody.getTenantId();
     var userList = syncPrimaryAffiliationBody.getUsers();
-
-    try {
-      TenantEntity tenantEntity = tenantService.getByTenantId(tenantId);
-      IntStream.range(0, userList.size()).sequential().forEach(idx -> {
-        var user = userList.get(idx);
+    TenantEntity tenantEntity = tenantService.getByTenantId(tenantId);
+    IntStream.range(0, userList.size()).sequential().forEach(idx -> {
+      var user = userList.get(idx);
+      try {
         log.info("Processing users: {} of {}", idx + 1, userList.size());
         Page<UserTenantEntity> userTenantPage = userTenantRepository.findByUserId(UUID.fromString(user.getId()), PageRequest.of(0, 1));
 
@@ -90,12 +89,11 @@ public class SyncPrimaryAffiliationServiceImpl implements SyncPrimaryAffiliation
           }
           sendCreatePrimaryAffiliationEvent(tenantEntity, user, centralTenantId);
         }
-
-      });
-      log.info("Successfully created primary affiliations for tenant {}", tenantId);
-    } catch (Exception e) {
-      log.error("Failed to create primary affiliations for tenant {}", tenantId, e);
-    }
+      } catch (Exception e) {
+        log.error("Failed to create primary affiliations for userid: {}, tenant: {} and error message: {}", user.getId(), tenantId, e.getMessage(), e);
+      }
+    });
+    log.info("Successfully created primary affiliations for tenant {}", tenantId);
   }
 
   @SneakyThrows

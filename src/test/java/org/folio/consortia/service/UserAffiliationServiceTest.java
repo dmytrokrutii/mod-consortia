@@ -6,11 +6,11 @@ import static org.folio.spring.integration.XOkapiHeaders.TENANT;
 import static org.folio.spring.integration.XOkapiHeaders.TOKEN;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.Collection;
@@ -136,6 +136,13 @@ class UserAffiliationServiceTest {
   }
 
   @Test
+  void createPrimaryAffiliationNotParsed() {
+    userAffiliationService.createPrimaryUserAffiliation("wrong event payload");
+
+    verifyNoInteractions(kafkaService);
+  }
+
+  @Test
   void primaryAffiliationSuccessfullyUpdatedTest() {
     UserTenantEntity userTenant = new UserTenantEntity();
     userTenant.setUserId(UUID.randomUUID());
@@ -158,6 +165,13 @@ class UserAffiliationServiceTest {
     }
 
     verify(kafkaService, times(1)).send(any(), anyString(), any());
+  }
+
+  @Test
+  void updatePrimaryAffiliationNotParsed() {
+    userAffiliationService.updatePrimaryUserAffiliation("wrong event payload");
+
+    verifyNoInteractions(kafkaService);
   }
 
   @Test
@@ -206,6 +220,13 @@ class UserAffiliationServiceTest {
       userAffiliationService.deletePrimaryUserAffiliation(userDeletedEventSample);
     }
     verify(kafkaService, times(0)).send(any(), anyString(), any());
+  }
+
+  @Test
+  void deletePrimaryAffiliationNotParsed() {
+    userAffiliationService.deletePrimaryUserAffiliation("wrong event payload");
+
+    verifyNoInteractions(kafkaService);
   }
 
   private Map<String, Collection<String>> createOkapiHeaders() {
