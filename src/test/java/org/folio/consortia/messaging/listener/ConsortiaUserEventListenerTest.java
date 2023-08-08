@@ -4,6 +4,7 @@ import static org.folio.consortia.support.BaseIT.TENANT;
 import static org.folio.consortia.utils.InputOutputTestUtils.getMockDataAsString;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -12,7 +13,12 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.folio.consortia.config.FolioExecutionContextHelper;
+import org.folio.consortia.security.AuthService;
+import org.folio.consortia.security.SecurityManagerService;
 import org.folio.consortia.service.UserAffiliationService;
+import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.FolioModuleMetadata;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -34,11 +40,22 @@ class ConsortiaUserEventListenerTest {
   private UserAffiliationService userAffiliationService;
   @Mock
   private EventListenerHelper eventListenerHelper;
+  @Mock
+  FolioModuleMetadata folioModuleMetadata;
+  @Mock
+  FolioExecutionContext folioExecutionContext = new FolioExecutionContext() {};
+  @Mock
+  AuthService authService;
+  @Mock
+  SecurityManagerService securityManagerService;
+  @Mock
+  FolioExecutionContextHelper contextHelper = new FolioExecutionContextHelper(folioModuleMetadata, folioExecutionContext, authService, securityManagerService);
 
   @Test
   void shouldCreatePrimaryAffiliationWhenConfigurationExists() {
     MessageHeaders messageHeaders = getMessageHeaders();
     when(eventListenerHelper.getCentralTenantByIdByHeader(messageHeaders)).thenReturn(TENANT);
+    doReturn(folioExecutionContext).when(contextHelper).getSystemUserFolioExecutionContext(anyString());
     eventListener.handleUserCreating(USER_CREATED_EVENT_SAMPLE, messageHeaders);
     verify(userAffiliationService).createPrimaryUserAffiliation(anyString());
   }
@@ -47,6 +64,7 @@ class ConsortiaUserEventListenerTest {
   void shouldUpdatePrimaryAffiliationWhenConfigurationExists() {
     MessageHeaders messageHeaders = getMessageHeaders();
     when(eventListenerHelper.getCentralTenantByIdByHeader(messageHeaders)).thenReturn(TENANT);
+    doReturn(folioExecutionContext).when(contextHelper).getSystemUserFolioExecutionContext(anyString());
     eventListener.handleUserUpdating(USER_UPDATED_EVENT_SAMPLE, messageHeaders);
     verify(userAffiliationService).updatePrimaryUserAffiliation(anyString());
   }
@@ -55,6 +73,7 @@ class ConsortiaUserEventListenerTest {
   void shouldDeletePrimaryAffiliationWhenConfigurationExists() {
     MessageHeaders messageHeaders = getMessageHeaders();
     when(eventListenerHelper.getCentralTenantByIdByHeader(messageHeaders)).thenReturn(TENANT);
+    doReturn(folioExecutionContext).when(contextHelper).getSystemUserFolioExecutionContext(anyString());
     eventListener.handleUserDeleting(USER_DELETED_EVENT_SAMPLE, messageHeaders);
     verify(userAffiliationService).deletePrimaryUserAffiliation(anyString());
   }

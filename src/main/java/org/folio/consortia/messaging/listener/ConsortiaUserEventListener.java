@@ -1,9 +1,9 @@
 package org.folio.consortia.messaging.listener;
 
-import static org.folio.consortia.utils.TenantContextUtils.createFolioExecutionContext;
 import static org.folio.consortia.utils.TenantContextUtils.runInFolioContext;
 
 import org.apache.commons.lang3.StringUtils;
+import org.folio.consortia.config.FolioExecutionContextHelper;
 import org.folio.consortia.service.UserAffiliationService;
 import org.folio.spring.FolioModuleMetadata;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -24,6 +24,7 @@ public class ConsortiaUserEventListener {
   private final UserAffiliationService userAffiliationService;
   private final FolioModuleMetadata folioMetadata;
   private final EventListenerHelper eventListenerHelper;
+  private final FolioExecutionContextHelper contextHelper;
 
   @KafkaListener(
     id = USER_CREATED_LISTENER_ID,
@@ -34,7 +35,7 @@ public class ConsortiaUserEventListener {
     // to create affiliation in central tenant schema
     String centralTenantId = eventListenerHelper.getCentralTenantByIdByHeader(messageHeaders);
     if (StringUtils.isNotBlank(centralTenantId)) {
-      runInFolioContext(createFolioExecutionContext(messageHeaders, folioMetadata, centralTenantId), () ->
+      runInFolioContext(contextHelper.getSystemUserFolioExecutionContext(centralTenantId), () ->
         userAffiliationService.createPrimaryUserAffiliation(data));
     }
   }
@@ -48,7 +49,7 @@ public class ConsortiaUserEventListener {
     // to update affiliation in central tenant schema
     String centralTenantId = eventListenerHelper.getCentralTenantByIdByHeader(messageHeaders);
     if (StringUtils.isNotBlank(centralTenantId)) {
-      runInFolioContext(createFolioExecutionContext(messageHeaders, folioMetadata, centralTenantId), () ->
+      runInFolioContext(contextHelper.getSystemUserFolioExecutionContext(centralTenantId), () ->
         userAffiliationService.updatePrimaryUserAffiliation(data));
     }
   }
@@ -62,7 +63,7 @@ public class ConsortiaUserEventListener {
     // to delete affiliation from central tenant schema
     String centralTenantId = eventListenerHelper.getCentralTenantByIdByHeader(messageHeaders);
     if (StringUtils.isNotBlank(centralTenantId)) {
-      runInFolioContext(createFolioExecutionContext(messageHeaders, folioMetadata, centralTenantId), () ->
+      runInFolioContext(contextHelper.getSystemUserFolioExecutionContext(centralTenantId), () ->
         userAffiliationService.deletePrimaryUserAffiliation(data));
     }
   }
