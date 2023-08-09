@@ -48,6 +48,9 @@ inventory-storage.modes-of-issuance.item.delete
 inventory-storage.instance-statuses.item.post
 inventory-storage.instance-statuses.item.put
 inventory-storage.instance-statuses.item.delete
+inventory-storage.instance-types.item.post
+inventory-storage.instance-types.item.put
+inventory-storage.instance-types.item.delete
 inventory-storage.instance-note-types.item.post
 inventory-storage.instance-note-types.item.put
 inventory-storage.instance-note-types.item.delete
