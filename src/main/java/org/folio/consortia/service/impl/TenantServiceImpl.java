@@ -30,7 +30,6 @@ import org.folio.consortia.service.PermissionUserService;
 import org.folio.consortia.service.TenantService;
 import org.folio.consortia.service.UserService;
 import org.folio.spring.FolioExecutionContext;
-import org.folio.spring.integration.XOkapiHeaders;
 import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.convert.ConversionService;
@@ -134,6 +133,7 @@ public class TenantServiceImpl implements TenantService {
       var centralSystemUser = userService.getByUsername(systemUserUsername)
         .orElseThrow(() ->  new ResourceNotFoundException("systemUserUsername", systemUserUsername));
       shadowSystemUser = userService.prepareShadowUser(UUID.fromString(centralSystemUser.getId()), folioExecutionContext.getTenantId());
+      userTenantRepository.save(createUserTenantEntity(consortiumId, shadowSystemUser, tenantDto));
     }
 
     // switch to context of the desired tenant and apply all necessary setup

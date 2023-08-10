@@ -183,7 +183,7 @@ class TenantServiceTest {
 
     verify(userService, times(1)).prepareShadowUser(UUID.fromString(adminUser.getId()), "diku");
     verify(userService, times(1)).prepareShadowUser(UUID.fromString(adminUser.getId()), "diku");
-    verify(userTenantRepository).save(any());
+    verify(userTenantRepository, times(2)).save(any());
     verify(configurationClient).saveConfiguration(any());
     verify(userTenantsClient).postUserTenant(any());
     verify(userService, times(2)).createUser(any());
