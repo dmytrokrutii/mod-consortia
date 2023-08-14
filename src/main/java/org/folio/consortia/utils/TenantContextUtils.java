@@ -46,7 +46,7 @@ public class TenantContextUtils {
   public static FolioExecutionContext prepareContextForTenant(String tenantId, FolioModuleMetadata folioModuleMetadata, FolioExecutionContext context) {
     if (MapUtils.isNotEmpty(context.getOkapiHeaders())) {
       // create deep copy of headers in order to make switching context thread safe
-      var headersCopy = SerializationUtils.clone((HashMap<String, Collection<String>>) context.getOkapiHeaders());
+      var headersCopy = SerializationUtils.clone((HashMap<String, Collection<String>>) context.getAllHeaders());
       headersCopy.put(XOkapiHeaders.TENANT, List.of(tenantId));
       log.info("FOLIO context initialized with tenant {}", tenantId);
       return new DefaultFolioExecutionContext(folioModuleMetadata, headersCopy);

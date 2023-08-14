@@ -33,7 +33,7 @@ public class HttpRequestServiceImpl implements HttpRequestService {
     var headers = convertHeadersToMultiMap(folioExecutionContext.getAllHeaders());
     HttpEntity<Object> httpEntity = new HttpEntity<>(payload, headers);
     var absUrl = folioExecutionContext.getOkapiUrl() + url;
-    log.debug("performRequest:: folio context header TENANT = {}" , folioExecutionContext.getOkapiHeaders().get(XOkapiHeaders.TENANT).iterator().next());
+    log.debug("performRequest:: folio context header TENANT = {}", folioExecutionContext.getOkapiHeaders().get(XOkapiHeaders.TENANT).iterator().next());
 
     var responseEntity = switch (httpMethod.toString()) {
       case "GET" -> restTemplate.exchange(absUrl, httpMethod, httpEntity, Object.class);

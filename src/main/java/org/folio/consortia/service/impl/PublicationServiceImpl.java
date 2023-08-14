@@ -61,6 +61,8 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @RequiredArgsConstructor
 public class PublicationServiceImpl implements PublicationService {
+  private static final String PUBLICATION_ID_FIELD = "publicationId";
+
   private final TenantService tenantService;
   private final UserTenantService userTenantService;
   private final FolioExecutionContext folioExecutionContext;
@@ -81,7 +83,7 @@ public class PublicationServiceImpl implements PublicationService {
   public PublicationResponse publishRequest(UUID consortiumId, PublicationRequest publicationRequest) {
     validatePublicationRequest(consortiumId, publicationRequest, folioExecutionContext);
 
-    PublicationStatusEntity createdPublicationEntity = savePublicationStatusRecord(publicationRequest.getTenants().size());
+    PublicationStatusEntity createdPublicationEntity = createPublicationStatusEntity(publicationRequest.getTenants().size());
 
     asyncTaskExecutor.execute(getRunnableWithCurrentFolioContext(
       () -> processTenantRequests(publicationRequest, createdPublicationEntity)));
@@ -95,7 +97,7 @@ public class PublicationServiceImpl implements PublicationService {
 
     consortiumService.checkConsortiumExistsOrThrow(consortiumId);
     var publicationStatusEntity = publicationStatusRepository.findById(publicationId)
-      .orElseThrow(() -> new ResourceNotFoundException("publicationId", String.valueOf(publicationId)));
+      .orElseThrow(() -> new ResourceNotFoundException(PUBLICATION_ID_FIELD, String.valueOf(publicationId)));
 
     var ptrEntities = publicationTenantRequestRepository.findByPcStateId(publicationId, PageRequest.of(0, Integer.MAX_VALUE));
     log.info("getPublicationDetails:: Found {} of {} expected tenant request records", ptrEntities.getTotalElements(), publicationStatusEntity.getTotalRecords());
@@ -140,7 +142,7 @@ public class PublicationServiceImpl implements PublicationService {
     for (String tenantId : publicationRequest.getTenants()) {
       try {
         PublicationTenantRequestEntity ptrEntity = buildPublicationRequestEntity(publicationRequest, createdPublicationEntity, tenantId);
-        var savedPublicationTenantRequest = savePublicationTenantRequest(ptrEntity, folioExecutionContext);
+        var savedPublicationTenantRequest = savePublicationTenantRequest(ptrEntity);
         var future = executor.submit(() -> executeAndUpdatePublicationTenantRequest(publicationRequest, tenantId, savedPublicationTenantRequest));
         futures.add(future);
       } catch (RuntimeException | JsonProcessingException e) {
@@ -152,7 +154,7 @@ public class PublicationServiceImpl implements PublicationService {
     executor.shutdown();
     try {
       if (executor.awaitTermination(300, TimeUnit.SECONDS)) {
-        updatePublicationsStatus(futures, createdPublicationEntity, folioExecutionContext);
+        updatePublicationsStatus(futures, createdPublicationEntity);
         executor.shutdownNow();
       }
     } catch (InterruptedException ie) {
@@ -167,15 +169,17 @@ public class PublicationServiceImpl implements PublicationService {
     PublicationTenantRequestEntity updatedPtre;
     try {
       var response = executeHttpRequest(publicationRequest, tenantId, folioExecutionContext);
-      updatedPtre = updateSucceedPublicationTenantRequest(response, savedPublicationTenantRequest, folioExecutionContext);
+      updatedPtre = updateSucceedPublicationTenantRequest(response, savedPublicationTenantRequest);
     } catch (Exception e) {
-      updatedPtre = updateFailedPublicationTenantRequest(e, savedPublicationTenantRequest, folioExecutionContext);
+      updatedPtre = updateFailedPublicationTenantRequest(e, savedPublicationTenantRequest);
     }
     return updatedPtre;
   }
 
-  private PublicationTenantRequestEntity savePublicationTenantRequest(PublicationTenantRequestEntity ptrEntity, FolioExecutionContext centralTenantContext) {
-    try (var context = new FolioExecutionContextSetter(prepareContextForTenant(centralTenantContext.getTenantId(), folioModuleMetadata, centralTenantContext))) {
+  private PublicationTenantRequestEntity savePublicationTenantRequest(PublicationTenantRequestEntity ptrEntity) {
+   try {
+      log.info("savePublicationTenantRequest:: PublicationTenantRequest with id '{}' and PublicationStatus with id '{} and status '{} was saved",
+          ptrEntity.getId(), ptrEntity.getPcState().getId(), ptrEntity.getPcState().getStatus());
       return publicationTenantRequestRepository.save(ptrEntity);
     } catch (RuntimeException e) {
       log.error("savePublicationTenantRequest:: error saving publication tenant request {}", ptrEntity.getId(), e);
@@ -184,7 +188,7 @@ public class PublicationServiceImpl implements PublicationService {
   }
 
   PublicationHttpResponse executeHttpRequest(PublicationRequest publicationRequest, String tenantId, FolioExecutionContext centralTenantContext) {
-    try (var context = new FolioExecutionContextSetter(prepareContextForTenant(tenantId, folioModuleMetadata, centralTenantContext))) {
+    try (var ignored = new FolioExecutionContextSetter(prepareContextForTenant(tenantId, folioModuleMetadata, centralTenantContext))) {
       var response = httpRequestService.performRequest(publicationRequest.getUrl(), HttpMethod.valueOf(publicationRequest.getMethod()), publicationRequest.getPayload());
       if (response.getStatusCode().is2xxSuccessful()) {
         log.info("executeHttpRequest:: successfully called {} on tenant {}", publicationRequest.getUrl(), tenantId);
@@ -200,7 +204,7 @@ public class PublicationServiceImpl implements PublicationService {
     }
   }
 
-  PublicationTenantRequestEntity updateSucceedPublicationTenantRequest(PublicationHttpResponse responseEntity, PublicationTenantRequestEntity ptrEntity, FolioExecutionContext centralTenantContext) {
+  PublicationTenantRequestEntity updateSucceedPublicationTenantRequest(PublicationHttpResponse responseEntity, PublicationTenantRequestEntity ptrEntity) {
     var currentLocalDateTime = LocalDateTime.now();
     ptrEntity.setCompletedDate(currentLocalDateTime);
 
@@ -208,10 +212,10 @@ public class PublicationServiceImpl implements PublicationService {
     ptrEntity.setResponse(responseEntity.getBody());
     ptrEntity.setStatus(PublicationStatus.COMPLETE);
 
-    return savePublicationTenantRequest(ptrEntity, centralTenantContext);
+    return savePublicationTenantRequest(ptrEntity);
   }
 
-  PublicationTenantRequestEntity updateFailedPublicationTenantRequest(Throwable t, PublicationTenantRequestEntity ptrEntity, FolioExecutionContext centralTenantContext) {
+  PublicationTenantRequestEntity updateFailedPublicationTenantRequest(Throwable t, PublicationTenantRequestEntity ptrEntity) {
     var currentLocalDateTime = LocalDateTime.now();
     ptrEntity.setCompletedDate(currentLocalDateTime);
     ptrEntity.setStatus(PublicationStatus.ERROR);
@@ -223,7 +227,7 @@ public class PublicationServiceImpl implements PublicationService {
       ptrEntity.setResponse(t.getMessage());
     }
 
-    return savePublicationTenantRequest(ptrEntity, centralTenantContext);
+    return savePublicationTenantRequest(ptrEntity);
   }
 
   private PublicationTenantRequestEntity buildPublicationRequestEntity(PublicationRequest publicationRequest,
@@ -241,19 +245,15 @@ public class PublicationServiceImpl implements PublicationService {
     return ptrEntity;
   }
 
-  private PublicationStatusEntity savePublicationStatusRecord(int totalRecords) {
+  private PublicationStatusEntity createPublicationStatusEntity(int totalRecords) {
     PublicationStatusEntity publicationStatusEntity = new PublicationStatusEntity();
     publicationStatusEntity.setId(UUID.randomUUID());
     publicationStatusEntity.setStatus(PublicationStatus.IN_PROGRESS);
     publicationStatusEntity.setTotalRecords(totalRecords);
-
-    var savedPSE = publicationStatusRepository.save(publicationStatusEntity);
-
-    log.info("Created publication record {}", savedPSE.getId());
-    return savedPSE;
+    return publicationStatusEntity;
   }
 
-  private void updatePublicationsStatus(List<Future<PublicationTenantRequestEntity>> futures, PublicationStatusEntity publicationStatusEntity, FolioExecutionContext centralTenantContext) {
+  private void updatePublicationsStatus(List<Future<PublicationTenantRequestEntity>> futures, PublicationStatusEntity publicationStatusEntity) {
     List<PublicationTenantRequestEntity> ptreList = new ArrayList<>();
     futures.forEach(future -> {
       try {
@@ -275,12 +275,8 @@ public class PublicationServiceImpl implements PublicationService {
     var updateStatus = isErrorStatus ? PublicationStatus.ERROR : PublicationStatus.COMPLETE;
     publicationStatusEntity.setStatus(updateStatus);
 
-    try (var context = new FolioExecutionContextSetter(prepareContextForTenant(centralTenantContext.getTenantId(), folioModuleMetadata, centralTenantContext))) {
-      publicationStatusRepository.save(publicationStatusEntity);
-      log.info("updatePublicationsStatus:: updated publication record {} with status {}", publicationStatusEntity.getId(), publicationStatusEntity.getStatus());
-    } catch (Exception e) {
-      log.error("updatePublicationsStatus:: failed to update publication record {}", publicationStatusEntity.getId(), e);
-    }
+    publicationStatusRepository.save(publicationStatusEntity);
+    log.info("updatePublicationsStatus:: updated publication record {} with status {}", publicationStatusEntity.getId(), publicationStatusEntity.getStatus());
   }
 
   private void validatePublicationRequest(UUID consortiumId, PublicationRequest publication, FolioExecutionContext context) {
@@ -307,7 +303,7 @@ public class PublicationServiceImpl implements PublicationService {
 
     consortiumService.checkConsortiumExistsOrThrow(consortiumId);
     var publicationStatusEntity = publicationStatusRepository.findById(publicationId)
-      .orElseThrow(() -> new ResourceNotFoundException("publicationId", String.valueOf(publicationId)));
+      .orElseThrow(() -> new ResourceNotFoundException(PUBLICATION_ID_FIELD, String.valueOf(publicationId)));
 
     var ptrEntities = publicationTenantRequestRepository.findByPcStateId(publicationId, PageRequest.of(0, Integer.MAX_VALUE));
     log.info("getPublicationResults:: Found {} of {} expected tenant request records for publication {}", ptrEntities.getTotalElements(), publicationStatusEntity.getTotalRecords(), publicationId);
@@ -331,7 +327,7 @@ public class PublicationServiceImpl implements PublicationService {
 
     consortiumService.checkConsortiumExistsOrThrow(consortiumId);
     if (!publicationStatusRepository.existsById(publicationId)) {
-      throw new ResourceNotFoundException("publicationId", String.valueOf(publicationId));
+      throw new ResourceNotFoundException(PUBLICATION_ID_FIELD, String.valueOf(publicationId));
     }
 
     publicationTenantRequestRepository.deleteByPcStateId(publicationId);

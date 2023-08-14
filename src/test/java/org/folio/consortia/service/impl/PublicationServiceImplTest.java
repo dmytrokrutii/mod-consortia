@@ -121,6 +121,8 @@ class PublicationServiceImplTest extends BaseUnitTest {
   @Test
   void updatePublicationTenantRequestOnSuccess() {
     PublicationTenantRequestEntity ptrEntity = new PublicationTenantRequestEntity();
+    var pse = getMockDataObject(PUBLICATION_STATUS_ENTITY_SAMPLE, PublicationStatusEntity.class);
+    ptrEntity.setPcState(pse);
     ptrEntity.setStatus(PublicationStatus.IN_PROGRESS);
     when(publicationTenantRequestRepository.save(any(PublicationTenantRequestEntity.class))).thenReturn(new PublicationTenantRequestEntity());
     when(publicationStatusRepository.save(any(PublicationStatusEntity.class))).thenReturn(new PublicationStatusEntity());
@@ -128,7 +130,7 @@ class PublicationServiceImplTest extends BaseUnitTest {
     var payload = RandomStringUtils.random(10);
     var restTemplateResponse = new PublicationHttpResponse(payload, HttpStatusCode.valueOf(201));
 
-    publicationService.updateSucceedPublicationTenantRequest(restTemplateResponse, ptrEntity, folioExecutionContext);
+    publicationService.updateSucceedPublicationTenantRequest(restTemplateResponse, ptrEntity);
     verify(publicationTenantRequestRepository).save(ptreCaptor.capture());
 
     var capturedPtre = ptreCaptor.getValue();
@@ -140,11 +142,13 @@ class PublicationServiceImplTest extends BaseUnitTest {
   @Test
   void updatePublicationTenantRequestOnFailure() {
     PublicationTenantRequestEntity ptrEntity = new PublicationTenantRequestEntity();
+    var pse = getMockDataObject(PUBLICATION_STATUS_ENTITY_SAMPLE, PublicationStatusEntity.class);
+    ptrEntity.setPcState(pse);
     ptrEntity.setStatus(PublicationStatus.IN_PROGRESS);
     when(publicationTenantRequestRepository.save(any(PublicationTenantRequestEntity.class))).thenReturn(new PublicationTenantRequestEntity());
 
     Throwable t = new CompletionException(new HttpClientErrorException(HttpStatusCode.valueOf(400), HttpStatus.BAD_REQUEST.getReasonPhrase()));
-    publicationService.updateFailedPublicationTenantRequest(t, ptrEntity, folioExecutionContext);
+    publicationService.updateFailedPublicationTenantRequest(t, ptrEntity);
     verify(publicationTenantRequestRepository).save(ptreCaptor.capture());
 
     var capturedPtre = ptreCaptor.getValue();

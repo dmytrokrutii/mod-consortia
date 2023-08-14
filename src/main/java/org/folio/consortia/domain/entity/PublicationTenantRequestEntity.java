@@ -7,6 +7,7 @@ import org.folio.consortia.domain.dto.PublicationStatus;
 import org.folio.consortia.domain.entity.base.AuditableEntity;
 import org.springframework.data.annotation.LastModifiedDate;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -30,7 +31,7 @@ public class PublicationTenantRequestEntity extends AuditableEntity {
   @Id
   private UUID id;
 
-  @ManyToOne
+  @ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
   @JoinColumn(name = "pc_id", referencedColumnName = "id")
   private PublicationStatusEntity pcState;
 
