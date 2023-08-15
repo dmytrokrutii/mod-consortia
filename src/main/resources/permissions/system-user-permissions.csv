@@ -3,6 +3,7 @@ users.collection.get
 users.item.get
 users.item.post
 users.item.put
+users.item.delete
 perms.users.item.put
 perms.users.item.post
 perms.users.item.delete
