@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.folio.consortia.client.UsersClient;
+import org.folio.consortia.domain.dto.Personal;
 import org.folio.consortia.domain.dto.User;
 import org.folio.consortia.exception.ConsortiumClientException;
 import org.folio.consortia.exception.ResourceNotFoundException;
@@ -90,6 +91,12 @@ public class UserServiceImpl implements UserService {
         user.setUsername(String.format("%s_%s", userOptional.getUsername(), HelperUtils.randomString(RANDOM_STRING_COUNT)));
         user.setType(SHADOW_USER_TYPE);
         user.setActive(true);
+        if (Objects.nonNull(userOptional.getPersonal())) {
+          // these firstname, lastname fields needed to correctly build UI metadata objects
+          user.setPersonal(new Personal()
+            .firstName(userOptional.getPersonal().getFirstName())
+            .lastName(userOptional.getPersonal().getLastName()));
+        }
       } else {
         log.warn("Could not find real user with id: {} in his home tenant: {}", userId.toString(), tenantId);
         throw new ResourceNotFoundException(USER_ID, userId.toString());

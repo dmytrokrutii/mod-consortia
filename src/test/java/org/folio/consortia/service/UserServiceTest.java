@@ -77,6 +77,8 @@ class UserServiceTest {
     User user = userService.prepareShadowUser(UUID.randomUUID(), "diku");
     Assertions.assertEquals("shadow", user.getType());
     Assertions.assertEquals(true, user.getActive());
+    Assertions.assertEquals("testFirst", user.getPersonal().getFirstName());
+    Assertions.assertEquals("testLast", user.getPersonal().getLastName());
   }
 
   private User createUserEntity(Boolean updateble) {
