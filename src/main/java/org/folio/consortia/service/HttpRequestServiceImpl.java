@@ -30,15 +30,15 @@ public class HttpRequestServiceImpl implements HttpRequestService {
   @SneakyThrows
   @Override
   public PublicationHttpResponse performRequest(String url, HttpMethod httpMethod, Object payload) {
-    var headers = convertHeadersToMultiMap(folioExecutionContext.getAllHeaders());
+    var headers = convertHeadersToMultiMap(folioExecutionContext.getOkapiHeaders());
     HttpEntity<Object> httpEntity = new HttpEntity<>(payload, headers);
     var absUrl = folioExecutionContext.getOkapiUrl() + url;
     log.debug("performRequest:: folio context header TENANT = {}", folioExecutionContext.getOkapiHeaders().get(XOkapiHeaders.TENANT).iterator().next());
 
     var responseEntity = switch (httpMethod.toString()) {
-      case "GET" -> restTemplate.exchange(absUrl, httpMethod, httpEntity, Object.class);
-      case "POST", "PUT", "DELETE" -> restTemplate.exchange(absUrl, httpMethod, httpEntity, String.class);
-      default -> throw new IllegalStateException("Unexpected value: " + httpMethod);
+      case "GET", "POST", "PUT" -> restTemplate.exchange(absUrl, httpMethod, httpEntity, Object.class);
+      case "DELETE" -> restTemplate.exchange(absUrl, httpMethod, httpEntity, String.class);
+      default -> throw new IllegalStateException("Unexpected HTTP method value: " + httpMethod);
     };
 
     return new PublicationHttpResponse(objectMapper.writeValueAsString(responseEntity.getBody()), responseEntity.getStatusCode());

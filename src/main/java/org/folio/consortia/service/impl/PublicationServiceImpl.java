@@ -179,7 +179,7 @@ public class PublicationServiceImpl implements PublicationService {
   private PublicationTenantRequestEntity savePublicationTenantRequest(PublicationTenantRequestEntity ptrEntity) {
    try {
       log.info("savePublicationTenantRequest:: PublicationTenantRequest with id '{}' and PublicationStatus with id '{} and status '{} was saved",
-          ptrEntity.getId(), ptrEntity.getPcState().getId(), ptrEntity.getPcState().getStatus());
+        ptrEntity.getId(), ptrEntity.getPcState().getId(), ptrEntity.getPcState().getStatus());
       return publicationTenantRequestRepository.save(ptrEntity);
     } catch (RuntimeException e) {
       log.error("savePublicationTenantRequest:: error saving publication tenant request {}", ptrEntity.getId(), e);

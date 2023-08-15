@@ -34,7 +34,7 @@ class HttpRequestServiceImplTest extends BaseUnitTest {
   void performRequestSuccess() throws JsonProcessingException {
     String payload = RandomStringUtils.random(10);
 
-    ResponseEntity<String> restTemplateResponse = new ResponseEntity<>(payload, HttpStatusCode.valueOf(201));
+    ResponseEntity<Object> restTemplateResponse = new ResponseEntity<>(payload, HttpStatusCode.valueOf(201));
     when(folioExecutionContext.getTenantId()).thenReturn(CENTRAL_TENANT_NAME);
     when(folioExecutionContext.getOkapiHeaders()).thenReturn(defaultHeaders());
     when(folioExecutionContext.getAllHeaders()).thenReturn(defaultHeaders());
@@ -42,7 +42,7 @@ class HttpRequestServiceImplTest extends BaseUnitTest {
       anyString(),
       eq(HttpMethod.POST),
       Mockito.any(HttpEntity.class),
-      Mockito.eq(String.class))
+      Mockito.eq(Object.class))
     ).thenReturn(restTemplateResponse);
     when(objectMapper.writeValueAsString(any())).thenReturn(payload);
 
