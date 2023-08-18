@@ -1,7 +1,7 @@
 package org.folio.consortia.config;
 
 import org.folio.consortia.domain.converter.ConsortiumConverter;
-import org.folio.consortia.domain.converter.TenantConverter;
+import org.folio.consortia.domain.converter.TenantEntityToTenantConverter;
 import org.folio.consortia.domain.converter.UserTenantConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,7 +24,7 @@ public class AppConfig implements WebMvcConfigurer {
 
   @Override
   public void addFormatters(FormatterRegistry registry) {
-    registry.addConverter(new TenantConverter());
+    registry.addConverter(new TenantEntityToTenantConverter());
     registry.addConverter(new UserTenantConverter());
     registry.addConverter(new ConsortiumConverter());
   }

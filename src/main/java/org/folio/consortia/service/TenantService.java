@@ -5,6 +5,8 @@ import java.util.UUID;
 
 import org.folio.consortia.domain.dto.Tenant;
 import org.folio.consortia.domain.dto.TenantCollection;
+import org.folio.consortia.domain.dto.TenantDetails;
+import org.folio.consortia.domain.dto.TenantDetails.SetupStatusEnum;
 import org.folio.consortia.domain.entity.TenantEntity;
 import org.folio.consortia.exception.ResourceNotFoundException;
 
@@ -48,6 +50,15 @@ public interface TenantService {
   Tenant update(UUID consortiumId, String tenantId, Tenant tenantDto);
 
   /**
+   * Updates tenant's setup status.
+   *
+   * @param tenantId the tenantId
+   * @param centralTenantId  the consortiumId
+   * @param setupStatus  the setup status
+   */
+  void updateTenantSetupStatus(String tenantId, String centralTenantId, SetupStatusEnum setupStatus);
+
+  /**
    * Deletes single tenant based on consortiumId.
    * @param consortiumId the consortiumId
    * @param tenantId the tenantId
@@ -61,6 +72,15 @@ public interface TenantService {
    * @return tenant Entity
    */
   TenantEntity getByTenantId(String tenantId);
+
+  /**
+   * Gets tenant details based on tenantId.
+   *
+   * @param consortiumId the consortiumId
+   * @param tenantId the tenantId
+   * @return tenant details
+   */
+  TenantDetails getTenantDetailsById(UUID consortiumId, String tenantId);
 
   /**
    * Gets central tenant id from db

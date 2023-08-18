@@ -5,6 +5,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.folio.consortia.exception.ResourceNotFoundException.NOT_FOUND_MSG_TEMPLATE;
 import static org.folio.consortia.utils.EntityUtils.createConsortiaConfiguration;
 import static org.folio.consortia.utils.EntityUtils.createTenant;
+import static org.folio.consortia.utils.EntityUtils.createTenantDetailsEntity;
 import static org.folio.consortia.utils.EntityUtils.createTenantEntity;
 import static org.folio.consortia.utils.EntityUtils.createUser;
 import static org.folio.consortia.utils.EntityUtils.createUserTenantEntity;
@@ -45,9 +46,11 @@ import org.folio.consortia.domain.dto.SyncPrimaryAffiliationBody;
 import org.folio.consortia.domain.dto.SyncUser;
 import org.folio.consortia.domain.dto.Tenant;
 import org.folio.consortia.domain.dto.User;
+import org.folio.consortia.domain.entity.TenantDetailsEntity;
 import org.folio.consortia.domain.entity.TenantEntity;
 import org.folio.consortia.domain.entity.UserTenantEntity;
 import org.folio.consortia.repository.ConsortiumRepository;
+import org.folio.consortia.repository.TenantDetailsRepository;
 import org.folio.consortia.repository.TenantRepository;
 import org.folio.consortia.repository.UserTenantRepository;
 import org.folio.consortia.service.TenantService;
@@ -87,6 +90,8 @@ class TenantControllerTest extends BaseIT {
   ConsortiumRepository consortiumRepository;
   @MockBean
   TenantRepository tenantRepository;
+  @MockBean
+  TenantDetailsRepository tenantDetailsRepository;
   @MockBean
   UserTenantRepository userTenantRepository;
   @MockBean
@@ -148,9 +153,9 @@ class TenantControllerTest extends BaseIT {
     User adminUser = createUser("diku_admin");
     User systemUser = createUser("consortia-system-user");
 
-    var tenantEntity = new TenantEntity();
-    tenantEntity.setConsortiumId(centralTenant.getConsortiumId());
-    tenantEntity.setId("diku1234");
+    var tenantDetailsEntity = new TenantDetailsEntity();
+    tenantDetailsEntity.setConsortiumId(centralTenant.getConsortiumId());
+    tenantDetailsEntity.setId("diku1234");
 
     wireMockServer.stubFor(
       WireMock.post(urlEqualTo("https://perms/users//permissions?indexField=userId"))
@@ -168,9 +173,10 @@ class TenantControllerTest extends BaseIT {
     doNothing().when(permissionsClient).addPermission(anyString(), any());
     when(consortiumRepository.existsById(any())).thenReturn(true);
     when(tenantRepository.existsById(any())).thenReturn(false);
-    when(tenantRepository.save(any(TenantEntity.class))).thenReturn(tenantEntity);
+    when(tenantDetailsRepository.save(any(TenantDetailsEntity.class))).thenReturn(tenantDetailsEntity);
     when(tenantRepository.findCentralTenant()).thenReturn(Optional.of(centralTenant));
-    doNothing().when(syncPrimaryAffiliationClient).syncPrimaryAffiliations(anyString(), anyString(), anyString());    doNothing().when(configurationClient).saveConfiguration(createConsortiaConfiguration(CENTRAL_TENANT_ID));
+    doNothing().when(syncPrimaryAffiliationClient).syncPrimaryAffiliations(anyString(), anyString(), anyString());
+    doNothing().when(configurationClient).saveConfiguration(createConsortiaConfiguration(CENTRAL_TENANT_ID));
 
     this.mockMvc.perform(
         post("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/tenants?adminUserId=" + adminUser.getId())
@@ -192,6 +198,21 @@ class TenantControllerTest extends BaseIT {
         put("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/tenants/diku1234")
           .headers(headers).content(contentString))
       .andExpectAll(status().isOk());
+  }
+
+  @Test
+  void shouldGetTenantDetails() throws Exception {
+    TenantDetailsEntity tenantDetailsEntity = createTenantDetailsEntity();
+
+    var headers = defaultHeaders();
+    when(tenantRepository.existsById(any())).thenReturn(true);
+    when(consortiumRepository.existsById(any())).thenReturn(true);
+    when(tenantDetailsRepository.findById(any())).thenReturn(Optional.of(tenantDetailsEntity));
+
+    this.mockMvc.perform(
+        get("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/tenants/diku1234")
+          .headers(headers))
+      .andExpectAll(status().isOk(), content().contentType(MediaType.APPLICATION_JSON_VALUE));
   }
 
   /* Error cases */

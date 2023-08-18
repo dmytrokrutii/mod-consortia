@@ -77,6 +77,21 @@ paths:
           $ref: "#/components/responses/NotFound"
         "500":
           $ref: "#/components/responses/InternalServerError"
+    get:
+      summary: Get tenant details by Id
+      operationId: getTenantDetailsById
+      parameters:
+        - $ref: "#/components/parameters/consortiumId"
+        - $ref: "#/components/parameters/tenantId"
+      responses:
+        "200":
+          $ref: "#/components/responses/TenantDetails"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /tenants/{tenantId}/sync-primary-affiliations:
     post:
       summary: Sync Primary Affiliations
@@ -144,6 +159,12 @@ components:
         application/json:
           schema:
             $ref: "schemas/tenant.yaml#/Tenant"
+    TenantDetails:
+      description: Returns a tenant details object
+      content:
+        application/json:
+          schema:
+            $ref: "schemas/tenant.yaml#/TenantDetails"
     TenantCollection:
       description: Returns a tenant collection object
       content:

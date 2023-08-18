@@ -14,6 +14,7 @@ import org.folio.consortia.domain.dto.SharingSettingRequest;
 import org.folio.consortia.domain.dto.SharingSettingResponse;
 import org.folio.consortia.domain.dto.Tenant;
 import org.folio.consortia.domain.dto.TenantCollection;
+import org.folio.consortia.domain.dto.TenantDetails.SetupStatusEnum;
 import org.folio.consortia.domain.dto.User;
 import org.folio.consortia.domain.dto.UserTenant;
 import org.folio.consortia.domain.entity.ConsortiaConfigurationEntity;
@@ -21,6 +22,7 @@ import org.folio.consortia.domain.entity.ConsortiumEntity;
 import org.folio.consortia.domain.entity.PublicationStatusEntity;
 import org.folio.consortia.domain.entity.PublicationTenantRequestEntity;
 import org.folio.consortia.domain.entity.SharingInstanceEntity;
+import org.folio.consortia.domain.entity.TenantDetailsEntity;
 import org.folio.consortia.domain.entity.TenantEntity;
 import org.folio.consortia.domain.entity.UserTenantEntity;
 import org.springframework.http.HttpMethod;
@@ -80,6 +82,27 @@ public class EntityUtils {
     tenantEntity.setName(name);
     tenantEntity.setIsCentral(false);
     return tenantEntity;
+  }
+
+  public static TenantDetailsEntity createTenantDetailsEntity() {
+    TenantDetailsEntity tenantDetailsEntity = new TenantDetailsEntity();
+    tenantDetailsEntity.setId("testtenant1");
+    tenantDetailsEntity.setCode("ABC");
+    tenantDetailsEntity.setName("testtenant1");
+    tenantDetailsEntity.setIsCentral(false);
+    tenantDetailsEntity.setConsortiumId(UUID.randomUUID());
+    tenantDetailsEntity.setSetupStatus(SetupStatusEnum.COMPLETED);
+    return tenantDetailsEntity;
+  }
+
+  public static TenantDetailsEntity createTenantDetailsEntity(String id, String name) {
+    TenantDetailsEntity tenantDetailsEntity = new TenantDetailsEntity();
+    tenantDetailsEntity.setId(id);
+    tenantDetailsEntity.setCode("ABC");
+    tenantDetailsEntity.setName(name);
+    tenantDetailsEntity.setIsCentral(false);
+    tenantDetailsEntity.setSetupStatus(SetupStatusEnum.IN_PROGRESS);
+    return tenantDetailsEntity;
   }
 
   public static Tenant createTenant(String id, String name) {

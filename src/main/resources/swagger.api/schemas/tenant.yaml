@@ -21,6 +21,15 @@ Tenant:
     - name
     - isCentral
 
+TenantDetails:
+  allOf:
+    - $ref: "tenant.yaml#/Tenant"
+    - type: object
+      properties:
+        setupStatus:
+          type: string
+          enum: [ "IN_PROGRESS", "COMPLETED", "FAILED" ]
+
 TenantCollection:
   type: object
   properties:

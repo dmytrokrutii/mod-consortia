@@ -117,6 +117,16 @@
           "methods": [
             "GET"
           ],
+          "pathPattern": "/consortia/{consortiumId}/tenants/{tenantId}",
+          "permissionsRequired": [
+            "consortia.tenants.item.get"
+          ],
+          "modulePermissions": []
+        },
+        {
+          "methods": [
+            "GET"
+          ],
           "pathPattern": "/consortia/{consortiumId}/_self",
           "permissionsRequired": [],
           "modulePermissions": []
@@ -354,6 +364,7 @@
         "consortia.tenants.item.post",
         "consortia.tenants.item.put",
         "consortia.tenants.item.delete",
+        "consortia.tenants.item.get",
         "consortia.user-tenants.collection.get",
         "consortia.user-tenants.item.get",
         "consortia.consortium.item.post",
@@ -394,6 +405,11 @@
       "permissionName": "consortia.tenants.item.delete",
       "displayName": "delete tenant",
       "description": "Delete tenant"
+    },
+    {
+      "permissionName": "consortia.tenants.item.get",
+      "displayName": "get tenant details",
+      "description": "Get tenant details"
     },
     {
       "permissionName": "consortia.sync-primary-affiliations.item.post",

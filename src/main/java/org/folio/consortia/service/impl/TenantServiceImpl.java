@@ -1,6 +1,7 @@
 package org.folio.consortia.service.impl;
 
 import static org.folio.consortia.utils.HelperUtils.checkIdenticalOrThrow;
+import static org.folio.consortia.utils.TenantContextUtils.prepareContextForTenant;
 
 import java.util.List;
 import java.util.Objects;
@@ -16,12 +17,16 @@ import org.folio.consortia.domain.dto.ConsortiaConfiguration;
 import org.folio.consortia.domain.dto.PermissionUser;
 import org.folio.consortia.domain.dto.Tenant;
 import org.folio.consortia.domain.dto.TenantCollection;
+import org.folio.consortia.domain.dto.TenantDetails;
+import org.folio.consortia.domain.dto.TenantDetails.SetupStatusEnum;
 import org.folio.consortia.domain.dto.User;
 import org.folio.consortia.domain.dto.UserTenant;
+import org.folio.consortia.domain.entity.TenantDetailsEntity;
 import org.folio.consortia.domain.entity.TenantEntity;
 import org.folio.consortia.domain.entity.UserTenantEntity;
 import org.folio.consortia.exception.ResourceAlreadyExistException;
 import org.folio.consortia.exception.ResourceNotFoundException;
+import org.folio.consortia.repository.TenantDetailsRepository;
 import org.folio.consortia.repository.TenantRepository;
 import org.folio.consortia.repository.UserTenantRepository;
 import org.folio.consortia.service.CleanupService;
@@ -56,6 +61,7 @@ public class TenantServiceImpl implements TenantService {
   private String systemUserUsername;
 
   private final TenantRepository tenantRepository;
+  private final TenantDetailsRepository tenantDetailsRepository;
   private final UserTenantRepository userTenantRepository;
   private final ConversionService converter;
   private final ConsortiumService consortiumService;
@@ -90,6 +96,14 @@ public class TenantServiceImpl implements TenantService {
   }
 
   @Override
+  public TenantDetails getTenantDetailsById(UUID consortiumId, String tenantId) {
+    consortiumService.checkConsortiumExistsOrThrow(consortiumId);
+    var tenantDetailsEntity = tenantDetailsRepository.findById(tenantId).orElseThrow(() ->
+      new ResourceNotFoundException("tenantId", tenantId));
+    return converter.convert(tenantDetailsEntity, TenantDetails.class);
+  }
+
+  @Override
   public String getCentralTenantId() {
     TenantEntity tenant = tenantRepository.findCentralTenant()
       .orElseThrow(() -> new ResourceNotFoundException("A central tenant is not found. The central tenant must be created"));
@@ -116,7 +130,7 @@ public class TenantServiceImpl implements TenantService {
     }
 
     // save tenant to db
-    Tenant savedTenant = saveTenant(consortiumId, tenantDto);
+    Tenant savedTenant = saveTenant(consortiumId, tenantDto, SetupStatusEnum.IN_PROGRESS);
 
     // save admin user tenant association for non-central tenant
     String centralTenantId;
@@ -159,7 +173,17 @@ public class TenantServiceImpl implements TenantService {
     consortiumService.checkConsortiumExistsOrThrow(consortiumId);
     checkTenantExistsOrThrow(tenantId);
     checkIdenticalOrThrow(tenantId, tenantDto.getId(), TENANTS_IDS_NOT_MATCHED_ERROR_MSG);
-    return saveTenant(consortiumId, tenantDto);
+    return updateTenant(consortiumId, tenantDto);
+  }
+
+  @Override
+  @Transactional
+  public void updateTenantSetupStatus(String tenantId, String centralTenantId, SetupStatusEnum setupStatus) {
+    try (var ctx = new FolioExecutionContextSetter(prepareContextForTenant(centralTenantId,
+      folioExecutionContext.getFolioModuleMetadata(), folioExecutionContext))) {
+      tenantDetailsRepository.setSetupStatusByTenantId(setupStatus, tenantId);
+      log.info("updateTenantSetupStatus:: tenant id={} status updated to {}", tenantId, setupStatus);
+    }
   }
 
   @Override
@@ -175,12 +199,21 @@ public class TenantServiceImpl implements TenantService {
     tenantRepository.deleteById(tenantId);
   }
 
-  private Tenant saveTenant(UUID consortiumId, Tenant tenantDto) {
-    log.debug("saveTenant:: Trying to save tenant with consoritumId={} and tenant with id={}", consortiumId, tenantDto);
-    TenantEntity entity = toEntity(consortiumId, tenantDto);
-    TenantEntity savedTenant = tenantRepository.save(entity);
-    log.info("saveTenant: Tenant '{}' successfully saved", savedTenant.getId());
+  private Tenant saveTenant(UUID consortiumId, Tenant tenantDto, SetupStatusEnum setupStatus) {
+    log.debug("saveTenant:: Trying to save tenant with consoritumId={} and tenant with id={}, setupStatus={}",
+      consortiumId, tenantDto, setupStatus);
+    TenantDetailsEntity entity = toTenantDetailsEntity(consortiumId, tenantDto, setupStatus);
+    TenantDetailsEntity savedTenant = tenantDetailsRepository.save(entity);
+    log.info("saveTenant: Tenant '{}' successfully saved, setupStatus={}", savedTenant.getId(), savedTenant.getSetupStatus());
     return converter.convert(savedTenant, Tenant.class);
+  }
+
+  private Tenant updateTenant(UUID consortiumId, Tenant tenantDto) {
+    log.debug("updateTenant:: Trying to update tenant with consoritumId={} and tenant with id={}", consortiumId, tenantDto);
+    TenantEntity entity = toTenantEntity(consortiumId, tenantDto);
+    TenantEntity updatedTenant = tenantRepository.save(entity);
+    log.info("updateTenant:: Tenant '{}' successfully updated", updatedTenant.getId());
+    return converter.convert(updatedTenant, Tenant.class);
   }
 
   /*
@@ -255,13 +288,24 @@ public class TenantServiceImpl implements TenantService {
     }
   }
 
-  private TenantEntity toEntity(UUID consortiumId, Tenant tenantDto) {
+  private TenantEntity toTenantEntity(UUID consortiumId, Tenant tenantDto) {
     TenantEntity entity = new TenantEntity();
     entity.setId(tenantDto.getId());
     entity.setName(tenantDto.getName());
     entity.setCode(tenantDto.getCode());
     entity.setIsCentral(tenantDto.getIsCentral());
     entity.setConsortiumId(consortiumId);
+    return entity;
+  }
+
+  private TenantDetailsEntity toTenantDetailsEntity(UUID consortiumId, Tenant tenantDto, SetupStatusEnum setupStatus) {
+    TenantDetailsEntity entity = new TenantDetailsEntity();
+    entity.setId(tenantDto.getId());
+    entity.setName(tenantDto.getName());
+    entity.setCode(tenantDto.getCode());
+    entity.setIsCentral(tenantDto.getIsCentral());
+    entity.setConsortiumId(consortiumId);
+    entity.setSetupStatus(setupStatus);
     return entity;
   }
 
@@ -286,7 +330,7 @@ public class TenantServiceImpl implements TenantService {
 
   private UserTenantEntity createUserTenantEntity(UUID consortiumId, User user, Tenant tenant) {
     UserTenantEntity userTenantEntity = new UserTenantEntity();
-    TenantEntity tenantEntity = toEntity(consortiumId, tenant);
+    TenantEntity tenantEntity = toTenantEntity(consortiumId, tenant);
 
     userTenantEntity.setUserId(UUID.fromString(user.getId()));
     userTenantEntity.setId(UUID.randomUUID());
