@@ -48,7 +48,7 @@
 
   <changeSet id="MODCON-88@add-tenant-setup-status" author="tatsiana_tarhonskaya@epam.com">
     <sql dbms="postgresql">
-      CREATE TYPE setup_status as ENUM ('IN_PROGRESS', 'COMPLETED', 'FAILED');
+      CREATE TYPE setup_status as ENUM ('IN_PROGRESS', 'COMPLETED', 'COMPLETED_WITH_ERRORS', 'FAILED');
       CREATE CAST (character varying as setup_status) WITH INOUT AS IMPLICIT;
     </sql>
     <addColumn tableName="tenant">

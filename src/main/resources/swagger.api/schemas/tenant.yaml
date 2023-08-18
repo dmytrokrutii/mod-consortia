@@ -28,7 +28,7 @@ TenantDetails:
       properties:
         setupStatus:
           type: string
-          enum: [ "IN_PROGRESS", "COMPLETED", "FAILED" ]
+          enum: [ "IN_PROGRESS", "COMPLETED", "COMPLETED_WITH_ERRORS", "FAILED" ]
 
 TenantCollection:
   type: object

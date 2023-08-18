@@ -260,6 +260,6 @@ class SyncPrimaryAffiliationServiceImplTest {
 
     syncPrimaryAffiliationService.createPrimaryUserAffiliations(consortiumId, centralTenantId, spab);
     verifyNoInteractions(kafkaService);
-    verify(tenantService).updateTenantSetupStatus(tenantId, centralTenantId, SetupStatusEnum.FAILED);
+    verify(tenantService).updateTenantSetupStatus(tenantId, centralTenantId, SetupStatusEnum.COMPLETED_WITH_ERRORS);
   }
 }
