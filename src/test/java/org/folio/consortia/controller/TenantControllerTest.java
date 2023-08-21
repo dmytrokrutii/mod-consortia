@@ -67,7 +67,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
@@ -104,20 +103,19 @@ class TenantControllerTest extends BaseIT {
   UserTenantService userTenantService;
   @MockBean
   UserService userService;
-  @MockBean
+  @Mock
   FolioExecutionContextHelper contextHelper;
   @Mock
   FolioModuleMetadata folioModuleMetadata;
   @Mock
   FolioExecutionContext folioExecutionContext = new FolioExecutionContext() {};
-  @MockBean
+  @Mock
   PermissionsClient permissionsClient;
   @MockBean
   UserTenantsClient userTenantsClient;
   @MockBean
   SyncPrimaryAffiliationClient syncPrimaryAffiliationClient;
-
-  @SpyBean
+  @MockBean
   UsersClient usersClient;
 
   /* Success cases */

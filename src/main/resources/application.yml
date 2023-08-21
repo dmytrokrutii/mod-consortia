@@ -79,6 +79,10 @@ management:
       base-path: /admin
       exposure:
         include: health, loggers
+  influx:
+    metrics:
+      export:
+        enabled: false
 logging:
   level:
     liquibase: debug

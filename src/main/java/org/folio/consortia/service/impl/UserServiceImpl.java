@@ -3,6 +3,7 @@ package org.folio.consortia.service.impl;
 import static org.folio.consortia.utils.TenantContextUtils.prepareContextForTenant;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -34,6 +35,7 @@ public class UserServiceImpl implements UserService {
   private final FolioExecutionContext folioExecutionContext;
   private final FolioModuleMetadata folioModuleMetadata;
   private static final Integer RANDOM_STRING_COUNT = 5;
+  private static final String ORIGINAL_TENANT_ID_REF_ID = "originaltenantid";
 
   @Override
   public User createUser(User user) {
@@ -97,6 +99,7 @@ public class UserServiceImpl implements UserService {
             .firstName(userOptional.getPersonal().getFirstName())
             .lastName(userOptional.getPersonal().getLastName()));
         }
+        user.setCustomFields(Map.of(ORIGINAL_TENANT_ID_REF_ID, tenantId));
       } else {
         log.warn("Could not find real user with id: {} in his home tenant: {}", userId.toString(), tenantId);
         throw new ResourceNotFoundException(USER_ID, userId.toString());

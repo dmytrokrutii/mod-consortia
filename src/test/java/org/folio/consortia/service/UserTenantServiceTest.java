@@ -11,6 +11,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -234,10 +235,7 @@ class UserTenantServiceTest {
     when(userService.prepareShadowUser(any(), any())).thenReturn(createUserEntity(false));
     doNothing().when(usersClient).updateUser(any(), any(User.class));
     when(userTenantRepository.save(userTenant)).thenReturn(userTenant);
-    when(folioExecutionContext.getTenantId()).thenReturn("diku");
-    Map<String, Collection<String>> okapiHeaders = new HashMap<>();
-    okapiHeaders.put(XOkapiHeaders.TENANT, List.of("diku"));
-    when(folioExecutionContext.getOkapiHeaders()).thenReturn(okapiHeaders);
+    mockOkapiHeaders();
 
     assertDoesNotThrow(() -> userTenantService.save(UUID.fromString(CONSORTIUM_ID), tenant, false));
   }
@@ -257,10 +255,7 @@ class UserTenantServiceTest {
     doNothing().when(usersClient).updateUser(any(), any(User.class));
     when(userTenantRepository.save(userTenant)).thenReturn(userTenant);
     doReturn(folioExecutionContext).when(contextHelper).getSystemUserFolioExecutionContext(anyString());
-    when(folioExecutionContext.getTenantId()).thenReturn("diku");
-    Map<String, Collection<String>> okapiHeaders = new HashMap<>();
-    okapiHeaders.put(XOkapiHeaders.TENANT, List.of("diku"));
-    when(folioExecutionContext.getOkapiHeaders()).thenReturn(okapiHeaders);
+    mockOkapiHeaders();
 
     assertDoesNotThrow(() -> userTenantService.save(UUID.fromString(CONSORTIUM_ID), tenant, true));
   }
@@ -280,10 +275,7 @@ class UserTenantServiceTest {
     when(userService.prepareShadowUser(any(), any())).thenReturn(createUserEntity(true));
     doNothing().when(usersClient).updateUser(any(), any(User.class));
     when(userTenantRepository.save(userTenant)).thenReturn(userTenant);
-    when(folioExecutionContext.getTenantId()).thenReturn("diku");
-    Map<String, Collection<String>> okapiHeaders = new HashMap<>();
-    okapiHeaders.put(XOkapiHeaders.TENANT, List.of("diku"));
-    when(folioExecutionContext.getOkapiHeaders()).thenReturn(okapiHeaders);
+    mockOkapiHeaders();
 
     assertDoesNotThrow(() -> userTenantService.save(UUID.fromString(CONSORTIUM_ID), tenant, false));
   }
@@ -306,10 +298,7 @@ class UserTenantServiceTest {
     when(permissionsClient.get(any())).thenReturn(permissionUserCollection);
     doNothing().when(usersClient).saveUser(any());
     when(userTenantRepository.save(userTenant)).thenReturn(userTenant);
-    when(folioExecutionContext.getTenantId()).thenReturn("diku");
-    Map<String, Collection<String>> okapiHeaders = new HashMap<>();
-    okapiHeaders.put(XOkapiHeaders.TENANT, List.of("diku"));
-    when(folioExecutionContext.getOkapiHeaders()).thenReturn(okapiHeaders);
+    mockOkapiHeaders();
 
     assertDoesNotThrow(() -> userTenantService.save(UUID.fromString(CONSORTIUM_ID), tenant, false));
   }
@@ -333,12 +322,30 @@ class UserTenantServiceTest {
     when(permissionsClient.create(any())).thenReturn(permissionUser);
     doNothing().when(usersClient).saveUser(any());
     when(userTenantRepository.save(userTenant)).thenReturn(userTenant);
-    when(folioExecutionContext.getTenantId()).thenReturn("diku");
-    Map<String, Collection<String>> okapiHeaders = new HashMap<>();
-    okapiHeaders.put(XOkapiHeaders.TENANT, List.of("diku"));
-    when(folioExecutionContext.getOkapiHeaders()).thenReturn(okapiHeaders);
+    mockOkapiHeaders();
 
     assertDoesNotThrow(() -> userTenantService.save(UUID.fromString(CONSORTIUM_ID), tenant, false));
+  }
+
+  @Test
+  void shouldNotCreatePermissionUserIfExists() {
+    UserTenant tenant = createUserTenantDtoEntity();
+    UUID userId = UUID.randomUUID();
+    String tenantId = String.valueOf(UUID.randomUUID());
+    UserTenantEntity userTenant = createUserTenantEntity(UUID.randomUUID(), userId, "testuser", tenantId);
+    userTenant.setIsPrimary(false);
+
+    when(consortiumRepository.findById(UUID.fromString(CONSORTIUM_ID))).thenReturn(Optional.of(createConsortiumEntity()));
+    when(userTenantRepository.findByUserIdAndIsPrimary(any(), any())).thenReturn(Optional.of(userTenant));
+    when(userService.getById(any())).thenReturn(createNullUserEntity());
+    when(userService.prepareShadowUser(any(), any())).thenReturn(createNullUserEntity());
+    when(permissionUserService.getByUserId(userId.toString())).thenReturn(Optional.of(new PermissionUser()));
+
+    mockOkapiHeaders();
+
+    verify(permissionUserService, never()).createWithEmptyPermissions(userId.toString());
+
+    userTenantService.save(UUID.fromString(CONSORTIUM_ID), tenant, false);
   }
 
   @Test
@@ -354,10 +361,7 @@ class UserTenantServiceTest {
     userTenant2.setIsPrimary(false);
     userTenant3.setIsPrimary(false);
     when(userTenantRepository.getByUserIdAndIsPrimaryFalse(any())).thenReturn(List.of(userTenant1, userTenant2, userTenant3));
-    when(folioExecutionContext.getTenantId()).thenReturn("diku");
-    Map<String, Collection<String>> okapiHeaders = new HashMap<>();
-    okapiHeaders.put(XOkapiHeaders.TENANT, List.of("diku"));
-    when(folioExecutionContext.getOkapiHeaders()).thenReturn(okapiHeaders);
+    mockOkapiHeaders();
 
     assertDoesNotThrow(() -> userTenantService.deleteShadowUsers(userId1));
   }
@@ -375,10 +379,7 @@ class UserTenantServiceTest {
     when(userService.prepareShadowUser(any(), any())).thenReturn(createNullUserEntity());
     when(userTenantRepository.findByUserIdAndTenantId(userId, tenantId)).thenReturn(Optional.of(userTenant));
     doNothing().when(userTenantRepository).deleteByUserIdAndTenantId(userId, tenantId);
-    when(folioExecutionContext.getTenantId()).thenReturn("diku");
-    Map<String, Collection<String>> okapiHeaders = new HashMap<>();
-    okapiHeaders.put(XOkapiHeaders.TENANT, List.of("diku"));
-    when(folioExecutionContext.getOkapiHeaders()).thenReturn(okapiHeaders);
+    mockOkapiHeaders();
 
     assertDoesNotThrow(() -> userTenantService.deleteByUserIdAndTenantId(UUID.fromString(CONSORTIUM_ID), tenantId, userId));
   }
@@ -426,10 +427,7 @@ class UserTenantServiceTest {
     when(consortiumRepository.findById(UUID.fromString(CONSORTIUM_ID))).thenReturn(Optional.of(createConsortiumEntity()));
     when(userTenantRepository.findByUserIdAndIsPrimary(any(), any())).thenReturn(Optional.empty());
     when(usersClient.getUsersByUserId(any())).thenReturn(createUserEntity(false));
-    when(folioExecutionContext.getTenantId()).thenReturn("diku");
-    Map<String, Collection<String>> okapiHeaders = new HashMap<>();
-    okapiHeaders.put(XOkapiHeaders.TENANT, List.of("diku"));
-    when(folioExecutionContext.getOkapiHeaders()).thenReturn(okapiHeaders);
+    mockOkapiHeaders();
 
     assertThrows(org.folio.consortia.exception.ResourceNotFoundException.class, () -> userTenantService.save(associationId, tenant, false));
   }
@@ -457,10 +455,7 @@ class UserTenantServiceTest {
     when(usersClient.getUsersByUserId(any())).thenReturn(createUserEntity(true));
     when(userTenantRepository.findByUserIdAndTenantId(userId, tenantId)).thenReturn(Optional.of(userTenant));
     doNothing().when(userTenantRepository).deleteByUserIdAndTenantId(userId, tenantId);
-    when(folioExecutionContext.getTenantId()).thenReturn("diku");
-    Map<String, Collection<String>> okapiHeaders = new HashMap<>();
-    okapiHeaders.put(XOkapiHeaders.TENANT, List.of("diku"));
-    when(folioExecutionContext.getOkapiHeaders()).thenReturn(okapiHeaders);
+    mockOkapiHeaders();
 
     assertThrows(org.folio.consortia.exception.PrimaryAffiliationException.class, () -> userTenantService.deleteByUserIdAndTenantId(UUID.fromString(CONSORTIUM_ID), tenantId, userId));
   }
@@ -479,10 +474,7 @@ class UserTenantServiceTest {
     when(userService.getById(any())).thenThrow(org.folio.consortia.exception.ConsortiumClientException.class);
     doNothing().when(usersClient).updateUser(any(), any(User.class));
     when(userTenantRepository.save(userTenant)).thenReturn(userTenant);
-    when(folioExecutionContext.getTenantId()).thenReturn("diku");
-    Map<String, Collection<String>> okapiHeaders = new HashMap<>();
-    okapiHeaders.put(XOkapiHeaders.TENANT, List.of("diku"));
-    when(folioExecutionContext.getOkapiHeaders()).thenReturn(okapiHeaders);
+    mockOkapiHeaders();
 
     assertThrows(org.folio.consortia.exception.ConsortiumClientException.class, () -> userTenantService.save(UUID.fromString(CONSORTIUM_ID), tenant, false));
   }
@@ -502,10 +494,7 @@ class UserTenantServiceTest {
     when(userService.getById(any())).thenThrow(org.folio.consortia.exception.ResourceNotFoundException.class);
     doNothing().when(usersClient).updateUser(any(), any(User.class));
     when(userTenantRepository.save(userTenant)).thenReturn(userTenant);
-    when(folioExecutionContext.getTenantId()).thenReturn("diku");
-    Map<String, Collection<String>> okapiHeaders = new HashMap<>();
-    okapiHeaders.put(XOkapiHeaders.TENANT, List.of("diku"));
-    when(folioExecutionContext.getOkapiHeaders()).thenReturn(okapiHeaders);
+    mockOkapiHeaders();
 
     assertThrows(org.folio.consortia.exception.ResourceNotFoundException.class, () -> userTenantService.save(UUID.fromString(CONSORTIUM_ID), tenant, false));
   }
@@ -523,10 +512,7 @@ class UserTenantServiceTest {
     when(consortiumRepository.findById(UUID.fromString(CONSORTIUM_ID))).thenReturn(Optional.of(createConsortiumEntity()));
     when(userTenantRepository.findByUserIdAndIsPrimary(any(), any())).thenReturn(Optional.of(userTenant));
     when(userService.getById(any())).thenThrow(java.lang.IllegalStateException.class);
-    when(folioExecutionContext.getTenantId()).thenReturn("diku");
-    Map<String, Collection<String>> okapiHeaders = new HashMap<>();
-    okapiHeaders.put(XOkapiHeaders.TENANT, List.of("diku"));
-    when(folioExecutionContext.getOkapiHeaders()).thenReturn(okapiHeaders);
+    mockOkapiHeaders();
 
     assertThrows(java.lang.IllegalStateException.class, () -> userTenantService.save(UUID.fromString(CONSORTIUM_ID), tenant, false));
   }
@@ -609,5 +595,12 @@ class UserTenantServiceTest {
     User user = new User();
     user.setId(UUID.randomUUID().toString());
     return user;
+  }
+
+  private void mockOkapiHeaders() {
+    when(folioExecutionContext.getTenantId()).thenReturn("diku");
+    Map<String, Collection<String>> okapiHeaders = new HashMap<>();
+    okapiHeaders.put(XOkapiHeaders.TENANT, List.of("diku"));
+    when(folioExecutionContext.getOkapiHeaders()).thenReturn(okapiHeaders);
   }
 }
