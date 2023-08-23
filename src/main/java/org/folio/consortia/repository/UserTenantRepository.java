@@ -24,8 +24,18 @@ public interface UserTenantRepository extends JpaRepository<UserTenantEntity, UU
 
   boolean existsByTenantId(String tenantId);
 
-  @Query("SELECT ut FROM UserTenantEntity ut WHERE ut.userId= ?1 AND ut.isPrimary= ?2")
-  Optional<UserTenantEntity> findByUserIdAndIsPrimary(UUID userId, Boolean isPrimary);
+  @Query("SELECT ut FROM UserTenantEntity ut WHERE ut.userId= ?1 AND ut.isPrimary= true")
+  Optional<UserTenantEntity> findByUserIdAndIsPrimaryTrue(UUID userId);
+
+  @Query("SELECT ut FROM UserTenantEntity ut WHERE ut.userId NOT IN (SELECT ut.userId FROM UserTenantEntity ut WHERE ut.userId= ?1 AND ut.isPrimary=true) AND ut.userId= ?1")
+  List<UserTenantEntity> getOrphansByUserIdAndIsPrimaryFalse(UUID userId);
+
+  @Query("SELECT ut FROM UserTenantEntity ut WHERE ut.userId= ?1 AND ut.isPrimary= false")
+  List<UserTenantEntity> getByUserIdAndIsPrimaryFalse(UUID userId);
+
+  @Modifying
+  @Query("UPDATE UserTenantEntity ut SET ut.username= ?1 WHERE ut.userId= ?2 AND ut.tenant.id= ?3")
+  void setUsernameByUserIdAndTenantId(String username, UUID userId, String tenantId);
 
   @Modifying
   @Query("DELETE FROM UserTenantEntity ut WHERE ut.userId= ?1 AND ut.tenant.id= ?2")
@@ -36,13 +46,6 @@ public interface UserTenantRepository extends JpaRepository<UserTenantEntity, UU
   void deleteByUserIdAndIsPrimaryTrue(UUID userId);
 
   @Modifying
-  @Query("UPDATE UserTenantEntity ut SET ut.username= ?1 WHERE ut.userId= ?2 AND ut.tenant.id= ?3")
-  void setUsernameByUserIdAndTenantId(String username, UUID userId, String tenantId);
-
-  @Query("SELECT ut FROM UserTenantEntity ut WHERE ut.userId NOT IN (SELECT ut.userId FROM UserTenantEntity ut WHERE ut.userId= ?1 AND ut.isPrimary=true) AND ut.userId= ?1")
-  List<UserTenantEntity> getByUserIdAndIsPrimaryFalse(UUID userId);
-
-  @Modifying
   @Query("DELETE FROM UserTenantEntity ut WHERE ut.userId NOT IN (SELECT ut.userId FROM UserTenantEntity ut WHERE ut.userId= ?1 AND ut.isPrimary=true) AND ut.userId= ?1")
-  void deleteByUserIdAndIsPrimaryFalse(UUID userId);
+  void deleteOrphansByUserIdAndIsPrimaryFalse(UUID userId);
 }

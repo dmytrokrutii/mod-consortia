@@ -1,7 +1,16 @@
 package org.folio.consortia.service;
 
+import static org.folio.consortia.utils.EntityUtils.createUserEntity;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.folio.consortia.client.UsersClient;
-import org.folio.consortia.domain.dto.Personal;
 import org.folio.consortia.domain.dto.User;
 import org.folio.consortia.service.impl.UserServiceImpl;
 import org.folio.spring.FolioExecutionContext;
@@ -15,15 +24,6 @@ import org.mockito.Mockito;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.batch.BatchAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @EnableAutoConfiguration(exclude = BatchAutoConfiguration.class)
@@ -86,19 +86,4 @@ class UserServiceTest {
     Assertions.assertEquals("testLast", user.getPersonal().getLastName());
   }
 
-  private User createUserEntity(Boolean updateble) {
-    User user = new User();
-    Personal personal = new Personal();
-    personal.setPreferredContactTypeId("email");
-    personal.setEmail("Test@mail.com");
-    personal.setFirstName("testFirst");
-    personal.setLastName("testLast");
-    user.setId(UUID.randomUUID().toString());
-    user.setPatronGroup(null);
-    user.setUsername("xyz");
-    user.setPersonal(personal);
-    user.setActive(Boolean.FALSE.equals(updateble));
-
-    return user;
-  }
 }

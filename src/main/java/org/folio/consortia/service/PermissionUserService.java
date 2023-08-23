@@ -38,8 +38,13 @@ public interface PermissionUserService {
    *
    * @param permissionUser  the permissionUser
    * @param permissionsFilePath  the path of file includes permission names to add
-   *
-   * @return
    */
   void addPermissions(PermissionUser permissionUser, String permissionsFilePath);
+
+  /**
+   * Remove user permissions from permission_users table based on userId
+   *
+   * @param userId id of user
+   */
+  void deletePermissionUser(String userId);
 }

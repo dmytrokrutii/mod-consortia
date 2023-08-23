@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.folio.consortia.domain.dto.ConsortiaConfiguration;
 import org.folio.consortia.domain.dto.Consortium;
+import org.folio.consortia.domain.dto.Personal;
 import org.folio.consortia.domain.dto.PublicationRequest;
 import org.folio.consortia.domain.dto.PublicationStatus;
 import org.folio.consortia.domain.dto.SharingInstance;
@@ -37,6 +38,7 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class EntityUtils {
+  public static final String RANDOM_USER_ID = "e0c74b9a-8d4c-4c38-8716-9997c6f7d26e";
   public static final UUID CONSORTIUM_ID = UUID.fromString("7698e46-c3e3-11ed-afa1-0242ac120002");
   public static final UUID ACTION_ID = UUID.fromString("dcfc317b-0d7c-4334-8656-596105fa6c99");
   public static final UUID INSTANCE_ID = UUID.fromString("111841e3-e6fb-4191-8fd8-5674a5107c33");
@@ -246,5 +248,35 @@ public class EntityUtils {
 
   public static User createUser(String username) {
     return new User().id(UUID.randomUUID().toString()).username(username);
+  }
+
+  public static User createUserEntity(Boolean updateble) {
+    User user = new User();
+    Personal personal = new Personal();
+    personal.setPreferredContactTypeId("email");
+    personal.setEmail("Test@mail.com");
+    personal.setFirstName("testFirst");
+    personal.setLastName("testLast");
+    user.setId(UUID.randomUUID().toString());
+    user.setPatronGroup(null);
+    user.setUsername("xyz");
+    user.setPersonal(personal);
+    user.setActive(Boolean.FALSE.equals(updateble));
+    return user;
+  }
+
+  public static User createUserEntity(UUID userId) {
+    User user = new User();
+    Personal personal = new Personal();
+    personal.setPreferredContactTypeId("email");
+    personal.setEmail("Test@mail.com");
+    personal.setFirstName("firstName");
+    personal.setLastName("lastName");
+    user.setId(userId.toString());
+    user.setPatronGroup(null);
+    user.setUsername("xyz");
+    user.setPersonal(personal);
+    user.setActive(true);
+    return user;
   }
 }

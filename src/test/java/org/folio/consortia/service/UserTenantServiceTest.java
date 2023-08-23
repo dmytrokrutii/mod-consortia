@@ -1,5 +1,7 @@
 package org.folio.consortia.service;
 
+import static org.folio.consortia.utils.EntityUtils.RANDOM_USER_ID;
+import static org.folio.consortia.utils.EntityUtils.createUserEntity;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -8,7 +10,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
@@ -30,7 +31,6 @@ import org.folio.consortia.config.FolioExecutionContextHelper;
 import org.folio.consortia.domain.converter.UserTenantConverter;
 import org.folio.consortia.domain.dto.PermissionUser;
 import org.folio.consortia.domain.dto.PermissionUserCollection;
-import org.folio.consortia.domain.dto.Personal;
 import org.folio.consortia.domain.dto.User;
 import org.folio.consortia.domain.dto.UserEvent;
 import org.folio.consortia.domain.dto.UserTenant;
@@ -199,6 +199,52 @@ class UserTenantServiceTest {
   }
 
   @Test
+  void shouldUpdateFirstAndLastNames() {
+    UUID userId = UUID.fromString(RANDOM_USER_ID);
+    String tenantId = "diku";
+    UUID associationId = UUID.randomUUID();
+    User primaryUser = createUserEntity(userId);
+    User shadowUser = createUserEntity(userId);
+    shadowUser.getPersonal().setFirstName("notUpdatedFirstName");
+    shadowUser.getPersonal().setFirstName("notUpdatedLastName");
+    User updatedShadowUser = createUserEntity(userId);
+    UserTenantEntity userTenant = createUserTenantEntity(associationId, userId, "user", tenantId);
+    userTenant.setIsPrimary(false);
+
+    // validation part
+    when(consortiumRepository.existsById(UUID.fromString(CONSORTIUM_ID))).thenReturn(true);
+    mockOkapiHeaders();
+
+    // Returned object when expected parameter passed
+    when(userTenantRepository.getByUserIdAndIsPrimaryFalse(userId)).thenReturn(List.of(userTenant));
+    // In first call it return primary User, in second call it return shadow user.
+    when(userService.getById(userId)).thenReturn(primaryUser).thenReturn(shadowUser);
+    doNothing().when(userService).updateUser(updatedShadowUser);
+    userTenantService.updateShadowUsersFirstAndLastNames(userId);
+
+    verify(userService, times(2)).getById(userId);
+    verify(userService, times(1)).updateUser(updatedShadowUser);
+  }
+
+  @Test
+  void shouldNotDoAnyActionWhenEmptyUserTenantEntityListReturned() {
+    UUID userId = UUID.fromString(RANDOM_USER_ID);
+
+    List<UserTenantEntity> emptyListOfUserTenantEntities = new ArrayList<>();
+
+    // validation part
+    when(consortiumRepository.existsById(UUID.fromString(CONSORTIUM_ID))).thenReturn(true);
+    mockOkapiHeaders();
+
+    // Returned object when expected parameter passed
+    when(userTenantRepository.getByUserIdAndIsPrimaryFalse(userId)).thenReturn(emptyListOfUserTenantEntities);
+    userTenantService.updateShadowUsersFirstAndLastNames(userId);
+
+    verify(userService, times(0)).updateUser(any());
+    verify(userService, times(0)).getById(any());
+  }
+
+  @Test
   void shouldThrowResourceNotFoundException() {
     UUID userId = UUID.randomUUID();
     String tenantId = UUID.randomUUID().toString();
@@ -230,7 +276,7 @@ class UserTenantServiceTest {
     userTenant.setIsPrimary(true);
 
     when(consortiumRepository.findById(UUID.fromString(CONSORTIUM_ID))).thenReturn(Optional.of(createConsortiumEntity()));
-    when(userTenantRepository.findByUserIdAndIsPrimary(any(), any())).thenReturn(Optional.of(userTenant));
+    when(userTenantRepository.findByUserIdAndIsPrimaryTrue(any())).thenReturn(Optional.of(userTenant));
     when(userService.getById(any())).thenReturn(createUserEntity(false));
     when(userService.prepareShadowUser(any(), any())).thenReturn(createUserEntity(false));
     doNothing().when(usersClient).updateUser(any(), any(User.class));
@@ -249,7 +295,7 @@ class UserTenantServiceTest {
     userTenant.setIsPrimary(true);
 
     when(consortiumRepository.findById(UUID.fromString(CONSORTIUM_ID))).thenReturn(Optional.of(createConsortiumEntity()));
-    when(userTenantRepository.findByUserIdAndIsPrimary(any(), any())).thenReturn(Optional.of(userTenant));
+    when(userTenantRepository.findByUserIdAndIsPrimaryTrue(any())).thenReturn(Optional.of(userTenant));
     when(userService.getById(any())).thenReturn(createUserEntity(false));
     when(userService.prepareShadowUser(any(), any())).thenReturn(createUserEntity(false));
     doNothing().when(usersClient).updateUser(any(), any(User.class));
@@ -270,7 +316,7 @@ class UserTenantServiceTest {
     userTenant.setIsPrimary(true);
 
     when(consortiumRepository.findById(UUID.fromString(CONSORTIUM_ID))).thenReturn(Optional.of(createConsortiumEntity()));
-    when(userTenantRepository.findByUserIdAndIsPrimary(any(), any())).thenReturn(Optional.of(userTenant));
+    when(userTenantRepository.findByUserIdAndIsPrimaryTrue(any())).thenReturn(Optional.of(userTenant));
     when(userService.getById(any())).thenReturn(createUserEntity(true));
     when(userService.prepareShadowUser(any(), any())).thenReturn(createUserEntity(true));
     doNothing().when(usersClient).updateUser(any(), any(User.class));
@@ -292,7 +338,7 @@ class UserTenantServiceTest {
     PermissionUserCollection permissionUserCollection = new PermissionUserCollection();
     permissionUserCollection.setPermissionUsers(List.of(permissionUser));
     when(consortiumRepository.findById(UUID.fromString(CONSORTIUM_ID))).thenReturn(Optional.of(createConsortiumEntity()));
-    when(userTenantRepository.findByUserIdAndIsPrimary(any(), any())).thenReturn(Optional.of(userTenant));
+    when(userTenantRepository.findByUserIdAndIsPrimaryTrue(any())).thenReturn(Optional.of(userTenant));
     when(userService.getById(any())).thenReturn(createNullUserEntity());
     when(userService.prepareShadowUser(any(), any())).thenReturn(createNullUserEntity());
     when(permissionsClient.get(any())).thenReturn(permissionUserCollection);
@@ -315,7 +361,7 @@ class UserTenantServiceTest {
     PermissionUserCollection permissionUserCollection = new PermissionUserCollection();
     permissionUserCollection.setPermissionUsers(List.of());
     when(consortiumRepository.findById(UUID.fromString(CONSORTIUM_ID))).thenReturn(Optional.of(createConsortiumEntity()));
-    when(userTenantRepository.findByUserIdAndIsPrimary(any(), any())).thenReturn(Optional.of(userTenant));
+    when(userTenantRepository.findByUserIdAndIsPrimaryTrue(any())).thenReturn(Optional.of(userTenant));
     when(userService.getById(any())).thenReturn(createNullUserEntity());
     when(userService.prepareShadowUser(any(), any())).thenReturn(createNullUserEntity());
     when(permissionsClient.get(any())).thenReturn(permissionUserCollection);
@@ -336,7 +382,7 @@ class UserTenantServiceTest {
     userTenant.setIsPrimary(false);
 
     when(consortiumRepository.findById(UUID.fromString(CONSORTIUM_ID))).thenReturn(Optional.of(createConsortiumEntity()));
-    when(userTenantRepository.findByUserIdAndIsPrimary(any(), any())).thenReturn(Optional.of(userTenant));
+    when(userTenantRepository.findByUserIdAndIsPrimaryTrue(any())).thenReturn(Optional.of(userTenant));
     when(userService.getById(any())).thenReturn(createNullUserEntity());
     when(userService.prepareShadowUser(any(), any())).thenReturn(createNullUserEntity());
     when(permissionUserService.getByUserId(userId.toString())).thenReturn(Optional.of(new PermissionUser()));
@@ -360,7 +406,7 @@ class UserTenantServiceTest {
     userTenant1.setIsPrimary(false);
     userTenant2.setIsPrimary(false);
     userTenant3.setIsPrimary(false);
-    when(userTenantRepository.getByUserIdAndIsPrimaryFalse(any())).thenReturn(List.of(userTenant1, userTenant2, userTenant3));
+    when(userTenantRepository.getOrphansByUserIdAndIsPrimaryFalse(any())).thenReturn(List.of(userTenant1, userTenant2, userTenant3));
     mockOkapiHeaders();
 
     assertDoesNotThrow(() -> userTenantService.deleteShadowUsers(userId1));
@@ -425,7 +471,7 @@ class UserTenantServiceTest {
     UUID associationId = UUID.randomUUID();
 
     when(consortiumRepository.findById(UUID.fromString(CONSORTIUM_ID))).thenReturn(Optional.of(createConsortiumEntity()));
-    when(userTenantRepository.findByUserIdAndIsPrimary(any(), any())).thenReturn(Optional.empty());
+    when(userTenantRepository.findByUserIdAndIsPrimaryTrue(any())).thenReturn(Optional.empty());
     when(usersClient.getUsersByUserId(any())).thenReturn(createUserEntity(false));
     mockOkapiHeaders();
 
@@ -436,7 +482,7 @@ class UserTenantServiceTest {
   @Test
   void getByUsernameAndTenantIdNotFound() {
     doNothing().when(consortiumService).checkConsortiumExistsOrThrow(any());
-    when(userTenantRepository.findByUserIdAndIsPrimary(any(), eq(true))).thenReturn(Optional.empty());
+    when(userTenantRepository.findByUserIdAndIsPrimaryTrue(any())).thenReturn(Optional.empty());
 
     var result = userTenantService.checkUserIfHasPrimaryAffiliationByUserId(UUID.randomUUID(), String.valueOf(UUID.randomUUID()));
 
@@ -470,7 +516,7 @@ class UserTenantServiceTest {
     userTenant.setIsPrimary(true);
 
     when(consortiumRepository.findById(UUID.fromString(CONSORTIUM_ID))).thenReturn(Optional.of(createConsortiumEntity()));
-    when(userTenantRepository.findByUserIdAndIsPrimary(any(), any())).thenReturn(Optional.of(userTenant));
+    when(userTenantRepository.findByUserIdAndIsPrimaryTrue(any())).thenReturn(Optional.of(userTenant));
     when(userService.getById(any())).thenThrow(org.folio.consortia.exception.ConsortiumClientException.class);
     doNothing().when(usersClient).updateUser(any(), any(User.class));
     when(userTenantRepository.save(userTenant)).thenReturn(userTenant);
@@ -490,7 +536,7 @@ class UserTenantServiceTest {
     userTenant.setIsPrimary(true);
 
     when(consortiumRepository.findById(UUID.fromString(CONSORTIUM_ID))).thenReturn(Optional.of(createConsortiumEntity()));
-    when(userTenantRepository.findByUserIdAndIsPrimary(any(), any())).thenReturn(Optional.of(userTenant));
+    when(userTenantRepository.findByUserIdAndIsPrimaryTrue(any())).thenReturn(Optional.of(userTenant));
     when(userService.getById(any())).thenThrow(org.folio.consortia.exception.ResourceNotFoundException.class);
     doNothing().when(usersClient).updateUser(any(), any(User.class));
     when(userTenantRepository.save(userTenant)).thenReturn(userTenant);
@@ -510,7 +556,7 @@ class UserTenantServiceTest {
     userTenant.setIsPrimary(true);
 
     when(consortiumRepository.findById(UUID.fromString(CONSORTIUM_ID))).thenReturn(Optional.of(createConsortiumEntity()));
-    when(userTenantRepository.findByUserIdAndIsPrimary(any(), any())).thenReturn(Optional.of(userTenant));
+    when(userTenantRepository.findByUserIdAndIsPrimaryTrue(any())).thenReturn(Optional.of(userTenant));
     when(userService.getById(any())).thenThrow(java.lang.IllegalStateException.class);
     mockOkapiHeaders();
 
@@ -523,7 +569,7 @@ class UserTenantServiceTest {
 
     doNothing().when(consortiumService).checkConsortiumExistsOrThrow(any());
     when(conversionService.convert(any(), any())).thenReturn(toDto(utEntity));
-    when(userTenantRepository.findByUserIdAndIsPrimary(any(), eq(true))).thenReturn(Optional.of(utEntity));
+    when(userTenantRepository.findByUserIdAndIsPrimaryTrue(any())).thenReturn(Optional.of(utEntity));
 
     var result = userTenantService.checkUserIfHasPrimaryAffiliationByUserId(UUID.randomUUID(), String.valueOf(UUID.randomUUID()));
 
@@ -566,22 +612,6 @@ class UserTenantServiceTest {
     tenant.setIsPrimary(false);
 
     return tenant;
-  }
-
-  private User createUserEntity(Boolean updateble) {
-    User user = new User();
-    Personal personal = new Personal();
-    personal.setPreferredContactTypeId("email");
-    personal.setEmail("Test@mail.com");
-    personal.setFirstName("testFirst");
-    personal.setLastName("testLast");
-    user.setId(UUID.randomUUID().toString());
-    user.setPatronGroup(null);
-    user.setUsername("xyz");
-    user.setPersonal(personal);
-    user.setActive(Boolean.FALSE.equals(updateble));
-
-    return user;
   }
 
   private UserEvent createUserEvent() {

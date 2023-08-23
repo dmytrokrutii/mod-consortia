@@ -9,6 +9,7 @@ import java.util.UUID;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.folio.consortia.config.FolioExecutionContextHelper;
+import org.folio.consortia.domain.dto.PermissionUser;
 import org.folio.consortia.domain.dto.User;
 import org.folio.consortia.domain.dto.UserTenant;
 import org.folio.consortia.domain.dto.UserTenantCollection;
@@ -111,7 +112,7 @@ public class UserTenantServiceImpl implements UserTenantService {
     log.debug("Going to save user with id: {} into tenant: {}", userTenantDto.getUserId(), userTenantDto.getTenantId());
     consortiumService.checkConsortiumExistsOrThrow(consortiumId);
 
-    Optional<UserTenantEntity> userTenant = userTenantRepository.findByUserIdAndIsPrimary(userTenantDto.getUserId(), IS_PRIMARY_TRUE);
+    Optional<UserTenantEntity> userTenant = userTenantRepository.findByUserIdAndIsPrimaryTrue(userTenantDto.getUserId());
     if (userTenant.isEmpty()) {
       log.warn("Could not find user '{}' with primary affiliation in user_tenant table", userTenantDto.getUserId());
       throw new ResourceNotFoundException(String.format(NOT_FOUND_PRIMARY_AFFILIATION_MSG, USER_ID, userTenantDto.getUserId()));
@@ -176,7 +177,7 @@ public class UserTenantServiceImpl implements UserTenantService {
 
     userTenantRepository.deleteByUserIdAndTenantId(userId, tenantId);
 
-    try (var context = new FolioExecutionContextSetter(prepareContextForTenant(tenantId, folioModuleMetadata, folioExecutionContext))) {
+    try (var ignored = new FolioExecutionContextSetter(prepareContextForTenant(tenantId, folioModuleMetadata, folioExecutionContext))) {
       User user = userService.getById(userId);
       deactivateUser(user);
       log.info("User affiliation deleted and user deactivated for user id: {} in the tenant: {}", userId.toString(), tenantId);
@@ -187,7 +188,7 @@ public class UserTenantServiceImpl implements UserTenantService {
   public boolean checkUserIfHasPrimaryAffiliationByUserId(UUID consortiumId, String userId) {
     consortiumService.checkConsortiumExistsOrThrow(consortiumId);
     Optional<UserTenantEntity> optionalUserTenant = userTenantRepository
-      .findByUserIdAndIsPrimary(UUID.fromString(userId), IS_PRIMARY_TRUE);
+      .findByUserIdAndIsPrimaryTrue(UUID.fromString(userId));
     return optionalUserTenant.isPresent();
   }
 
@@ -198,8 +199,24 @@ public class UserTenantServiceImpl implements UserTenantService {
   }
 
   @Override
-  public UserTenant update(UUID consortiumId, UserTenant primary) {
-    return new UserTenant();
+  public void updateShadowUsersFirstAndLastNames(UUID userId) {
+    List<UserTenantEntity> userTenantEntities = userTenantRepository.getByUserIdAndIsPrimaryFalse(userId);
+    if (CollectionUtils.isNotEmpty(userTenantEntities)) {
+      User primaryUser = userService.getById(userId);
+      String firstName = primaryUser.getPersonal().getFirstName();
+      String lastName = primaryUser.getPersonal().getLastName();
+      List<String> tenantIds = userTenantEntities.stream().map(userTenantEntity -> userTenantEntity.getTenant().getId()).toList();
+      log.info("Updating shadow users in all tenants exist in consortia for the user: {}", userId);
+      tenantIds.forEach(tenantId -> {
+        try (var ignored = new FolioExecutionContextSetter(prepareContextForTenant(tenantId, folioModuleMetadata, folioExecutionContext))) {
+          User shadowUser = userService.getById(userId);
+          shadowUser.getPersonal().setFirstName(firstName);
+          shadowUser.getPersonal().setLastName(lastName);
+          userService.updateUser(shadowUser);
+          log.info("Updated shadow user: {} in tenant : {}", userId, tenantId);
+        }
+      });
+    }
   }
 
   private void createOrUpdateShadowUser(UUID userId, User shadowUser, UserTenant userTenantDto) {
@@ -254,20 +271,24 @@ public class UserTenantServiceImpl implements UserTenantService {
     }
   }
 
+  @Override
   public void deleteShadowUsers(UUID userId) {
-    List<UserTenantEntity> userTenantEntities = userTenantRepository.getByUserIdAndIsPrimaryFalse(userId);
+    List<UserTenantEntity> userTenantEntities = userTenantRepository.getOrphansByUserIdAndIsPrimaryFalse(userId);
     if (CollectionUtils.isNotEmpty(userTenantEntities)) {
       List<String> tenantIds = userTenantEntities.stream().map(userTenantEntity -> userTenantEntity.getTenant().getId()).toList();
 
       log.info("Removing orphaned shadow users from all tenants exist in consortia for the user: {}", userId);
       tenantIds.forEach(tenantId -> {
-        try (var context = new FolioExecutionContextSetter(prepareContextForTenant(tenantId, folioModuleMetadata, folioExecutionContext))) {
+        try (var ignored = new FolioExecutionContextSetter(prepareContextForTenant(tenantId, folioModuleMetadata, folioExecutionContext))) {
           userService.deleteById(userId.toString());
+          Optional<PermissionUser> permissionUser = permissionUserService.getByUserId(userId.toString());
+          log.info("Trying to delete permission user for userId={}", userId.toString());
+          permissionUser.ifPresent(ps -> permissionUserService.deletePermissionUser(ps.getId()));
           log.info("Removed shadow user: {} from tenant : {}", userId, tenantId);
         }
       });
 
-      userTenantRepository.deleteByUserIdAndIsPrimaryFalse(userId);
+      userTenantRepository.deleteOrphansByUserIdAndIsPrimaryFalse(userId);
     }
   }
 
