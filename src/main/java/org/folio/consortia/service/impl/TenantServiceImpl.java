@@ -31,6 +31,7 @@ import org.folio.consortia.repository.TenantRepository;
 import org.folio.consortia.repository.UserTenantRepository;
 import org.folio.consortia.service.CleanupService;
 import org.folio.consortia.service.ConsortiumService;
+import org.folio.consortia.service.LockService;
 import org.folio.consortia.service.PermissionUserService;
 import org.folio.consortia.service.TenantService;
 import org.folio.consortia.service.UserService;
@@ -73,6 +74,7 @@ public class TenantServiceImpl implements TenantService {
   private final UserTenantsClient userTenantsClient;
   private final SyncPrimaryAffiliationClient syncPrimaryAffiliationClient;
   private final CleanupService cleanupService;
+  private final LockService lockService;
 
   @Override
   public TenantCollection get(UUID consortiumId, Integer offset, Integer limit) {
@@ -130,6 +132,7 @@ public class TenantServiceImpl implements TenantService {
     }
 
     // save tenant to db
+    lockService.lockTenantSetupWithinTransaction();
     Tenant savedTenant = saveTenant(consortiumId, tenantDto, SetupStatusEnum.IN_PROGRESS);
 
     // save admin user tenant association for non-central tenant

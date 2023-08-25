@@ -120,6 +120,8 @@ class TenantServiceTest {
   CleanupService cleanupService;
   @Mock
   private FolioExecutionContextHelper contextHelper;
+  @Mock
+  private LockService lockService;
 
   @Test
   void shouldGetTenantList() {
@@ -195,6 +197,7 @@ class TenantServiceTest {
     verify(userTenantsClient).postUserTenant(any());
     verify(userService, times(2)).createUser(any());
     verify(userService, times(1)).getByUsername(any());
+    verify(lockService).lockTenantSetupWithinTransaction();
 
     Assertions.assertEquals(tenant, tenant1);
   }
@@ -234,6 +237,7 @@ class TenantServiceTest {
     var tenant1 = tenantService.save(consortiumId, UUID.randomUUID(), tenant);
 
     verify(configurationClient).saveConfiguration(any());
+    verify(lockService).lockTenantSetupWithinTransaction();
 
     verify(userService, never()).prepareShadowUser(any(), any());
     verify(userTenantRepository, never()).save(any());

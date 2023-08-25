@@ -31,6 +31,7 @@ import org.folio.consortia.domain.entity.UserTenantEntity;
 import org.folio.consortia.repository.TenantRepository;
 import org.folio.consortia.repository.UserTenantRepository;
 import org.folio.consortia.service.ConsortiaConfigurationService;
+import org.folio.consortia.service.LockService;
 import org.folio.consortia.service.TenantService;
 import org.folio.consortia.service.UserService;
 import org.folio.consortia.service.UserTenantService;
@@ -72,6 +73,8 @@ class SyncPrimaryAffiliationServiceImplTest {
   UserService userService;
   @Mock
   TenantRepository tenantRepository;
+  @Mock
+  private LockService lockService;
 
   protected static final String TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkaWt1X2FkbWluIiwidXNlcl9pZCI6IjFkM2I1OGNiLTA3YjUtNWZjZC04YTJhLTNjZTA2YTBlYjkwZiIsImlhdCI6MTYxNjQyMDM5MywidGVuYW50IjoiZGlrdSJ9.2nvEYQBbJP1PewEgxixBWLHSX_eELiBEBpjufWiJZRs";
   protected static final String TENANT = "diku";
@@ -106,6 +109,7 @@ class SyncPrimaryAffiliationServiceImplTest {
 
     verify(kafkaService, timeout(2000)).send(any(), anyString(), anyString());
     verify(tenantService).updateTenantSetupStatus(tenantId, centralTenantId, SetupStatusEnum.COMPLETED);
+    verify(lockService).lockTenantSetupWithinTransaction();
   }
   @Test
   void createPrimaryUserAffiliationsWhenLocalTenantSaving() throws JsonProcessingException {
@@ -138,6 +142,7 @@ class SyncPrimaryAffiliationServiceImplTest {
 
     verify(kafkaService, timeout(2000)).send(any(), anyString(), anyString());
     verify(tenantService).updateTenantSetupStatus(tenantId, centralTenantId, SetupStatusEnum.COMPLETED);
+    verify(lockService).lockTenantSetupWithinTransaction();
   }
 
   @Test
@@ -229,6 +234,7 @@ class SyncPrimaryAffiliationServiceImplTest {
     } catch (DataAccessResourceFailureException e) {
       verifyNoInteractions(kafkaService);
       verify(tenantService).updateTenantSetupStatus(tenantId, centralTenantId, SetupStatusEnum.FAILED);
+      verify(lockService).lockTenantSetupWithinTransaction();
     }
   }
 
@@ -261,5 +267,6 @@ class SyncPrimaryAffiliationServiceImplTest {
     syncPrimaryAffiliationService.createPrimaryUserAffiliations(consortiumId, centralTenantId, spab);
     verifyNoInteractions(kafkaService);
     verify(tenantService).updateTenantSetupStatus(tenantId, centralTenantId, SetupStatusEnum.COMPLETED_WITH_ERRORS);
+    verify(lockService).lockTenantSetupWithinTransaction();
   }
 }

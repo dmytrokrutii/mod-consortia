@@ -17,6 +17,7 @@ import org.folio.consortia.domain.dto.UserTenant;
 import org.folio.consortia.domain.entity.TenantEntity;
 import org.folio.consortia.domain.entity.UserTenantEntity;
 import org.folio.consortia.repository.UserTenantRepository;
+import org.folio.consortia.service.LockService;
 import org.folio.consortia.service.SyncPrimaryAffiliationService;
 import org.folio.consortia.service.TenantService;
 import org.folio.consortia.service.UserService;
@@ -24,6 +25,7 @@ import org.folio.consortia.service.UserTenantService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -42,6 +44,7 @@ public class SyncPrimaryAffiliationServiceImpl implements SyncPrimaryAffiliation
   private final ObjectMapper objectMapper = new ObjectMapper();
   private final KafkaService kafkaService;
   private final SyncPrimaryAffiliationClient syncPrimaryAffiliationClient;
+  private final LockService lockService;
 
   @Override
   public void syncPrimaryAffiliations(UUID consortiumId, String tenantId, String centralTenantId) {
@@ -75,11 +78,13 @@ public class SyncPrimaryAffiliationServiceImpl implements SyncPrimaryAffiliation
       .users(syncUsers);
   }
 
+  @Transactional
   @Override
   public void createPrimaryUserAffiliations(UUID consortiumId, String centralTenantId,
     SyncPrimaryAffiliationBody syncPrimaryAffiliationBody) {
     try {
       log.info("Start creating user primary affiliation for tenant {}", syncPrimaryAffiliationBody.getTenantId());
+      lockService.lockTenantSetupWithinTransaction();
       var tenantId = syncPrimaryAffiliationBody.getTenantId();
       var userList = syncPrimaryAffiliationBody.getUsers();
       TenantEntity tenantEntity = tenantService.getByTenantId(tenantId);
