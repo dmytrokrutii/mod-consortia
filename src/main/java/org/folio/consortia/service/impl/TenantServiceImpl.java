@@ -42,6 +42,7 @@ import org.springframework.core.convert.ConversionService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
@@ -180,7 +181,7 @@ public class TenantServiceImpl implements TenantService {
   }
 
   @Override
-  @Transactional
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void updateTenantSetupStatus(String tenantId, String centralTenantId, SetupStatusEnum setupStatus) {
     try (var ctx = new FolioExecutionContextSetter(prepareContextForTenant(centralTenantId,
       folioExecutionContext.getFolioModuleMetadata(), folioExecutionContext))) {
