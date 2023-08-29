@@ -33,6 +33,12 @@ SyncUser:
     phoneNumber:
       description: "The phone number of the user"
       type: string
+    externalSystemId:
+      description: "External system id of user"
+      type: string
+    barcode:
+      description: "The user's barcode"
+      type: string
   additionalProperties: false
 
 

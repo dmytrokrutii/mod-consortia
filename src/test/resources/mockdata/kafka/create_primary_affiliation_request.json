@@ -11,6 +11,8 @@
     "active": true,
     "departments": [],
     "proxyFor": [],
+    "externalSystemId": "123",
+    "barcode": "abc123",
     "createdDate": 1681984177336,
     "updatedDate": 1681984177336
   }

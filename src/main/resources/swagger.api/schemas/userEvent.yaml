@@ -23,6 +23,9 @@ properties:
     description: "Date time when user action occurred"
     format: "date-time"
     type: string
+  isPersonalDataChanged:
+    description: "A flag to determine if personal data of a user changed"
+    type: boolean
   userDto:
     description: "Full snapshot of the user"
     type: object

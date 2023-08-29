@@ -26,6 +26,12 @@ properties:
   phoneNumber:
     description: "The user's phone number"
     type: string
+  externalSystemId:
+    description: "External system id of user"
+    type: string
+  barcode:
+    description: "The user's barcode"
+    type: string
 additionalProperties: false
 required:
   - id

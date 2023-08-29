@@ -153,6 +153,8 @@ public class SyncPrimaryAffiliationServiceImpl implements SyncPrimaryAffiliation
     event.setEmail(user.getEmail());
     event.setPhoneNumber(user.getPhoneNumber());
     event.setMobilePhoneNumber(user.getMobilePhoneNumber());
+    event.setBarcode(user.getBarcode());
+    event.setExternalSystemId(user.getExternalSystemId());
     event.setCentralTenantId(centralTenantId);
     return event;
   }

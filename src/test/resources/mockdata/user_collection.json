@@ -31,7 +31,9 @@
         "firstName": "Mockey",
         "email": "mock@biglibrary.org",
         "phone": "2125551212"
-      }
+      },
+      "externalSystemId": "123",
+      "barcode": "test123"
     }
   ],
   "totalRecords": 2

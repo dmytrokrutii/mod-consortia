@@ -96,8 +96,7 @@ public class UserAffiliationServiceImpl implements UserAffiliationService {
         log.info("Username in primary affiliation has been updated for the user: {}", userEvent.getUserDto().getId());
       }
 
-      boolean isPersonalDataChanged = true;
-      if (isPersonalDataChanged) {
+      if (Boolean.TRUE.equals(userEvent.getIsPersonalDataChanged())) {
         userTenantService.updateShadowUsersFirstAndLastNames(getUserId(userEvent));
       }
       PrimaryAffiliationEvent affiliationEvent = createPrimaryAffiliationEvent(userEvent, centralTenantId);
@@ -186,11 +185,16 @@ public class UserAffiliationServiceImpl implements UserAffiliationService {
     User userDto = userEvent.getUserDto();
     if (StringUtils.isNotBlank(userDto.getUsername())) { // for delete event username will be empty
       event.setUsername(userEvent.getUserDto().getUsername());
-      if (ObjectUtils.isNotEmpty(userDto.getPersonal())) {
-        event.setEmail(userDto.getPersonal().getEmail());
-        event.setPhoneNumber(userDto.getPersonal().getPhone());
-        event.setMobilePhoneNumber(userDto.getPersonal().getMobilePhone());
+
+      var personalInfo = userDto.getPersonal();
+      if (ObjectUtils.isNotEmpty(personalInfo)) {
+        event.setEmail(personalInfo.getEmail());
+        event.setPhoneNumber(personalInfo.getPhone());
+        event.setMobilePhoneNumber(personalInfo.getMobilePhone());
       }
+      event.setBarcode(userDto.getBarcode());
+      event.setExternalSystemId(userDto.getExternalSystemId());
+
     }
     event.setTenantId(userEvent.getTenantId());
     event.setCentralTenantId(centralTenantId);
