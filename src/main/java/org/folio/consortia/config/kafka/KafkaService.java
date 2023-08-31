@@ -144,9 +144,16 @@ public class KafkaService {
     }
     String tenantTopicName = getTenantTopicName(topic.getTopicName(), tenant);
 
-    ProducerRecord<String, Object> producerRecord = new ProducerRecord<>(tenantTopicName, key, data);
-    producerRecord.headers().add(XOkapiHeaders.TENANT, tenant.getBytes(StandardCharsets.UTF_8));
+    ProducerRecord<String, Object> producerRecord = createProducerRecord(tenantTopicName, key, data);
     kafkaTemplate.send(producerRecord);
     log.info("Kafka event sent to topic: {} for tenant: {} with data: {}.", tenantTopicName, tenant, data);
+  }
+
+  private ProducerRecord<String, Object> createProducerRecord(String tenantTopicName, String key, String data) {
+    ProducerRecord<String, Object> producerRecord = new ProducerRecord<>(tenantTopicName, key, data);
+    producerRecord.headers().add(XOkapiHeaders.TENANT, folioExecutionContext.getTenantId().getBytes(StandardCharsets.UTF_8));
+    producerRecord.headers().add(XOkapiHeaders.TOKEN, folioExecutionContext.getToken().getBytes(StandardCharsets.UTF_8));
+    producerRecord.headers().add(XOkapiHeaders.URL, folioExecutionContext.getOkapiUrl().getBytes(StandardCharsets.UTF_8));
+    return producerRecord;
   }
 }

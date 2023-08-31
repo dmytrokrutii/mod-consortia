@@ -1,5 +1,7 @@
 package org.folio.consortia.service.impl;
 
+import static org.folio.consortia.exception.UserAffiliationException.AFFILIATION_FROM_CENTRAL_TENANT_CAN_NOT_BE_DELETED;
+import static org.folio.consortia.exception.UserAffiliationException.USER_HAS_PRIMARY_AFFILIATION_WITH_TENANT;
 import static org.folio.consortia.utils.TenantContextUtils.prepareContextForTenant;
 
 import java.util.List;
@@ -15,11 +17,12 @@ import org.folio.consortia.domain.dto.UserTenant;
 import org.folio.consortia.domain.dto.UserTenantCollection;
 import org.folio.consortia.domain.entity.TenantEntity;
 import org.folio.consortia.domain.entity.UserTenantEntity;
-import org.folio.consortia.exception.PrimaryAffiliationException;
+import org.folio.consortia.exception.UserAffiliationException;
 import org.folio.consortia.exception.ResourceNotFoundException;
 import org.folio.consortia.repository.UserTenantRepository;
 import org.folio.consortia.service.ConsortiumService;
 import org.folio.consortia.service.PermissionUserService;
+import org.folio.consortia.service.TenantService;
 import org.folio.consortia.service.UserService;
 import org.folio.consortia.service.UserTenantService;
 import org.folio.spring.FolioExecutionContext;
@@ -58,6 +61,7 @@ public class UserTenantServiceImpl implements UserTenantService {
   private final UserService userService;
   private final FolioModuleMetadata folioModuleMetadata;
   private final PermissionUserService permissionUserService;
+  private final TenantService tenantService;
   private final FolioExecutionContextHelper contextHelper;
 
   @Override
@@ -172,7 +176,13 @@ public class UserTenantServiceImpl implements UserTenantService {
     if (Boolean.TRUE.equals(userTenantEntity.getIsPrimary())) {
       log.warn("Primary affiliation could not be deleted from API for user id: {} in the tenant: {}",
         userId.toString(), userTenantEntity.getTenant().getId());
-      throw new PrimaryAffiliationException(String.valueOf(userId), tenantId);
+      throw new UserAffiliationException(String.format(USER_HAS_PRIMARY_AFFILIATION_WITH_TENANT, userId, tenantId));
+    }
+
+    String centralTenantId = tenantService.getCentralTenantId();
+    if (Objects.equals(tenantId, centralTenantId)) {
+      log.warn("Affiliation for user id: {} can not be deleted from central tenant id: {}", userId.toString(), centralTenantId);
+      throw new UserAffiliationException(String.format(AFFILIATION_FROM_CENTRAL_TENANT_CAN_NOT_BE_DELETED, userId, centralTenantId));
     }
 
     userTenantRepository.deleteByUserIdAndTenantId(userId, tenantId);
@@ -194,8 +204,8 @@ public class UserTenantServiceImpl implements UserTenantService {
 
   @Override
   @Transactional
-  public void deletePrimaryUserTenantAffiliation(UUID userId) {
-    userTenantRepository.deleteByUserIdAndIsPrimaryTrue(userId);
+  public boolean deletePrimaryUserTenantAffiliation(UUID userId) {
+    return userTenantRepository.deleteByUserIdAndIsPrimaryTrue(userId) == 1;
   }
 
   @Override

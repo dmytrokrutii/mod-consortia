@@ -43,7 +43,7 @@ public interface UserTenantRepository extends JpaRepository<UserTenantEntity, UU
 
   @Modifying
   @Query("DELETE FROM UserTenantEntity ut WHERE ut.userId= ?1 AND ut.isPrimary= true")
-  void deleteByUserIdAndIsPrimaryTrue(UUID userId);
+  int deleteByUserIdAndIsPrimaryTrue(UUID userId);
 
   @Modifying
   @Query("DELETE FROM UserTenantEntity ut WHERE ut.userId NOT IN (SELECT ut.userId FROM UserTenantEntity ut WHERE ut.userId= ?1 AND ut.isPrimary=true) AND ut.userId= ?1")

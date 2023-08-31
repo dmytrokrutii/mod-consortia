@@ -20,8 +20,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.folio.consortia.config.kafka.KafkaService;
-import org.folio.consortia.domain.dto.UserTenant;
-import org.folio.consortia.domain.dto.UserTenantCollection;
 import org.folio.consortia.domain.entity.UserTenantEntity;
 import org.folio.consortia.repository.TenantRepository;
 import org.folio.consortia.service.impl.UserAffiliationServiceImpl;
@@ -184,12 +182,34 @@ class UserAffiliationServiceTest {
     Map<String, Collection<String>> map = createOkapiHeaders();
     when(folioExecutionContext.getOkapiHeaders()).thenReturn(map);
 
+    when(userTenantService.deletePrimaryUserTenantAffiliation(any())).thenReturn(true);
+
     folioExecutionContext = new DefaultFolioExecutionContext(folioModuleMetadata, map);
     try (var fec = new FolioExecutionContextSetter(folioExecutionContext)) {
       userAffiliationService.deletePrimaryUserAffiliation(userDeletedEventSample);
     }
 
     verify(kafkaService, times(1)).send(any(), anyString(), any());
+  }
+
+  @Test
+  public void deduplicateDeletePrimaryAffiliationTest() {
+    var te = createTenantEntity();
+
+    when(tenantService.getByTenantId(anyString())).thenReturn(te);
+    doNothing().when(consortiumService).checkConsortiumExistsOrThrow(any());
+    when(folioExecutionContext.getTenantId()).thenReturn("diku");
+    Map<String, Collection<String>> map = createOkapiHeaders();
+    when(folioExecutionContext.getOkapiHeaders()).thenReturn(map);
+
+    when(userTenantService.deletePrimaryUserTenantAffiliation(any())).thenReturn(false);
+
+    folioExecutionContext = new DefaultFolioExecutionContext(folioModuleMetadata, map);
+    try (var fec = new FolioExecutionContextSetter(folioExecutionContext)) {
+      userAffiliationService.deletePrimaryUserAffiliation(userDeletedEventSample);
+    }
+
+    verifyNoInteractions(kafkaService);
   }
 
   @Test
@@ -202,6 +222,8 @@ class UserAffiliationServiceTest {
     when(folioExecutionContext.getTenantId()).thenReturn("diku");
     Map<String, Collection<String>> map = createOkapiHeaders();
     when(folioExecutionContext.getOkapiHeaders()).thenReturn(map);
+
+    when(userTenantService.deletePrimaryUserTenantAffiliation(any())).thenReturn(true);
 
     try (var fec = new FolioExecutionContextSetter(folioExecutionContext)) {
       userAffiliationService.deletePrimaryUserAffiliation(userDeletedEventSample);

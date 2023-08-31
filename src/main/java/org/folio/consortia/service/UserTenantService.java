@@ -120,8 +120,9 @@ public interface UserTenantService {
    * Delete primary user tenant affiliation.
    *
    * @param userId id of user in user_tenant table
+   * @return true if some rows were deleted
    */
-  void deletePrimaryUserTenantAffiliation(UUID userId);
+  boolean deletePrimaryUserTenantAffiliation(UUID userId);
 
   /**
    * Deletes orphaned shadow_users.

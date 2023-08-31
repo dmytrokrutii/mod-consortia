@@ -1,5 +1,7 @@
 package org.folio.consortia.service;
 
+import static org.folio.consortia.exception.UserAffiliationException.AFFILIATION_FROM_CENTRAL_TENANT_CAN_NOT_BE_DELETED;
+import static org.folio.consortia.exception.UserAffiliationException.USER_HAS_PRIMARY_AFFILIATION_WITH_TENANT;
 import static org.folio.consortia.utils.EntityUtils.RANDOM_USER_ID;
 import static org.folio.consortia.utils.EntityUtils.createUserEntity;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -39,6 +41,7 @@ import org.folio.consortia.domain.entity.ConsortiumEntity;
 import org.folio.consortia.domain.entity.TenantEntity;
 import org.folio.consortia.domain.entity.UserTenantEntity;
 import org.folio.consortia.exception.ResourceNotFoundException;
+import org.folio.consortia.exception.UserAffiliationException;
 import org.folio.consortia.repository.ConsortiumRepository;
 import org.folio.consortia.repository.UserTenantRepository;
 import org.folio.consortia.service.impl.UserTenantServiceImpl;
@@ -90,6 +93,8 @@ class UserTenantServiceTest {
   private FolioModuleMetadata folioModuleMetadata;
   @Mock
   private PermissionUserService permissionUserService;
+  @Mock
+  private TenantService tenantService;
   @Mock
   private UserService userService;
 
@@ -259,11 +264,23 @@ class UserTenantServiceTest {
   @Test
   void shouldDeletePrimaryAffiliation() {
     var userEvent = createUserEvent();
-    doNothing().when(userTenantRepository).deleteByUserIdAndIsPrimaryTrue(any());
+    when(userTenantRepository.deleteByUserIdAndIsPrimaryTrue(any())).thenReturn(1);
 
-    userTenantService.deletePrimaryUserTenantAffiliation(UUID.fromString(userEvent.getUserDto().getId()));
+    boolean deleted = userTenantService.deletePrimaryUserTenantAffiliation(UUID.fromString(userEvent.getUserDto().getId()));
 
     verify(userTenantRepository, times(1)).deleteByUserIdAndIsPrimaryTrue(any());
+    assertTrue(deleted);
+  }
+
+  @Test
+  void shouldNotDeletePrimaryAffiliation() {
+    var userEvent = createUserEvent();
+    when(userTenantRepository.deleteByUserIdAndIsPrimaryTrue(any())).thenReturn(0);
+
+    boolean deleted = userTenantService.deletePrimaryUserTenantAffiliation(UUID.fromString(userEvent.getUserDto().getId()));
+
+    verify(userTenantRepository, times(1)).deleteByUserIdAndIsPrimaryTrue(any());
+    assertFalse(deleted);
   }
 
   @Test
@@ -490,7 +507,7 @@ class UserTenantServiceTest {
   }
 
   @Test
-  void shouldFailWhileDeletingUserTenantByUserIdAndTenantId() {
+  void shouldFailWhileDeletingPrimaryAffiliation() {
     UUID userId = UUID.randomUUID();
     String tenantId = "dikue";
     UUID associationId = UUID.randomUUID();
@@ -503,7 +520,21 @@ class UserTenantServiceTest {
     doNothing().when(userTenantRepository).deleteByUserIdAndTenantId(userId, tenantId);
     mockOkapiHeaders();
 
-    assertThrows(org.folio.consortia.exception.PrimaryAffiliationException.class, () -> userTenantService.deleteByUserIdAndTenantId(UUID.fromString(CONSORTIUM_ID), tenantId, userId));
+    assertThrows(UserAffiliationException.class, () -> userTenantService.deleteByUserIdAndTenantId(UUID.fromString(CONSORTIUM_ID), tenantId, userId),
+      String.format(USER_HAS_PRIMARY_AFFILIATION_WITH_TENANT, userId, tenantId));
+  }
+
+  @Test
+  void shouldFailWhenDeletingCentralAffiliation() {
+    UUID userId = UUID.randomUUID();
+    String tenantId = "university";
+    when(consortiumRepository.existsById(UUID.fromString(CONSORTIUM_ID))).thenReturn(true);
+    when(userTenantRepository.findByUserIdAndTenantId(userId, tenantId))
+      .thenReturn(Optional.of(createUserTenantEntity(UUID.randomUUID(), userId, "user", tenantId)));
+    when(tenantService.getCentralTenantId()).thenReturn(tenantId);
+
+    assertThrows(UserAffiliationException.class, () -> userTenantService.deleteByUserIdAndTenantId(UUID.fromString(CONSORTIUM_ID), tenantId, userId),
+      String.format(AFFILIATION_FROM_CENTRAL_TENANT_CAN_NOT_BE_DELETED, userId, tenantId));
   }
 
   @Test

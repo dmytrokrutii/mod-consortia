@@ -1,5 +1,6 @@
 package org.folio.consortia.controller;
 
+import static org.folio.consortia.utils.EntityUtils.CENTRAL_TENANT_ID;
 import static org.folio.consortia.utils.EntityUtils.createUserTenant;
 import static org.folio.consortia.utils.EntityUtils.createUserTenantEntity;
 import static org.hamcrest.Matchers.is;
@@ -27,6 +28,7 @@ import org.folio.consortia.domain.entity.UserTenantEntity;
 import org.folio.consortia.exception.ResourceNotFoundException;
 import org.folio.consortia.repository.ConsortiumRepository;
 import org.folio.consortia.repository.UserTenantRepository;
+import org.folio.consortia.service.TenantService;
 import org.folio.consortia.service.UserTenantService;
 import org.folio.consortia.support.BaseIT;
 import org.junit.jupiter.api.Assertions;
@@ -65,6 +67,8 @@ class UserTenantControllerTest extends BaseIT {
   private ConsortiumRepository consortiumRepository;
   @MockBean
   private UserTenantRepository userTenantRepository;
+  @MockBean
+  private TenantService tenantService;
   @SpyBean
   private UsersClient usersClient;
 
@@ -179,6 +183,7 @@ class UserTenantControllerTest extends BaseIT {
 
     when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
     when(userTenantRepository.findByUserIdAndTenantId(any(), any())).thenReturn(Optional.of(userTenantEntity));
+    when(tenantService.getCentralTenantId()).thenReturn(CENTRAL_TENANT_ID);
     doNothing().when(userTenantRepository).deleteByUserIdAndTenantId(any(), any());
     doThrow(FeignException.errorStatus("getByUserId", createUnknownResponse("network error")))
       .when(usersClient).getUsersByUserId(any());

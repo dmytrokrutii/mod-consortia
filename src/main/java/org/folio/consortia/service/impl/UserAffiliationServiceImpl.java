@@ -55,11 +55,12 @@ public class UserAffiliationServiceImpl implements UserAffiliationService {
       if (isPrimaryAffiliationExists) {
         log.warn("Primary affiliation already exists for tenant/user: {}/{}", userEvent.getTenantId(), userEvent.getUserDto().getUsername());
         return;
-      } else {
-        userTenantService.createPrimaryUserTenantAffiliation(consortiaTenant.getConsortiumId(), consortiaTenant, userEvent.getUserDto().getId(), userEvent.getUserDto().getUsername());
-        if (ObjectUtils.notEqual(centralTenantId, consortiaTenant.getId())) {
-          userTenantService.save(consortiaTenant.getConsortiumId(), createUserTenant(centralTenantId, userEvent), false);
-        }
+      }
+
+      userTenantService.createPrimaryUserTenantAffiliation(consortiaTenant.getConsortiumId(), consortiaTenant,
+        userEvent.getUserDto().getId(), userEvent.getUserDto().getUsername());
+      if (ObjectUtils.notEqual(centralTenantId, consortiaTenant.getId())) {
+        userTenantService.save(consortiaTenant.getConsortiumId(), createUserTenant(centralTenantId, userEvent), false);
       }
 
       PrimaryAffiliationEvent affiliationEvent = createPrimaryAffiliationEvent(userEvent, centralTenantId);
@@ -121,7 +122,12 @@ public class UserAffiliationServiceImpl implements UserAffiliationService {
     var consortiaTenant = pair.getRight();
 
     try {
-      userTenantService.deletePrimaryUserTenantAffiliation(getUserId(userEvent));
+      boolean existed = userTenantService.deletePrimaryUserTenantAffiliation(getUserId(userEvent));
+      if (!existed) {
+        log.warn("Primary affiliation does not existed for tenant/user: {}/{}", userEvent.getTenantId(), userEvent.getUserDto().getId());
+        return;
+      }
+
       userTenantService.deleteShadowUsers(getUserId(userEvent));
 
       PrimaryAffiliationEvent affiliationEvent = createPrimaryAffiliationEvent(userEvent, centralTenantId);

@@ -18,7 +18,7 @@ import org.folio.consortia.domain.dto.Error;
 import org.folio.consortia.domain.dto.Errors;
 import org.folio.consortia.exception.ConsortiumClientException;
 import org.folio.consortia.exception.InvalidTokenException;
-import org.folio.consortia.exception.PrimaryAffiliationException;
+import org.folio.consortia.exception.UserAffiliationException;
 import org.folio.consortia.exception.PublicationException;
 import org.folio.consortia.exception.ResourceAlreadyExistException;
 import org.folio.consortia.exception.ResourceNotFoundException;
@@ -87,8 +87,8 @@ public class ErrorHandlingController {
   }
 
   @ResponseStatus(HttpStatus.BAD_REQUEST)
-  @ExceptionHandler(PrimaryAffiliationException.class)
-  public Errors handlePrimaryAffiliationException(Exception e) {
+  @ExceptionHandler(UserAffiliationException.class)
+  public Errors handleUserAffiliationException(Exception e) {
     return createExternalError(e.getMessage(), VALIDATION_ERROR);
   }
 
