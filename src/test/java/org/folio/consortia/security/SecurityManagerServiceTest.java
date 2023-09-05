@@ -33,6 +33,7 @@ class SecurityManagerServiceTest extends BaseIT {
           + "            \"id\": \"a85c45b7-d427-4122-8532-5570219c5e59\",\n"
           + "            \"active\": true,\n"
           + "            \"departments\": [],\n"
+          + "            \"type\":  \"system\",\n"
           + "            \"proxyFor\": [],\n"
           + "            \"personal\": {\n"
           + "                \"addresses\": []\n"

@@ -12,6 +12,7 @@ import java.util.UUID;
 
 import org.folio.consortia.client.UsersClient;
 import org.folio.consortia.domain.dto.User;
+import org.folio.consortia.domain.dto.UserType;
 import org.folio.consortia.service.impl.UserServiceImpl;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.FolioModuleMetadata;
@@ -79,7 +80,7 @@ class UserServiceTest {
     when(folioExecutionContext.getOkapiHeaders()).thenReturn(okapiHeaders);
     Mockito.when(usersClient.getUsersByUserId(any())).thenReturn(createUserEntity(true));
     User user = userService.prepareShadowUser(UUID.randomUUID(), "diku");
-    Assertions.assertEquals("shadow", user.getType());
+    Assertions.assertEquals(UserType.SHADOW.getName(), user.getType());
     Assertions.assertEquals("diku", user.getCustomFields().get("originaltenantid"));
     Assertions.assertEquals(true, user.getActive());
     Assertions.assertEquals("testFirst", user.getPersonal().getFirstName());

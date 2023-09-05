@@ -8,6 +8,7 @@ import org.folio.consortia.domain.dto.PermissionUser;
 import org.folio.consortia.domain.dto.Personal;
 import org.folio.consortia.domain.dto.SystemUserParameters;
 import org.folio.consortia.domain.dto.User;
+import org.folio.consortia.domain.dto.UserType;
 import org.folio.consortia.service.PermissionUserService;
 import org.folio.consortia.service.UserService;
 import org.springframework.beans.factory.annotation.Value;
@@ -81,6 +82,7 @@ public class SecurityManagerService {
     result.setId(UUID.randomUUID().toString());
     result.setActive(true);
     result.setUsername(username);
+    result.setType(UserType.SYSTEM.getName());
 
     populateMissingUserProperties(result);
 

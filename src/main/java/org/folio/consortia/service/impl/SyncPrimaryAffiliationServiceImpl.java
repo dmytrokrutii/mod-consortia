@@ -133,7 +133,7 @@ public class SyncPrimaryAffiliationServiceImpl implements SyncPrimaryAffiliation
   private void sendCreatePrimaryAffiliationEvent(TenantEntity consortiaTenant, SyncUser user, String centralTenantId) {
     PrimaryAffiliationEvent affiliationEvent = createPrimaryAffiliationEvent(user, consortiaTenant.getId(), centralTenantId);
     String data = objectMapper.writeValueAsString(affiliationEvent);
-    kafkaService.send(KafkaService.Topic.CONSORTIUM_PRIMARY_AFFILIATION_CREATED, consortiaTenant.getConsortiumId().toString(), data);
+    kafkaService.send(KafkaService.Topic.CONSORTIUM_PRIMARY_AFFILIATION_CREATED, user.getId(), data);
   }
 
   private UserTenant createUserTenant(String tenantId, SyncUser user) {

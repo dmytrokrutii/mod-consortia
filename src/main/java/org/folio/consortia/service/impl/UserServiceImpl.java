@@ -11,6 +11,7 @@ import java.util.UUID;
 import org.folio.consortia.client.UsersClient;
 import org.folio.consortia.domain.dto.Personal;
 import org.folio.consortia.domain.dto.User;
+import org.folio.consortia.domain.dto.UserType;
 import org.folio.consortia.exception.ConsortiumClientException;
 import org.folio.consortia.exception.ResourceNotFoundException;
 import org.folio.consortia.service.UserService;
@@ -29,7 +30,6 @@ import lombok.extern.log4j.Log4j2;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
   private static final String USER_ID = "userId";
-  private static final String SHADOW_USER_TYPE = "shadow";
 
   private final UsersClient usersClient;
   private final FolioExecutionContext folioExecutionContext;
@@ -91,7 +91,7 @@ public class UserServiceImpl implements UserService {
       if (Objects.nonNull(userOptional.getId())) {
         user.setId(userId.toString());
         user.setUsername(String.format("%s_%s", userOptional.getUsername(), HelperUtils.randomString(RANDOM_STRING_COUNT)));
-        user.setType(SHADOW_USER_TYPE);
+        user.setType(UserType.SHADOW.getName());
         user.setActive(true);
         if (Objects.nonNull(userOptional.getPersonal())) {
           // these firstname, lastname fields needed to correctly build UI metadata objects

@@ -101,7 +101,7 @@ public class SharingInstanceServiceImpl implements SharingInstanceService {
       sharingInstance.setStatus(Status.COMPLETE);
     } else {
       String data = objectMapper.writeValueAsString(sharingInstance);
-      kafkaService.send(KafkaService.Topic.CONSORTIUM_INSTANCE_SHARING_INIT, String.valueOf(consortiumId), data);
+      kafkaService.send(KafkaService.Topic.CONSORTIUM_INSTANCE_SHARING_INIT, String.valueOf(sharingInstance.getId()), data);
 
       sharingInstance.setStatus(Status.IN_PROGRESS);
     }
