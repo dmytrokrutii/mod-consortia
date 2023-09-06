@@ -159,7 +159,7 @@ public class TenantServiceImpl implements TenantService {
     try (var context = new FolioExecutionContextSetter(contextHelper.getSystemUserFolioExecutionContext(tenantDto.getId(), systemUserHeaders))) {
       configurationClient.saveConfiguration(createConsortiaConfigurationBody(centralTenantId));
       if (!tenantDto.getIsCentral()) {
-        createUserTenantWithDummyUser(tenantDto.getId(), centralTenantId);
+        createUserTenantWithDummyUser(tenantDto.getId(), centralTenantId, consortiumId);
         createShadowUserWithPermissions(shadowAdminUser, SHADOW_ADMIN_PERMISSION_FILE_PATH); //NOSONAR
         log.info("save:: shadow admin user '{}' with permissions was created in tenant '{}'", shadowAdminUser.getId(), tenantDto.getId());
         createShadowUserWithPermissions(shadowSystemUser, SHADOW_SYSTEM_USER_PERMISSION_FILE_PATH);
@@ -227,14 +227,16 @@ public class TenantServiceImpl implements TenantService {
 
     @param tenantId tenant id
     @param centralTenantId central tenant id
+    @param consortiumId consortium id
   */
-  private void createUserTenantWithDummyUser(String tenantId, String centralTenantId) {
+  private void createUserTenantWithDummyUser(String tenantId, String centralTenantId, UUID consortiumId) {
     UserTenant userTenant = new UserTenant();
     userTenant.setId(UUID.randomUUID());
     userTenant.setTenantId(tenantId);
     userTenant.setUserId(UUID.randomUUID());
     userTenant.setUsername(DUMMY_USERNAME);
     userTenant.setCentralTenantId(centralTenantId);
+    userTenant.setConsortiumId(consortiumId);
 
     log.info("Creating userTenant with dummy user with id {}.", userTenant.getId());
     userTenantsClient.postUserTenant(userTenant);

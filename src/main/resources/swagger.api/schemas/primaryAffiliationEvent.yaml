@@ -17,6 +17,9 @@ properties:
   centralTenantId:
     description: "The name of the user's central tenant"
     type: string
+  consortiumId:
+    description: "The consortium uuid that user belongs to"
+    $ref: "uuid.yaml"
   email:
     description: "The user's email"
     type: string

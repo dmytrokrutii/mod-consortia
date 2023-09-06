@@ -61,7 +61,7 @@ public class UserAffiliationServiceImpl implements UserAffiliationService {
         userTenantService.save(tenant.getConsortiumId(), createUserTenant(centralTenantId, userEvent), false);
       }
 
-      PrimaryAffiliationEvent affiliationEvent = createPrimaryAffiliationEvent(userEvent, centralTenantId);
+      PrimaryAffiliationEvent affiliationEvent = createPrimaryAffiliationEvent(userEvent, centralTenantId, tenant.getConsortiumId());
       String data = objectMapper.writeValueAsString(affiliationEvent);
 
       kafkaService.send(KafkaService.Topic.CONSORTIUM_PRIMARY_AFFILIATION_CREATED, userEvent.getUserDto().getId(), data);
@@ -97,7 +97,7 @@ public class UserAffiliationServiceImpl implements UserAffiliationService {
       if (Boolean.TRUE.equals(userEvent.getIsPersonalDataChanged())) {
         userTenantService.updateShadowUsersFirstAndLastNames(getUserId(userEvent));
       }
-      PrimaryAffiliationEvent affiliationEvent = createPrimaryAffiliationEvent(userEvent, centralTenantId);
+      PrimaryAffiliationEvent affiliationEvent = createPrimaryAffiliationEvent(userEvent, centralTenantId, null);
       String data = objectMapper.writeValueAsString(affiliationEvent);
 
       kafkaService.send(KafkaService.Topic.CONSORTIUM_PRIMARY_AFFILIATION_UPDATED, userEvent.getUserDto().getId(), data);
@@ -126,7 +126,7 @@ public class UserAffiliationServiceImpl implements UserAffiliationService {
 
       userTenantService.deleteShadowUsers(getUserId(userEvent));
 
-      PrimaryAffiliationEvent affiliationEvent = createPrimaryAffiliationEvent(userEvent, centralTenantId);
+      PrimaryAffiliationEvent affiliationEvent = createPrimaryAffiliationEvent(userEvent, centralTenantId, null);
       String data = objectMapper.writeValueAsString(affiliationEvent);
 
       kafkaService.send(KafkaService.Topic.CONSORTIUM_PRIMARY_AFFILIATION_DELETED, userEvent.getUserDto().getId(), data);
@@ -164,7 +164,7 @@ public class UserAffiliationServiceImpl implements UserAffiliationService {
     return userTenant;
   }
 
-  private PrimaryAffiliationEvent createPrimaryAffiliationEvent(UserEvent userEvent, String centralTenantId) {
+  private PrimaryAffiliationEvent createPrimaryAffiliationEvent(UserEvent userEvent, String centralTenantId, UUID consortiumId) {
     PrimaryAffiliationEvent event = new PrimaryAffiliationEvent();
     event.setId(userEvent.getId());
     event.setUserId(UUID.fromString(userEvent.getUserDto().getId()));
@@ -185,6 +185,7 @@ public class UserAffiliationServiceImpl implements UserAffiliationService {
     }
     event.setTenantId(userEvent.getTenantId());
     event.setCentralTenantId(centralTenantId);
+    event.setConsortiumId(consortiumId);
     return event;
   }
 }

@@ -114,7 +114,7 @@ public class SyncPrimaryAffiliationServiceImpl implements SyncPrimaryAffiliation
           if (ObjectUtils.notEqual(centralTenantId, tenantEntity.getId())) {
             userTenantService.save(consortiumId, createUserTenant(centralTenantId, user), true);
           }
-          sendCreatePrimaryAffiliationEvent(tenantEntity, user, centralTenantId);
+          sendCreatePrimaryAffiliationEvent(tenantEntity, user, centralTenantId, consortiumId);
         }
         affiliatedUsersCount++;
       } catch (Exception e) {
@@ -130,8 +130,8 @@ public class SyncPrimaryAffiliationServiceImpl implements SyncPrimaryAffiliation
   }
 
   @SneakyThrows
-  private void sendCreatePrimaryAffiliationEvent(TenantEntity consortiaTenant, SyncUser user, String centralTenantId) {
-    PrimaryAffiliationEvent affiliationEvent = createPrimaryAffiliationEvent(user, consortiaTenant.getId(), centralTenantId);
+  private void sendCreatePrimaryAffiliationEvent(TenantEntity consortiaTenant, SyncUser user, String centralTenantId, UUID consortiumId) {
+    PrimaryAffiliationEvent affiliationEvent = createPrimaryAffiliationEvent(user, consortiaTenant.getId(), centralTenantId, consortiumId);
     String data = objectMapper.writeValueAsString(affiliationEvent);
     kafkaService.send(KafkaService.Topic.CONSORTIUM_PRIMARY_AFFILIATION_CREATED, user.getId(), data);
   }
@@ -144,7 +144,10 @@ public class SyncPrimaryAffiliationServiceImpl implements SyncPrimaryAffiliation
     return userTenant;
   }
 
-  private PrimaryAffiliationEvent createPrimaryAffiliationEvent(SyncUser user, String tenantId, String centralTenantId) {
+  private PrimaryAffiliationEvent createPrimaryAffiliationEvent(SyncUser user,
+                                                                String tenantId,
+                                                                String centralTenantId,
+                                                                UUID consortiumId) {
     PrimaryAffiliationEvent event = new PrimaryAffiliationEvent();
     event.setId(UUID.randomUUID());
     event.setUserId(UUID.fromString(user.getId()));
@@ -156,6 +159,7 @@ public class SyncPrimaryAffiliationServiceImpl implements SyncPrimaryAffiliation
     event.setBarcode(user.getBarcode());
     event.setExternalSystemId(user.getExternalSystemId());
     event.setCentralTenantId(centralTenantId);
+    event.setConsortiumId(consortiumId);
     return event;
   }
 }
