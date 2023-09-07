@@ -2,12 +2,14 @@ package org.folio.consortia.service.impl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.folio.consortia.client.SyncPrimaryAffiliationClient;
 import org.folio.consortia.config.kafka.KafkaService;
+import org.folio.consortia.domain.dto.Personal;
 import org.folio.consortia.domain.dto.PrimaryAffiliationEvent;
 import org.folio.consortia.domain.dto.SyncPrimaryAffiliationBody;
 import org.folio.consortia.domain.dto.SyncUser;
@@ -70,12 +72,27 @@ public class SyncPrimaryAffiliationServiceImpl implements SyncPrimaryAffiliation
   }
 
   private SyncPrimaryAffiliationBody buildSyncPrimaryAffiliationBody(String tenantId, List<User> users) {
-    var syncUsers = users.stream()
-      .map(user -> new SyncUser().id(user.getId())
-        .username(user.getUsername()))
-      .toList();
-    return new SyncPrimaryAffiliationBody().tenantId(tenantId)
-      .users(syncUsers);
+    return new SyncPrimaryAffiliationBody()
+      .tenantId(tenantId)
+      .users(users.stream()
+        .map(this::getSyncUser)
+        .toList());
+  }
+
+  private SyncUser getSyncUser(User user) {
+    SyncUser syncUser = new SyncUser()
+      .id(user.getId())
+      .username(user.getUsername())
+      .externalSystemId(user.getExternalSystemId())
+      .barcode(user.getBarcode());
+    Personal personal = user.getPersonal();
+    if (Objects.nonNull(personal)) {
+      syncUser
+        .email(personal.getEmail())
+        .phoneNumber(personal.getPhone())
+        .mobilePhoneNumber(personal.getMobilePhone());
+    }
+    return syncUser;
   }
 
   @Transactional

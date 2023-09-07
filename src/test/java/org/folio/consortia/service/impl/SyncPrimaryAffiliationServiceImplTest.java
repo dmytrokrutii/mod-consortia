@@ -156,11 +156,7 @@ class SyncPrimaryAffiliationServiceImplTest {
     var userCollectionString = getMockDataAsString("mockdata/user_collection.json");
     List<User> userCollection = new ObjectMapper().readValue(userCollectionString, UserCollection.class).getUsers();
 
-    var syncUser = new SyncUser().id("88888888-8888-4888-8888-888888888888").username("mockuser8");
-    var syncUser2 = new SyncUser().id("99999999-9999-4999-9999-999999999999").username("mockuser9");
-    var spab = new SyncPrimaryAffiliationBody()
-      .users(List.of(syncUser, syncUser2))
-      .tenantId(tenantId);
+    var spab = getSyncBody(tenantId);
 
     // stub collection of 2 users
     when(userService.getUsersByQuery(anyString(), anyInt(), anyInt())).thenReturn(userCollection);
@@ -181,11 +177,7 @@ class SyncPrimaryAffiliationServiceImplTest {
     var userCollectionString = getMockDataAsString("mockdata/user_collection.json");
     List<User> userCollection = new ObjectMapper().readValue(userCollectionString, UserCollection.class).getUsers();
 
-    var syncUser = new SyncUser().id("88888888-8888-4888-8888-888888888888").username("mockuser8");
-    var syncUser2 = new SyncUser().id("99999999-9999-4999-9999-999999999999").username("mockuser9");
-    var spab = new SyncPrimaryAffiliationBody()
-      .users(List.of(syncUser, syncUser2))
-      .tenantId(tenantId);
+    var spab = getSyncBody(tenantId);
 
     // stub collection of 2 users
     when(userService.getUsersByQuery(anyString(), anyInt(), anyInt())).thenReturn(userCollection);
@@ -268,5 +260,24 @@ class SyncPrimaryAffiliationServiceImplTest {
     verifyNoInteractions(kafkaService);
     verify(tenantService).updateTenantSetupStatus(tenantId, centralTenantId, SetupStatusEnum.COMPLETED_WITH_ERRORS);
     verify(lockService).lockTenantSetupWithinTransaction();
+  }
+
+  private SyncPrimaryAffiliationBody getSyncBody(String tenantId) {
+    var syncUser = new SyncUser()
+      .id("88888888-8888-4888-8888-888888888888")
+      .username("mockuser8")
+      .email("hlintall1@si.edu")
+      .phoneNumber("927-306-2327");
+    var syncUser2 = new SyncUser()
+      .id("99999999-9999-4999-9999-999999999999")
+      .username("mockuser9")
+      .externalSystemId("123")
+      .barcode("test123")
+      .email("mock@biglibrary.org")
+      .phoneNumber("2125551212")
+      .mobilePhoneNumber("112233");
+    return new SyncPrimaryAffiliationBody()
+      .users(List.of(syncUser, syncUser2))
+      .tenantId(tenantId);
   }
 }

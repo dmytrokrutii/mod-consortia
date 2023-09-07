@@ -4,7 +4,7 @@
       "username": "mockuser8",
       "id": "88888888-8888-4888-8888-888888888888",
       "active": true,
-      "type": "patron",
+      "type": "staff",
       "meta": {
         "creation_date": "2016-11-05T0723",
         "last_login_date": ""
@@ -20,7 +20,7 @@
       "username": "mockuser9",
       "id": "99999999-9999-4999-9999-999999999999",
       "active": true,
-      "type": "patron",
+      "type": "staff",
       "meta": {
         "creation_date": "2016-11-05T0723",
         "last_login_date": ""
@@ -30,7 +30,8 @@
         "middleName": "M.",
         "firstName": "Mockey",
         "email": "mock@biglibrary.org",
-        "phone": "2125551212"
+        "phone": "2125551212",
+        "mobilePhone": "112233"
       },
       "externalSystemId": "123",
       "barcode": "test123"
