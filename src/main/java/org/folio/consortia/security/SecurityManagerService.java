@@ -94,6 +94,7 @@ public class SecurityManagerService {
   }
 
   private void populateMissingUserProperties(User user) {
+    user.setType(UserType.SYSTEM.getName());
     user.setPersonal(new Personal());
     user.getPersonal().setLastName(USER_LAST_NAME);
   }

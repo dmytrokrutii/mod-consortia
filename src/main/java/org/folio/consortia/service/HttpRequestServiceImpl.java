@@ -1,6 +1,7 @@
 package org.folio.consortia.service;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -10,6 +11,7 @@ import org.folio.spring.integration.XOkapiHeaders;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -31,6 +33,8 @@ public class HttpRequestServiceImpl implements HttpRequestService {
   @Override
   public PublicationHttpResponse performRequest(String url, HttpMethod httpMethod, Object payload) {
     var headers = convertHeadersToMultiMap(folioExecutionContext.getOkapiHeaders());
+    headers.setAccept(Collections.singletonList(MediaType.ALL));
+
     HttpEntity<Object> httpEntity = new HttpEntity<>(payload, headers);
     var absUrl = folioExecutionContext.getOkapiUrl() + url;
     log.debug("performRequest:: folio context header TENANT = {}", folioExecutionContext.getOkapiHeaders().get(XOkapiHeaders.TENANT).iterator().next());
