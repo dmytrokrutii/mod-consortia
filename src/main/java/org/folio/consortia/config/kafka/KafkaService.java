@@ -137,16 +137,15 @@ public class KafkaService {
   }
 
   public void send(Topic topic, String key, String data) {
-    log.info("Sending {}.", data);
     String tenant = folioExecutionContext.getTenantId();
     if (StringUtils.isBlank(tenant)) {
       throw new IllegalStateException("Can't send to Kafka because tenant is blank");
     }
     String tenantTopicName = getTenantTopicName(topic.getTopicName(), tenant);
-
+    log.debug("Sending event with key: {} to topic: {} for tenant: {}", key, tenantTopicName, tenant);
     ProducerRecord<String, Object> producerRecord = createProducerRecord(tenantTopicName, key, data);
     kafkaTemplate.send(producerRecord);
-    log.info("Kafka event sent to topic: {} for tenant: {} with data: {}.", tenantTopicName, tenant, data);
+    log.info("Kafka event sent with key: {} to topic: {} for tenant: {}", key, tenantTopicName, tenant);
   }
 
   private ProducerRecord<String, Object> createProducerRecord(String tenantTopicName, String key, String data) {

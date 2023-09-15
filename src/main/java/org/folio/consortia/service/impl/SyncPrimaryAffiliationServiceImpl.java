@@ -6,33 +6,27 @@ import java.util.Objects;
 import java.util.UUID;
 
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.ObjectUtils;
 import org.folio.consortia.client.SyncPrimaryAffiliationClient;
-import org.folio.consortia.config.kafka.KafkaService;
 import org.folio.consortia.domain.dto.Personal;
 import org.folio.consortia.domain.dto.PrimaryAffiliationEvent;
 import org.folio.consortia.domain.dto.SyncPrimaryAffiliationBody;
 import org.folio.consortia.domain.dto.SyncUser;
 import org.folio.consortia.domain.dto.TenantDetails.SetupStatusEnum;
 import org.folio.consortia.domain.dto.User;
-import org.folio.consortia.domain.dto.UserTenant;
 import org.folio.consortia.domain.entity.TenantEntity;
 import org.folio.consortia.domain.entity.UserTenantEntity;
 import org.folio.consortia.repository.UserTenantRepository;
 import org.folio.consortia.service.LockService;
+import org.folio.consortia.service.PrimaryAffiliationService;
 import org.folio.consortia.service.SyncPrimaryAffiliationService;
 import org.folio.consortia.service.TenantService;
 import org.folio.consortia.service.UserService;
-import org.folio.consortia.service.UserTenantService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 
 @Service
@@ -40,13 +34,11 @@ import lombok.extern.log4j.Log4j2;
 @RequiredArgsConstructor
 public class SyncPrimaryAffiliationServiceImpl implements SyncPrimaryAffiliationService {
   private final UserService userService;
-  private final UserTenantService userTenantService;
   private final TenantService tenantService;
   private final UserTenantRepository userTenantRepository;
-  private final ObjectMapper objectMapper = new ObjectMapper();
-  private final KafkaService kafkaService;
   private final SyncPrimaryAffiliationClient syncPrimaryAffiliationClient;
   private final LockService lockService;
+  private final PrimaryAffiliationService createPrimaryAffiliationService;
 
   @Override
   public void syncPrimaryAffiliations(UUID consortiumId, String tenantId, String centralTenantId) {
@@ -127,11 +119,8 @@ public class SyncPrimaryAffiliationServiceImpl implements SyncPrimaryAffiliation
           log.info("createPrimaryUserAffiliations:: Primary affiliation already exists for tenant/user: {}/{}",
             tenantId, user.getUsername());
         } else {
-          userTenantService.createPrimaryUserTenantAffiliation(consortiumId, tenantEntity, user.getId(), user.getUsername());
-          if (ObjectUtils.notEqual(centralTenantId, tenantEntity.getId())) {
-            userTenantService.save(consortiumId, createUserTenant(centralTenantId, user), true);
-          }
-          sendCreatePrimaryAffiliationEvent(tenantEntity, user, centralTenantId, consortiumId);
+          PrimaryAffiliationEvent primaryAffiliationEvent = createPrimaryAffiliationEvent(user, tenantId, centralTenantId, consortiumId);
+          createPrimaryAffiliationService.createPrimaryAffiliationInNewTransaction(consortiumId, centralTenantId, tenantEntity, primaryAffiliationEvent);
         }
         affiliatedUsersCount++;
       } catch (Exception e) {
@@ -144,21 +133,6 @@ public class SyncPrimaryAffiliationServiceImpl implements SyncPrimaryAffiliation
       SetupStatusEnum.COMPLETED_WITH_ERRORS : SetupStatusEnum.COMPLETED);
     log.info("createPrimaryUserAffiliations:: Successfully created {} of {} primary affiliations for tenant {}",
       affiliatedUsersCount, userList.size(), tenantId);
-  }
-
-  @SneakyThrows
-  private void sendCreatePrimaryAffiliationEvent(TenantEntity consortiaTenant, SyncUser user, String centralTenantId, UUID consortiumId) {
-    PrimaryAffiliationEvent affiliationEvent = createPrimaryAffiliationEvent(user, consortiaTenant.getId(), centralTenantId, consortiumId);
-    String data = objectMapper.writeValueAsString(affiliationEvent);
-    kafkaService.send(KafkaService.Topic.CONSORTIUM_PRIMARY_AFFILIATION_CREATED, user.getId(), data);
-  }
-
-  private UserTenant createUserTenant(String tenantId, SyncUser user) {
-    UserTenant userTenant = new UserTenant();
-    userTenant.setTenantId(tenantId);
-    userTenant.setUserId(UUID.fromString(user.getId()));
-    userTenant.setUsername(user.getUsername());
-    return userTenant;
   }
 
   private PrimaryAffiliationEvent createPrimaryAffiliationEvent(SyncUser user,

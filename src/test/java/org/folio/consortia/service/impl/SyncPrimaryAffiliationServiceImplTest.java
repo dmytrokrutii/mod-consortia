@@ -4,7 +4,6 @@ import static org.folio.consortia.utils.EntityUtils.createTenantEntity;
 import static org.folio.consortia.utils.InputOutputTestUtils.getMockDataAsString;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -19,22 +18,20 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.folio.consortia.client.SyncPrimaryAffiliationClient;
-import org.folio.consortia.config.kafka.KafkaService;
 import org.folio.consortia.domain.dto.SyncPrimaryAffiliationBody;
 import org.folio.consortia.domain.dto.SyncUser;
 import org.folio.consortia.domain.dto.TenantDetails.SetupStatusEnum;
 import org.folio.consortia.domain.dto.User;
 import org.folio.consortia.domain.dto.UserCollection;
-import org.folio.consortia.domain.dto.UserTenant;
 import org.folio.consortia.domain.entity.TenantEntity;
 import org.folio.consortia.domain.entity.UserTenantEntity;
 import org.folio.consortia.repository.TenantRepository;
 import org.folio.consortia.repository.UserTenantRepository;
 import org.folio.consortia.service.ConsortiaConfigurationService;
 import org.folio.consortia.service.LockService;
+import org.folio.consortia.service.PrimaryAffiliationService;
 import org.folio.consortia.service.TenantService;
 import org.folio.consortia.service.UserService;
-import org.folio.consortia.service.UserTenantService;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -57,11 +54,9 @@ class SyncPrimaryAffiliationServiceImplTest {
   @InjectMocks
   SyncPrimaryAffiliationServiceImpl syncPrimaryAffiliationService;
   @Mock
-  private UserTenantService userTenantService;
-  @Mock
   private TenantService tenantService;
   @Mock
-  private KafkaService kafkaService;
+  private PrimaryAffiliationService primaryAffiliationService;
   @Mock
   private UserTenantRepository userTenantRepository;
   @Mock
@@ -102,12 +97,11 @@ class SyncPrimaryAffiliationServiceImplTest {
     when(userTenantRepository.findByUserId(any(), any())).thenReturn(new PageImpl<>(Collections.emptyList()));
     when(tenantRepository.findById(anyString())).thenReturn(Optional.of(tenantEntity1));
     when(userService.getUsersByQuery(anyString(), anyInt(), anyInt())).thenReturn(userCollection);
-    when(userTenantService.createPrimaryUserTenantAffiliation(any(), any(), anyString(), anyString())).thenReturn(new UserTenant());
     when(consortiaConfigurationService.getCentralTenantId(anyString())).thenReturn(tenantId);
 
     syncPrimaryAffiliationService.createPrimaryUserAffiliations(consortiumId, centralTenantId, spab);
 
-    verify(kafkaService, timeout(2000)).send(any(), anyString(), anyString());
+    verify(primaryAffiliationService).createPrimaryAffiliationInNewTransaction(any(), anyString(), any(), any());
     verify(tenantService).updateTenantSetupStatus(tenantId, centralTenantId, SetupStatusEnum.COMPLETED);
     verify(lockService).lockTenantSetupWithinTransaction();
   }
@@ -134,13 +128,11 @@ class SyncPrimaryAffiliationServiceImplTest {
     when(userTenantRepository.findByUserId(any(), any())).thenReturn(new PageImpl<>(Collections.emptyList()));
     when(tenantRepository.findById(anyString())).thenReturn(Optional.of(tenantEntity1));
     when(userService.getUsersByQuery(anyString(), anyInt(), anyInt())).thenReturn(userCollection);
-    when(userTenantService.createPrimaryUserTenantAffiliation(any(), any(), anyString(), anyString())).thenReturn(new UserTenant());
     when(consortiaConfigurationService.getCentralTenantId(anyString())).thenReturn(centralTenantId);
-    when(userTenantService.save(any(), any(), anyBoolean())).thenReturn(new UserTenant());
 
     syncPrimaryAffiliationService.createPrimaryUserAffiliations(consortiumId, centralTenantId, spab);
 
-    verify(kafkaService, timeout(2000)).send(any(), anyString(), anyString());
+    verify(primaryAffiliationService).createPrimaryAffiliationInNewTransaction(any(), anyString(), any(), any());
     verify(tenantService).updateTenantSetupStatus(tenantId, centralTenantId, SetupStatusEnum.COMPLETED);
     verify(lockService).lockTenantSetupWithinTransaction();
   }
@@ -160,7 +152,6 @@ class SyncPrimaryAffiliationServiceImplTest {
 
     // stub collection of 2 users
     when(userService.getUsersByQuery(anyString(), anyInt(), anyInt())).thenReturn(userCollection);
-    when(userTenantService.createPrimaryUserTenantAffiliation(any(), any(), anyString(), anyString())).thenReturn(new UserTenant());
 
     syncPrimaryAffiliationService.syncPrimaryAffiliations(consortiumId, tenantId, centralTenantId);
 
@@ -224,7 +215,7 @@ class SyncPrimaryAffiliationServiceImplTest {
       syncPrimaryAffiliationService.createPrimaryUserAffiliations(consortiumId, centralTenantId, spab);
       fail("Expected exception was not thrown");
     } catch (DataAccessResourceFailureException e) {
-      verifyNoInteractions(kafkaService);
+      verifyNoInteractions(primaryAffiliationService);
       verify(tenantService).updateTenantSetupStatus(tenantId, centralTenantId, SetupStatusEnum.FAILED);
       verify(lockService).lockTenantSetupWithinTransaction();
     }
@@ -238,8 +229,6 @@ class SyncPrimaryAffiliationServiceImplTest {
     TenantEntity tenantEntity1 = createTenantEntity(tenantId, "TestName1");
     tenantEntity1.setConsortiumId(consortiumId);
 
-    var userCollectionString = getMockDataAsString("mockdata/user_collection.json");
-    List<User> userCollection = new ObjectMapper().readValue(userCollectionString, UserCollection.class).getUsers();
 
     var syncUser = new SyncUser().id("88888888-8888-4888-8888-888888888888").username("mockuser8");
     var syncUser2 = new SyncUser().id("99999999-9999-4999-9999-999999999999").username("mockuser9");
@@ -247,17 +236,11 @@ class SyncPrimaryAffiliationServiceImplTest {
       .users(List.of(syncUser, syncUser2))
       .tenantId(tenantId);
 
-    when(tenantService.getByTenantId(anyString())).thenReturn(tenantEntity1);
-    when(userTenantRepository.findByUserId(any(), any())).thenReturn(new PageImpl<>(Collections.emptyList()));
-    when(tenantRepository.findById(anyString())).thenReturn(Optional.of(tenantEntity1));
-
-    when(userService.getUsersByQuery(anyString(), anyInt(), anyInt())).thenReturn(userCollection);
-    when(userTenantService.createPrimaryUserTenantAffiliation(any(), any(), anyString(), anyString()))
+    when(tenantService.getByTenantId(anyString())).thenReturn(tenantEntity1)
       .thenThrow(DataAccessResourceFailureException.class);
-    when(consortiaConfigurationService.getCentralTenantId(anyString())).thenReturn(tenantId);
 
     syncPrimaryAffiliationService.createPrimaryUserAffiliations(consortiumId, centralTenantId, spab);
-    verifyNoInteractions(kafkaService);
+    verifyNoInteractions(primaryAffiliationService);
     verify(tenantService).updateTenantSetupStatus(tenantId, centralTenantId, SetupStatusEnum.COMPLETED_WITH_ERRORS);
     verify(lockService).lockTenantSetupWithinTransaction();
   }

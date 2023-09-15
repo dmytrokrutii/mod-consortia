@@ -11,6 +11,7 @@ import org.folio.consortia.domain.dto.User;
 import org.folio.consortia.domain.dto.UserEvent;
 import org.folio.consortia.domain.dto.UserTenant;
 import org.folio.consortia.domain.entity.UserTenantEntity;
+import org.folio.consortia.service.PrimaryAffiliationService;
 import org.folio.consortia.service.TenantService;
 import org.folio.consortia.service.UserAffiliationService;
 import org.folio.consortia.service.UserTenantService;
@@ -33,6 +34,7 @@ public class UserAffiliationServiceImpl implements UserAffiliationService {
   private final TenantService tenantService;
   private final KafkaService kafkaService;
   private final FolioExecutionContext folioExecutionContext;
+  private final PrimaryAffiliationService primaryAffiliationService;
   private final ObjectMapper objectMapper = new ObjectMapper();
 
   @Override
@@ -55,17 +57,8 @@ public class UserAffiliationServiceImpl implements UserAffiliationService {
         return;
       }
 
-      userTenantService.createPrimaryUserTenantAffiliation(tenant.getConsortiumId(), tenant,
-        userEvent.getUserDto().getId(), userEvent.getUserDto().getUsername());
-      if (ObjectUtils.notEqual(centralTenantId, tenant.getId())) {
-        userTenantService.save(tenant.getConsortiumId(), createUserTenant(centralTenantId, userEvent), false);
-      }
-
       PrimaryAffiliationEvent affiliationEvent = createPrimaryAffiliationEvent(userEvent, centralTenantId, tenant.getConsortiumId());
-      String data = objectMapper.writeValueAsString(affiliationEvent);
-
-      kafkaService.send(KafkaService.Topic.CONSORTIUM_PRIMARY_AFFILIATION_CREATED, userEvent.getUserDto().getId(), data);
-      log.info("Primary affiliation has been set for the user: {}", userEvent.getUserDto().getId());
+      primaryAffiliationService.createPrimaryAffiliation(tenant.getConsortiumId(), centralTenantId, tenant, affiliationEvent);
     } catch (Exception e) {
       log.error("Exception occurred while creating primary affiliation for userId: {}, tenant: {} and error message: {}",
         userEvent.getUserDto().getId(), userEvent.getTenantId(), e.getMessage(), e);
@@ -154,14 +147,6 @@ public class UserAffiliationServiceImpl implements UserAffiliationService {
       throw new IllegalArgumentException("User id is empty");
     }
     return UUID.fromString(userEvent.getUserDto().getId());
-  }
-
-  private UserTenant createUserTenant(String tenantId, UserEvent userEvent) {
-    UserTenant userTenant = new UserTenant();
-    userTenant.setTenantId(tenantId);
-    userTenant.setUserId(UUID.fromString(userEvent.getUserDto().getId()));
-    userTenant.setUsername(userEvent.getUserDto().getUsername());
-    return userTenant;
   }
 
   private PrimaryAffiliationEvent createPrimaryAffiliationEvent(UserEvent userEvent, String centralTenantId, UUID consortiumId) {

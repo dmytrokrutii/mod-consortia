@@ -55,6 +55,8 @@ class UserAffiliationServiceTest {
   @Mock
   KafkaService kafkaService;
   @Mock
+  PrimaryAffiliationService primaryAffiliationService;
+  @Mock
   FolioExecutionContext folioExecutionContext;
   AutoCloseable mockitoMocks;
 
@@ -84,7 +86,7 @@ class UserAffiliationServiceTest {
       userAffiliationService.createPrimaryUserAffiliation(userCreatedEventSample);
     }
 
-    verify(kafkaService, times(1)).send(any(), anyString(), any());
+    verify(primaryAffiliationService, times(1)).createPrimaryAffiliation(any(), anyString(), any(), any());
 
   }
 
@@ -103,7 +105,7 @@ class UserAffiliationServiceTest {
       userAffiliationService.createPrimaryUserAffiliation(userCreatedEventSample);
     }
 
-    verify(kafkaService, times(1)).send(any(), anyString(), any());
+    verify(primaryAffiliationService, times(1)).createPrimaryAffiliation(any(), anyString(), any(), any());
   }
 
   @Test
