@@ -75,7 +75,7 @@ public class PublicationServiceImpl implements PublicationService {
   private final ObjectMapper objectMapper;
   private final ConsortiumService consortiumService;
 
-  @Value("${folio.system.max-active-threads:5}")
+  @Value("${folio.max-active-threads:5}")
   private int maxActiveThreads;
 
   @Override

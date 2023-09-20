@@ -1,8 +1,8 @@
 package org.folio.consortia.service;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 import org.folio.consortia.domain.dto.PublicationHttpResponse;
@@ -34,6 +34,7 @@ public class HttpRequestServiceImpl implements HttpRequestService {
   public PublicationHttpResponse performRequest(String url, HttpMethod httpMethod, Object payload) {
     var headers = convertHeadersToMultiMap(folioExecutionContext.getOkapiHeaders());
     headers.setAccept(Collections.singletonList(MediaType.ALL));
+    headers.setContentType(MediaType.APPLICATION_JSON);
 
     HttpEntity<Object> httpEntity = new HttpEntity<>(payload, headers);
     var absUrl = folioExecutionContext.getOkapiUrl() + url;
@@ -50,7 +51,7 @@ public class HttpRequestServiceImpl implements HttpRequestService {
 
   private HttpHeaders convertHeadersToMultiMap(Map<String, Collection<String>> contextHeaders) {
     HttpHeaders multimapHeaders = new HttpHeaders();
-    contextHeaders.forEach((key, value) -> multimapHeaders.put(key, (List<String>) value));
+    contextHeaders.forEach((key, value) -> multimapHeaders.put(key, new ArrayList<>(value)));
 
     return multimapHeaders;
   }

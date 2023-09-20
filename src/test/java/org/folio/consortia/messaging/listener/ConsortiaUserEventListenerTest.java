@@ -14,11 +14,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.folio.consortia.config.FolioExecutionContextHelper;
-import org.folio.consortia.security.AuthService;
-import org.folio.consortia.security.SecurityManagerService;
 import org.folio.consortia.service.UserAffiliationService;
 import org.folio.spring.FolioExecutionContext;
-import org.folio.spring.FolioModuleMetadata;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -41,15 +38,9 @@ class ConsortiaUserEventListenerTest {
   @Mock
   private EventListenerHelper eventListenerHelper;
   @Mock
-  FolioModuleMetadata folioModuleMetadata;
-  @Mock
   FolioExecutionContext folioExecutionContext = new FolioExecutionContext() {};
   @Mock
-  AuthService authService;
-  @Mock
-  SecurityManagerService securityManagerService;
-  @Mock
-  FolioExecutionContextHelper contextHelper = new FolioExecutionContextHelper(folioModuleMetadata, folioExecutionContext, authService, securityManagerService);
+  FolioExecutionContextHelper contextHelper;
 
   @Test
   void shouldCreatePrimaryAffiliationWhenConfigurationExists() {

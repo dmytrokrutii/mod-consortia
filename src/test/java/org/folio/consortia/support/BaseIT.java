@@ -1,11 +1,13 @@
 package org.folio.consortia.support;
 
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
 
+import com.github.tomakehurst.wiremock.extension.responsetemplating.ResponseTemplateTransformer;
 import org.folio.consortia.support.extension.EnableKafkaExtension;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.folio.tenant.domain.dto.TenantAttributes;
@@ -62,7 +64,10 @@ public abstract class BaseIT {
 
   @BeforeAll
   static void beforeAll(@Autowired MockMvc mockMvc) {
-    wireMockServer = new WireMockServer(WIRE_MOCK_PORT);
+    wireMockServer = new WireMockServer(wireMockConfig()
+      .port(WIRE_MOCK_PORT)
+      .extensions(new ResponseTemplateTransformer(true)));
+
     wireMockServer.start();
 
     setUpTenant(mockMvc);
@@ -108,6 +113,6 @@ public abstract class BaseIT {
 
   @DynamicPropertySource
   static void setFolioOkapiUrl(DynamicPropertyRegistry registry) {
-    registry.add("folio.okapi.url", () -> "http://localhost:" + WIRE_MOCK_PORT);
+    registry.add("folio.okapi-url", () -> "http://localhost:" + WIRE_MOCK_PORT);
   }
 }

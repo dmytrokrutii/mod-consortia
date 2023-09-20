@@ -12,7 +12,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -185,7 +184,7 @@ class TenantServiceTest {
     doNothing().when(configurationClient).saveConfiguration(createConsortiaConfiguration(CENTRAL_TENANT_ID));
     doNothing().when(userTenantsClient).postUserTenant(any());
     when(conversionService.convert(localTenantDetailsEntity, Tenant.class)).thenReturn(tenant);
-    doReturn(folioExecutionContext).when(contextHelper).getSystemUserFolioExecutionContext(anyString(), anyMap());
+    doReturn(folioExecutionContext).when(contextHelper).getSystemUserFolioExecutionContext(anyString());
     when(folioExecutionContext.getTenantId()).thenReturn("diku");
 
     var tenant1 = tenantService.save(consortiumId, UUID.fromString(adminUser.getId()), tenant);
@@ -227,7 +226,7 @@ class TenantServiceTest {
     doNothing().when(configurationClient).saveConfiguration(createConsortiaConfiguration(CENTRAL_TENANT_ID));
     doNothing().when(userTenantsClient).postUserTenant(any());
     when(conversionService.convert(tenantDetailsEntity, Tenant.class)).thenReturn(tenant);
-    doReturn(folioExecutionContext).when(contextHelper).getSystemUserFolioExecutionContext(anyString(), anyMap());
+    doReturn(folioExecutionContext).when(contextHelper).getSystemUserFolioExecutionContext(anyString());
     when(folioExecutionContext.getTenantId()).thenReturn("diku");
     Map<String, Collection<String>> okapiHeaders = new HashMap<>();
     okapiHeaders.put(XOkapiHeaders.TENANT, List.of("diku"));

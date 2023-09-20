@@ -37,8 +37,7 @@ spring:
         enabled: true
 folio:
   environment: ${ENV:folio}
-  okapi:
-    url: ${OKAPI_URL:http://okapi:9130}
+  okapi-url: ${OKAPI_URL:http://okapi:9130}
   kafka:
     numberOfPartitions: ${NUMBER_OF_PARTITIONS:1}
     replicationFactor: ${REPLICATION_FACTOR:1}
@@ -62,12 +61,14 @@ folio:
   tenant:
     validation:
       enabled: true
-  system:
+  system-user:
     username: consortia-system-user
     password: ${SYSTEM_USER_PASSWORD:consortia-system-user}
-    max-active-threads: 5
+    lastname: SystemConsortia
+    permissionsFilePath: permissions/system-user-permissions.csv
   timer:
     publication-records-max-age-in-seconds: 86400
+  max-active-threads: 5
 feign:
   client:
     config:

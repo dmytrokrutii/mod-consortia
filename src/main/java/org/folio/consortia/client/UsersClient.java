@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@FeignClient(name = "users" , configuration = FeignClientConfiguration.class)
+@FeignClient(name = "consortia-users-client", url = "users" , configuration = FeignClientConfiguration.class)
 public interface UsersClient {
 
   @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
