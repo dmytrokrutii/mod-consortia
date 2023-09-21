@@ -11,6 +11,7 @@ import java.net.ServerSocket;
 import java.util.PrimitiveIterator;
 import java.util.concurrent.ThreadLocalRandom;
 
+import com.github.tomakehurst.wiremock.extension.responsetemplating.ResponseTemplateTransformer;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -19,10 +20,11 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 
 public class OkapiExtension implements BeforeAllCallback, AfterAllCallback {
 
-  private static final String OKAPI_URL_PROPERTY = "okapi.url";
+  private static final String OKAPI_URL_PROPERTY = "okapi-url";
   private static final WireMockServer WIRE_MOCK = new WireMockServer(
     wireMockConfig()
       .port(nextFreePort())
+      .extensions(new ResponseTemplateTransformer(true))
   );
 
   private static int nextFreePort() {

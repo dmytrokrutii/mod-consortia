@@ -59,7 +59,7 @@ public class TenantServiceImpl implements TenantService {
   private static final String TENANT_HAS_ACTIVE_USER_ASSOCIATIONS_ERROR_MSG = "Cannot delete tenant with ID {tenantId} because it has an association with a user. "
       + "Please remove the user association before attempting to delete the tenant.";
   private static final String DUMMY_USERNAME = "dummy_user";
-  @Value("${folio.system.username}")
+  @Value("${folio.system-user.username}")
   private String systemUserUsername;
 
   private final TenantRepository tenantRepository;
@@ -155,8 +155,7 @@ public class TenantServiceImpl implements TenantService {
     }
 
     // switch to context of the desired tenant and apply all necessary setup
-    var systemUserHeaders = contextHelper.getHeadersForSystemUserWithRefreshPermissions(tenantDto.getId());
-    try (var context = new FolioExecutionContextSetter(contextHelper.getSystemUserFolioExecutionContext(tenantDto.getId(), systemUserHeaders))) {
+    try (var ignored = new FolioExecutionContextSetter(contextHelper.getSystemUserFolioExecutionContext(tenantDto.getId()))) {
       configurationClient.saveConfiguration(createConsortiaConfigurationBody(centralTenantId));
       if (!tenantDto.getIsCentral()) {
         createUserTenantWithDummyUser(tenantDto.getId(), centralTenantId, consortiumId);
