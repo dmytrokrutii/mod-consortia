@@ -86,11 +86,6 @@
       <version>${folio-service-tools.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.folio</groupId>
-      <artifactId>folio-service-tools-spring-dev</artifactId>
-      <version>${folio-service-tools.version}</version>
-    </dependency>
-    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-actuator</artifactId>
       <exclusions>
