@@ -18,9 +18,9 @@ import org.folio.consortia.messaging.domain.ConsortiaInputEventType;
 import org.folio.consortia.messaging.domain.ConsortiaOutputEventType;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.integration.XOkapiHeaders;
+import org.folio.spring.tools.kafka.KafkaUtils;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.core.env.Environment;
 import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.KafkaAdmin;
@@ -133,7 +133,7 @@ public class KafkaService {
    * @return topic name as {@link String} object
    */
   private String getTenantTopicName(String topicName, String tenantId) {
-    return String.format("%s.Default.%s.%s", kafkaEnvId, tenantId, topicName);
+    return KafkaUtils.getTenantTopicNameWithNamespace(topicName, kafkaEnvId, tenantId, "Default");
   }
 
   public void send(Topic topic, String key, String data) {
