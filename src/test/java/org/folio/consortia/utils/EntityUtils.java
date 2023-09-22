@@ -1,13 +1,18 @@
 package org.folio.consortia.utils;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.folio.consortia.domain.dto.ConsortiaConfiguration;
 import org.folio.consortia.domain.dto.Consortium;
 import org.folio.consortia.domain.dto.Personal;
+import org.folio.consortia.domain.dto.PublicationDetailsResponse;
 import org.folio.consortia.domain.dto.PublicationRequest;
+import org.folio.consortia.domain.dto.PublicationResult;
+import org.folio.consortia.domain.dto.PublicationResultCollection;
 import org.folio.consortia.domain.dto.PublicationStatus;
 import org.folio.consortia.domain.dto.SharingInstance;
 import org.folio.consortia.domain.dto.SharingSettingDeleteResponse;
@@ -26,10 +31,9 @@ import org.folio.consortia.domain.entity.SharingInstanceEntity;
 import org.folio.consortia.domain.entity.TenantDetailsEntity;
 import org.folio.consortia.domain.entity.TenantEntity;
 import org.folio.consortia.domain.entity.UserTenantEntity;
-import org.springframework.http.HttpMethod;
-import org.testcontainers.shaded.org.apache.commons.lang3.ObjectUtils;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -234,16 +238,49 @@ public class EntityUtils {
     PublicationRequest publicationRequest = new PublicationRequest();
     publicationRequest.setUrl(sharingSetting.getUrl());
     publicationRequest.setMethod(method);
-    // we don't need payload for delete request
-    if (ObjectUtils.notEqual(method, HttpMethod.DELETE.toString())) {
-      final ObjectMapper mapper = new ObjectMapper();
-      final ObjectNode root = mapper.createObjectNode();
-      root.set("id", mapper.convertValue("1844767a-8367-4926-9999-514c35840399", JsonNode.class));
-      root.set("name", mapper.convertValue("ORG-NAME", JsonNode.class));
-      root.set("source", mapper.convertValue("consortium", JsonNode.class));
-      publicationRequest.setPayload(root);
-    }
+    final ObjectMapper mapper = new ObjectMapper();
+    final ObjectNode root = mapper.createObjectNode();
+    root.set("id", mapper.convertValue("1844767a-8367-4926-9999-514c35840399", JsonNode.class));
+    root.set("name", mapper.convertValue("ORG-NAME", JsonNode.class));
+    root.set("source", mapper.convertValue("consortium", JsonNode.class));
+    publicationRequest.setPayload(root);
     return publicationRequest;
+  }
+
+  public static PublicationResultCollection createPublicationResultCollection(String tenantId1, String tenantId2) {
+    var pbr1 = new PublicationResult();
+    pbr1.setTenantId(tenantId1);
+    pbr1.setStatusCode(400);
+    var pbr2 = new PublicationResult();
+    pbr2.setTenantId(tenantId2);
+    pbr2.setStatusCode(401);
+    var publicationResultCollection = new PublicationResultCollection();
+    publicationResultCollection.setPublicationResults(List.of(pbr1, pbr2));
+    return publicationResultCollection;
+  }
+
+  public static PublicationDetailsResponse createPublicationDetails(PublicationStatus status) {
+    PublicationDetailsResponse pbd = new PublicationDetailsResponse();
+    pbd.setStatus(status);
+    return pbd;
+  }
+
+  public static JsonNode createJsonNodeForDepartmentPayload() throws JsonProcessingException {
+    Map<String, String> payload = new HashMap<>();
+    payload.put("id", "1844767a-8367-4926-9999-514c35840399");
+    payload.put("name", "ORG-NAME");
+    payload.put("source", "local");
+    ObjectMapper mapper = new ObjectMapper();
+    String json = mapper.writeValueAsString(payload);
+    return mapper.readTree(json);
+  }
+
+  public static JsonNode createJsonNodeForGroupPayload() throws JsonProcessingException {
+    Map<String, String> payload = new HashMap<>();
+    payload.put("group", "space");
+    ObjectMapper mapper = new ObjectMapper();
+    String json = mapper.writeValueAsString(payload);
+    return mapper.readTree(json);
   }
 
   public static User createUser(String username) {

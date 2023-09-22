@@ -1,7 +1,12 @@
 package org.folio.consortia.service;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.folio.consortia.utils.EntityUtils.CONSORTIUM_ID;
+import static org.folio.consortia.utils.EntityUtils.createJsonNodeForDepartmentPayload;
+import static org.folio.consortia.utils.EntityUtils.createJsonNodeForGroupPayload;
+import static org.folio.consortia.utils.EntityUtils.createPublicationDetails;
 import static org.folio.consortia.utils.EntityUtils.createPublicationRequestForSetting;
+import static org.folio.consortia.utils.EntityUtils.createPublicationResultCollection;
 import static org.folio.consortia.utils.EntityUtils.createSharingSettingResponse;
 import static org.folio.consortia.utils.EntityUtils.createSharingSettingResponseForDelete;
 import static org.folio.consortia.utils.EntityUtils.createTenant;
@@ -16,7 +21,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.HashMap;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,12 +31,15 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.folio.consortia.config.FolioExecutionContextHelper;
+import org.folio.consortia.domain.dto.PublicationRequest;
 import org.folio.consortia.domain.dto.PublicationResponse;
+import org.folio.consortia.domain.dto.PublicationStatus;
 import org.folio.consortia.domain.dto.SharingSettingRequest;
 import org.folio.consortia.domain.dto.Tenant;
 import org.folio.consortia.domain.dto.TenantCollection;
 import org.folio.consortia.domain.entity.SharingSettingEntity;
 import org.folio.consortia.repository.ConsortiumRepository;
+import org.folio.consortia.repository.PublicationStatusRepository;
 import org.folio.consortia.repository.SharingSettingRepository;
 import org.folio.consortia.service.impl.SharingSettingServiceImpl;
 import org.folio.spring.FolioExecutionContext;
@@ -37,16 +47,21 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.HttpMethod;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 @SpringBootTest
 class SharingSettingServiceTest {
-  private static final String SHARING_SETTING_REQUEST_SAMPLE = "mockdata/sharing_setting_request.json";
-  private static final String SHARING_SETTING_REQUEST_SAMPLE_WITHOUT_PAYLOAD = "mockdata/sharing_setting_request_without_payload.json";
+  private static final String SHARING_SETTING_REQUEST_SAMPLE_FOR_DEPARTMENT = "mockdata/sharing_settings/sharing_setting_request_for_department.json";
+  private static final String SHARING_SETTING_REQUEST_SAMPLE_FOR_GROUP = "mockdata/sharing_settings/sharing_setting_request_for_group.json";
+  private static final String SHARING_SETTING_REQUEST_SAMPLE_WITHOUT_PAYLOAD = "mockdata/sharing_settings/sharing_setting_request_without_payload.json";
+
   @InjectMocks
   private SharingSettingServiceImpl sharingSettingService;
   @Mock
@@ -54,9 +69,13 @@ class SharingSettingServiceTest {
   @Mock
   private ConsortiumService consortiumService;
   @Mock
+  private TaskExecutor asyncTaskExecutor;
+  @Mock
   private TenantService tenantService;
   @Mock
   private PublicationService publicationService;
+  @Mock
+  private PublicationStatusRepository publicationStatusRepository;
   @Mock
   private SharingSettingRepository sharingSettingRepository;
   @Mock
@@ -68,14 +87,13 @@ class SharingSettingServiceTest {
 
   @Test
   void shouldStartSharingSetting() throws JsonProcessingException {
-    UUID consortiumId = UUID.randomUUID();
     UUID createSettingsPcId = UUID.randomUUID();
     UUID updateSettingsPcId = UUID.randomUUID();
     Tenant tenant1 = createTenant("tenant1", "tenant1");
     Tenant tenant2 = createTenant("tenant2", "tenant2");
     Set<String> tenantAssociationsWithSetting = Set.of("tenant1");
     TenantCollection tenantCollection = createTenantCollection(List.of(tenant1, tenant2));
-    var sharingSettingRequest = getMockDataObject(SHARING_SETTING_REQUEST_SAMPLE, SharingSettingRequest.class);
+    var sharingSettingRequest = getMockDataObject(SHARING_SETTING_REQUEST_SAMPLE_FOR_DEPARTMENT, SharingSettingRequest.class);
     Map<String, String> payload = new LinkedHashMap<>();
     payload.put("id", "1844767a-8367-4926-9999-514c35840399");
     payload.put("name", "ORG-NAME");
@@ -94,18 +112,18 @@ class SharingSettingServiceTest {
     var publicationResponsePost = new PublicationResponse().id(createSettingsPcId);
     var publicationResponsePut = new PublicationResponse().id(updateSettingsPcId);
 
-    when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
-    when(publicationService.publishRequest(consortiumId, publicationRequestPost)).thenReturn(publicationResponsePost);
-    when(publicationService.publishRequest(consortiumId, publicationRequestPut)).thenReturn(publicationResponsePut);
-    when(tenantService.getAll(consortiumId)).thenReturn(tenantCollection);
+    when(consortiumRepository.existsById(CONSORTIUM_ID)).thenReturn(true);
+    when(publicationService.publishRequest(CONSORTIUM_ID, publicationRequestPost)).thenReturn(publicationResponsePost);
+    when(publicationService.publishRequest(CONSORTIUM_ID, publicationRequestPut)).thenReturn(publicationResponsePut);
+    when(tenantService.getAll(CONSORTIUM_ID)).thenReturn(tenantCollection);
     when(sharingSettingRepository.findTenantsBySettingId(sharingSettingRequest.getSettingId())).thenReturn(tenantAssociationsWithSetting);
     when(sharingSettingRepository.save(any())).thenReturn(new SharingSettingEntity());
     when(folioExecutionContext.getTenantId()).thenReturn("mobius");
     doReturn(folioExecutionContext).when(contextHelper).getSystemUserFolioExecutionContext(anyString());
-    when(objectMapper.convertValue(payload, JsonNode.class)).thenReturn(createJsonNode());
+    when(objectMapper.convertValue(payload, JsonNode.class)).thenReturn(createJsonNodeForDepartmentPayload());
 
     var expectedResponse = createSharingSettingResponse(createSettingsPcId, updateSettingsPcId);
-    var actualResponse = sharingSettingService.start(consortiumId, sharingSettingRequest);
+    var actualResponse = sharingSettingService.start(CONSORTIUM_ID, sharingSettingRequest);
 
     assertThat(actualResponse.getCreateSettingsPCId()).isEqualTo(expectedResponse.getCreateSettingsPCId());
     assertThat(actualResponse.getUpdateSettingsPCId()).isEqualTo(expectedResponse.getUpdateSettingsPCId());
@@ -115,92 +133,141 @@ class SharingSettingServiceTest {
 
   @Test
   void shouldDeleteSharingSetting() {
-    UUID consortiumId = UUID.randomUUID();
     UUID pcId = UUID.randomUUID();
     UUID settingId = UUID.fromString("1844767a-8367-4926-9999-514c35840399");
     Tenant tenant1 = createTenant("tenant1", "tenant1");
     Tenant tenant2 = createTenant("tenant2", "tenant2");
     Set<String> tenantAssociationsWithSetting = Set.of("tenant1");
     TenantCollection tenantCollection = createTenantCollection(List.of(tenant1, tenant2));
-    var sharingSettingRequest = getMockDataObject(SHARING_SETTING_REQUEST_SAMPLE_WITHOUT_PAYLOAD, SharingSettingRequest.class);
+    var sharingSettingRequest = getMockDataObject(SHARING_SETTING_REQUEST_SAMPLE_FOR_DEPARTMENT, SharingSettingRequest.class);
 
     // "tenant1" exists in tenant setting association so that tenant1 is in DELETE request publication,
-    var publicationRequestDelete = createPublicationRequestForSetting(sharingSettingRequest, HttpMethod.DELETE.toString());
-    publicationRequestDelete.setTenants(Set.of("tenant1"));
-    publicationRequestDelete.setUrl("/organizations-storage/organizations/1844767a-8367-4926-9999-514c35840399");
+    var expectedPublicationRequestDelete = createPublicationRequestForSetting(sharingSettingRequest, HttpMethod.DELETE.toString());
+    expectedPublicationRequestDelete.setTenants(Set.of("tenant1"));
+    expectedPublicationRequestDelete.setUrl("/organizations-storage/organizations/1844767a-8367-4926-9999-514c35840399");
+    Map<String, String> map = new LinkedHashMap<>();
+    map.put("id", "1844767a-8367-4926-9999-514c35840399");
+    map.put("name", "ORG-NAME");
+    map.put("source", "local");
+    expectedPublicationRequestDelete.setPayload(map);
 
     var publicationResponse = new PublicationResponse().id(pcId);
 
-    when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
+    when(consortiumRepository.existsById(CONSORTIUM_ID)).thenReturn(true);
     when(sharingSettingRepository.existsBySettingId(settingId)).thenReturn(true);
-    when(publicationService.publishRequest(consortiumId, publicationRequestDelete)).thenReturn(publicationResponse);
-    when(tenantService.getAll(consortiumId)).thenReturn(tenantCollection);
+    when(publicationService.publishRequest(CONSORTIUM_ID, expectedPublicationRequestDelete)).thenReturn(publicationResponse);
+    when(tenantService.getAll(CONSORTIUM_ID)).thenReturn(tenantCollection);
     when(sharingSettingRepository.findTenantsBySettingId(sharingSettingRequest.getSettingId())).thenReturn(tenantAssociationsWithSetting);
     when(folioExecutionContext.getTenantId()).thenReturn("mobius");
     doReturn(folioExecutionContext).when(contextHelper).getSystemUserFolioExecutionContext(anyString());
 
     var expectedResponse = createSharingSettingResponseForDelete(pcId);
-    var actualResponse = sharingSettingService.delete(consortiumId, settingId, sharingSettingRequest);
+    var actualResponse = sharingSettingService.delete(CONSORTIUM_ID, settingId, sharingSettingRequest);
 
     assertThat(actualResponse.getPcId()).isEqualTo(expectedResponse.getPcId());
 
     verify(publicationService, times(1)).publishRequest(any(), any());
   }
 
+  @Test
+  void shouldUpdateFailedTenantSettings() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, JsonProcessingException {
+    UUID publicationId = UUID.randomUUID();
+    UUID pcId = UUID.randomUUID();
+    var publicationResponse = new PublicationResponse().id(pcId);
+    var sharingSettingRequest = getMockDataObject(SHARING_SETTING_REQUEST_SAMPLE_FOR_GROUP, SharingSettingRequest.class);
+    String centralTenant = "mobius";
+    String localTenant = "school";
+    var publicationResultCollection = createPublicationResultCollection(centralTenant, localTenant);
+    var publicationDetails = createPublicationDetails(PublicationStatus.ERROR);
+    JsonNode node = createJsonNodeForGroupPayload();
+    // expected data for publish request
+    Set<String> expectedFailedTenantList = new HashSet<>(List.of(centralTenant, localTenant));
+    var expectedPublicationRequest = createExceptedPublicationRequest(sharingSettingRequest, expectedFailedTenantList, HttpMethod.PUT);
+
+    // set time interval and maxTries for Thread sleep cycle
+    ReflectionTestUtils.setField(sharingSettingService, "maxTries", 60);
+    ReflectionTestUtils.setField(sharingSettingService, "interval", 200);
+
+    when(publicationService.checkPublicationDetailsExists(CONSORTIUM_ID, publicationId)).thenReturn(true);
+    when(publicationService.getPublicationDetails(CONSORTIUM_ID, publicationId)).thenReturn(publicationDetails);
+    when(publicationService.getPublicationResults(CONSORTIUM_ID, publicationId)).thenReturn(publicationResultCollection);
+    when(objectMapper.convertValue(any(), eq(JsonNode.class))).thenReturn(node);
+    when(folioExecutionContext.getTenantId()).thenReturn("mobius");
+    doReturn(folioExecutionContext).when(contextHelper).getSystemUserFolioExecutionContext(anyString());
+    // expected arguments for publish method parameters
+    when(publicationService.publishRequest(CONSORTIUM_ID, expectedPublicationRequest)).thenReturn(publicationResponse);
+
+    Method method = SharingSettingServiceImpl.class.getDeclaredMethod("updateSettingsForFailedTenants", UUID.class, UUID.class, SharingSettingRequest.class);
+    method.setAccessible(true);
+    method.invoke(sharingSettingService, CONSORTIUM_ID, publicationId, sharingSettingRequest);
+
+    verify(publicationService).getPublicationDetails(any(), any());
+    verify(publicationService).checkPublicationDetailsExists(CONSORTIUM_ID, publicationId);
+    verify(publicationService).publishRequest(any(), any());
+  }
+
   // Negative cases
   @Test
   void shouldThrowErrorForNotEqualSettingIdWithPayloadId() throws JsonProcessingException {
-    UUID consortiumId = UUID.randomUUID();
-    var sharingSettingRequest = getMockDataObject(SHARING_SETTING_REQUEST_SAMPLE, SharingSettingRequest.class);
-    Map<String, String> payload = new LinkedHashMap<>();
-    payload.put("id", "9999999-8367-4926-9999-514c35840399");
-    payload.put("name", "ORG-NAME");
-    payload.put("source", "local");
-    ObjectMapper mapper = new ObjectMapper();
-    String json = mapper.writeValueAsString(payload);
-    JsonNode node = mapper.readTree(json);
+    var sharingSettingRequest = getMockDataObject(SHARING_SETTING_REQUEST_SAMPLE_FOR_DEPARTMENT, SharingSettingRequest.class);
+    sharingSettingRequest.setSettingId(UUID.randomUUID());
+    JsonNode node = createJsonNodeForDepartmentPayload();
 
-    when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
+    when(consortiumRepository.existsById(CONSORTIUM_ID)).thenReturn(true);
     when(objectMapper.convertValue(any(), eq(JsonNode.class))).thenReturn(node);
 
-    assertThrows(java.lang.IllegalArgumentException.class, () -> sharingSettingService.start(consortiumId, sharingSettingRequest));
+    assertThrows(java.lang.IllegalArgumentException.class, () -> sharingSettingService.start(CONSORTIUM_ID, sharingSettingRequest));
     verify(publicationService, times(0)).publishRequest(any(), any());
   }
 
   @Test
   void shouldThrowErrorForNotEqualSettingIdPathId() {
-    UUID consortiumId = UUID.randomUUID();
     UUID settingId = UUID.fromString("999999-8367-4926-9999-514c35840399");
 
+    var sharingSettingRequest = getMockDataObject(SHARING_SETTING_REQUEST_SAMPLE_FOR_GROUP, SharingSettingRequest.class);
+
+    when(consortiumRepository.existsById(CONSORTIUM_ID)).thenReturn(true);
+
+    assertThrows(java.lang.IllegalArgumentException.class,
+      () -> sharingSettingService.delete(CONSORTIUM_ID, settingId, sharingSettingRequest));
+    verify(publicationService, times(0)).publishRequest(any(), any());
+  }
+
+  @Test
+  void shouldThrowErrorForNotHavingPayloadOfSetting() {
     var sharingSettingRequest = getMockDataObject(SHARING_SETTING_REQUEST_SAMPLE_WITHOUT_PAYLOAD, SharingSettingRequest.class);
 
-    when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
+    when(consortiumRepository.existsById(CONSORTIUM_ID)).thenReturn(true);
 
-    assertThrows(java.lang.IllegalArgumentException.class, () -> sharingSettingService.delete(consortiumId, settingId, sharingSettingRequest));
+    assertThrows(java.lang.IllegalArgumentException.class,
+      () -> sharingSettingService.delete(CONSORTIUM_ID, sharingSettingRequest.getSettingId(), sharingSettingRequest));
     verify(publicationService, times(0)).publishRequest(any(), any());
   }
 
   @Test
   void shouldThrowErrorForNotFound() {
-    UUID consortiumId = UUID.randomUUID();
     UUID settingId = UUID.fromString("1844767a-8367-4926-9999-514c35840399");
 
-    var sharingSettingRequest = getMockDataObject(SHARING_SETTING_REQUEST_SAMPLE_WITHOUT_PAYLOAD, SharingSettingRequest.class);
+    var sharingSettingRequest = getMockDataObject(SHARING_SETTING_REQUEST_SAMPLE_FOR_DEPARTMENT, SharingSettingRequest.class);
 
-    when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
+    when(consortiumRepository.existsById(CONSORTIUM_ID)).thenReturn(true);
     when(sharingSettingRepository.existsBySettingId(settingId)).thenReturn(false);
 
-    assertThrows(org.folio.consortia.exception.ResourceNotFoundException.class, () -> sharingSettingService.delete(consortiumId, settingId, sharingSettingRequest));
+    assertThrows(org.folio.consortia.exception.ResourceNotFoundException.class,
+      () -> sharingSettingService.delete(CONSORTIUM_ID, settingId, sharingSettingRequest));
     verify(publicationService, times(0)).publishRequest(any(), any());
   }
 
-  public JsonNode createJsonNode() throws JsonProcessingException {
-    Map<String, String> payload = new HashMap<>();
-    payload.put("id", "1844767a-8367-4926-9999-514c35840399");
-    payload.put("name", "ORG-NAME");
-    payload.put("source", "local");
-    ObjectMapper mapper = new ObjectMapper();
-    String json = mapper.writeValueAsString(payload);
-    return mapper.readTree(json);
+  private PublicationRequest createExceptedPublicationRequest(SharingSettingRequest sharingSettingRequest, Set<String> tenantList, HttpMethod method) {
+    var expectedPublicationRequest = new PublicationRequest();
+    expectedPublicationRequest.setTenants(tenantList);
+    expectedPublicationRequest.setMethod(method.toString());
+    expectedPublicationRequest.setUrl(sharingSettingRequest.getUrl() + "/" + sharingSettingRequest.getSettingId());
+    final ObjectMapper mapper = new ObjectMapper();
+    final ObjectNode root = mapper.createObjectNode();
+    root.set("group", mapper.convertValue("space", JsonNode.class));
+    root.set("source", mapper.convertValue("local", JsonNode.class));
+    expectedPublicationRequest.setPayload(root);
+    return expectedPublicationRequest;
   }
 }

@@ -8,6 +8,7 @@ public class HelperUtils {
   public static final String CONSORTIUM_FOLIO_INSTANCE_SOURCE = "CONSORTIUM-FOLIO";
   public static final String CONSORTIUM_MARC_INSTANCE_SOURCE = "CONSORTIUM-MARC";
   public static final String CONSORTIUM_SETTING_SOURCE = "consortium";
+  public static final String LOCAL_SETTING_SOURCE = "local";
 
   private HelperUtils() {}
 

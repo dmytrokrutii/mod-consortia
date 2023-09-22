@@ -158,6 +158,20 @@ class PublicationServiceImplTest extends BaseUnitTest {
   }
 
   @Test
+  void checkPublicationDetailsExists() {
+    var consortiumId = UUID.randomUUID();
+    var publicationId = UUID.randomUUID();
+
+    doNothing().when(consortiumService).checkConsortiumExistsOrThrow(consortiumId);
+    when(publicationStatusRepository.existsById(publicationId)).thenReturn(true);
+
+    publicationService.checkPublicationDetailsExists(consortiumId, publicationId);
+
+    Mockito.verify(publicationStatusRepository).existsById(publicationId);
+    Mockito.verify(consortiumService).checkConsortiumExistsOrThrow(consortiumId);
+  }
+
+  @Test
   void deletePublicationByIdSuccessful() {
     var consortiumId = UUID.randomUUID();
     var publicationId = UUID.randomUUID();

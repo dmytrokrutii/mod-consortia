@@ -321,6 +321,12 @@ public class PublicationServiceImpl implements PublicationService {
   }
 
   @Override
+  public boolean checkPublicationDetailsExists(UUID consortiumId, UUID publicationId) {
+    consortiumService.checkConsortiumExistsOrThrow(consortiumId);
+    return publicationStatusRepository.existsById(publicationId);
+  }
+
+  @Override
   @Transactional
   public void deletePublicationById(UUID consortiumId, UUID publicationId) {
     log.debug("deletePublicationById:: Trying to delete publication by consortiumId: {} and publicationId id: {}", consortiumId, publicationId);
