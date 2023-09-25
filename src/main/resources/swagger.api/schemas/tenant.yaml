@@ -5,8 +5,8 @@ Tenant:
       type: string
     code:
       type: string
-      minLength: 3
-      maxLength: 3
+      minLength: 2
+      maxLength: 5
       pattern: "^[a-zA-Z0-9]*$"
     name:
       type: string
