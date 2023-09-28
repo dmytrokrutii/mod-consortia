@@ -373,6 +373,7 @@
         "consortia.user-tenants.item.post",
         "consortia.user-tenants.item.delete",
         "consortia.consortia-configuration.item.post",
+        "consortia.inventory.share.local.instance",
         "consortia.sync-primary-affiliations.item.post",
         "consortia.create-primary-affiliations.item.post",
         "consortia.sharing-instances.item.post",
@@ -475,6 +476,15 @@
       "permissionName": "consortia.consortia-configuration.item.post",
       "displayName": "create consortia configuration",
       "description": "Create consortia configuration"
+    },
+    {
+      "permissionName": "consortia.inventory.share.local.instance",
+      "displayName": "Inventory: Share local instance with consortium",
+      "description": "Inventory: Share local instance with consortium",
+      "subPermissions": [
+        "consortia.sharing-instances.item.post"
+      ],
+      "visible": true
     },
     {
       "permissionName": "consortia.sharing-instances.item.post",
