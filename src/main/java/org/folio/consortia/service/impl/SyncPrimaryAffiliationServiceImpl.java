@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.folio.consortia.client.SyncPrimaryAffiliationClient;
 import org.folio.consortia.domain.dto.Personal;
 import org.folio.consortia.domain.dto.PrimaryAffiliationEvent;
@@ -67,11 +68,11 @@ public class SyncPrimaryAffiliationServiceImpl implements SyncPrimaryAffiliation
     return new SyncPrimaryAffiliationBody()
       .tenantId(tenantId)
       .users(users.stream()
-        .map(this::getSyncUser)
+        .map(user -> getSyncUser(user, tenantId))
         .toList());
   }
 
-  private SyncUser getSyncUser(User user) {
+  private SyncUser getSyncUser(User user, String tenantId) {
     SyncUser syncUser = new SyncUser()
       .id(user.getId())
       .username(user.getUsername())
@@ -83,6 +84,10 @@ public class SyncPrimaryAffiliationServiceImpl implements SyncPrimaryAffiliation
         .email(personal.getEmail())
         .phoneNumber(personal.getPhone())
         .mobilePhoneNumber(personal.getMobilePhone());
+    }
+    if (StringUtils.isBlank(user.getType())) {
+      log.warn("Required field 'type' was not populated for existing user with id: {}, username: {} in tenant: {}",
+        user.getId(), user.getUsername(), tenantId);
     }
     return syncUser;
   }
