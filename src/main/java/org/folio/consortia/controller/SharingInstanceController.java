@@ -1,5 +1,6 @@
 package org.folio.consortia.controller;
 
+import static org.folio.consortia.utils.TenantContextUtils.prepareContextForTenant;
 import static org.springframework.http.HttpStatus.CREATED;
 
 import java.util.UUID;
@@ -8,7 +9,11 @@ import org.folio.consortia.domain.dto.SharingInstance;
 import org.folio.consortia.domain.dto.SharingInstanceCollection;
 import org.folio.consortia.domain.dto.Status;
 import org.folio.consortia.rest.resource.InstancesApi;
+import org.folio.consortia.service.ConsortiaConfigurationService;
 import org.folio.consortia.service.SharingInstanceService;
+import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.FolioModuleMetadata;
+import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,10 +29,17 @@ import lombok.extern.log4j.Log4j2;
 public class SharingInstanceController implements InstancesApi {
 
   private final SharingInstanceService sharingInstanceService;
+  private final ConsortiaConfigurationService configurationService;
+  private final FolioModuleMetadata folioModuleMetadata;
+  private final FolioExecutionContext folioExecutionContext;
 
   @Override
   public ResponseEntity<SharingInstance> startSharingInstance(UUID consortiumId, @Validated SharingInstance sharingInstance) {
-    return ResponseEntity.status(CREATED).body(sharingInstanceService.start(consortiumId, sharingInstance));
+    var centralTenantId = configurationService.getCentralTenantId(folioExecutionContext.getTenantId());
+    try (var ignored = new FolioExecutionContextSetter(prepareContextForTenant(centralTenantId, folioModuleMetadata, folioExecutionContext))) {
+     var sharedInstance = sharingInstanceService.start(consortiumId, sharingInstance);
+     return ResponseEntity.status(CREATED).body(sharedInstance);
+    }
   }
 
   @Override

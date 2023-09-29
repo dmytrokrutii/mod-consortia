@@ -2,6 +2,7 @@ package org.folio.consortia.service.impl;
 
 import static org.folio.consortia.utils.HelperUtils.CONSORTIUM_SETTING_SOURCE;
 import static org.folio.consortia.utils.HelperUtils.LOCAL_SETTING_SOURCE;
+import static org.folio.spring.scope.FolioExecutionScopeExecutionContextManager.getRunnableWithCurrentFolioContext;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -142,22 +143,20 @@ public class SharingSettingServiceImpl implements SharingSettingService {
     log.info("start:: The Sharing Settings for settingId '{}' and '{}' unique tenant(s) were successfully deleted from the database", sharingSettingRequest.getSettingId(), publicationDeleteRequest.getTenants().size());
 
     // we create PC request with POST and PUT Http method to create settings as a consortia-system-user
-    UUID pcId;
-    SharingSettingDeleteResponse sharingSettingDeleteResponse;
     try (var ignored = new FolioExecutionContextSetter(contextHelper.getSystemUserFolioExecutionContext(folioExecutionContext.getTenantId()))) {
-      pcId = publishRequest(consortiumId, publicationDeleteRequest);
-      sharingSettingDeleteResponse = new SharingSettingDeleteResponse()
-        .pcId(pcId);
+      var pcId = publishRequest(consortiumId, publicationDeleteRequest);
+      var sharingSettingDeleteResponse = new SharingSettingDeleteResponse().pcId(pcId);
+      // update sources of failed requests
+      asyncTaskExecutor.execute(getRunnableWithCurrentFolioContext(() -> {
+        try {
+          updateSettingsForFailedTenants(consortiumId, pcId, sharingSettingRequest);
+        } catch (InterruptedException e) {
+          log.error("Thread sleep was interrupted", e);
+          Thread.currentThread().interrupt();
+        }
+      }));
+      return sharingSettingDeleteResponse;
     }
-    asyncTaskExecutor.execute(() -> {
-      try {
-        updateSettingsForFailedTenants(consortiumId, pcId, sharingSettingRequest);
-      } catch (InterruptedException e) {
-        log.error("Thread sleep was interrupted", e);
-        Thread.currentThread().interrupt();
-      }
-    });
-    return sharingSettingDeleteResponse;
   }
 
   private UUID publishRequest(UUID consortiumId, PublicationRequest publicationRequest) {
@@ -203,10 +202,8 @@ public class SharingSettingServiceImpl implements SharingSettingService {
     publicationPutRequest.setPayload(updatedPayload);
     publicationPutRequest.setTenants(failedTenantList);
 
-    try (var ignored = new FolioExecutionContextSetter(contextHelper.getSystemUserFolioExecutionContext(folioExecutionContext.getTenantId()))) {
-      log.info("send PUT request to publication with new source in payload={} by system user of {}", LOCAL_SETTING_SOURCE, folioExecutionContext.getTenantId());
-      publishRequest(consortiumId, publicationPutRequest);
-    }
+    log.info("send PUT request to publication with new source in payload={} by system user of {}", LOCAL_SETTING_SOURCE, folioExecutionContext.getTenantId());
+    publishRequest(consortiumId, publicationPutRequest);
   }
 
   private void validateSharingSettingRequestOrThrow(UUID settingId, SharingSettingRequest sharingSettingRequest) {

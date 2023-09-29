@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 
 import org.folio.consortia.repository.ConsortiumRepository;
 import org.folio.consortia.repository.TenantRepository;
+import org.folio.consortia.service.ConsortiaConfigurationService;
 import org.folio.consortia.service.TenantService;
 import org.folio.consortia.support.BaseIT;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,6 +50,8 @@ class SharingInstanceControllerIntegrationTests extends BaseIT {
   private ConsortiumRepository consortiumRepository;
   @MockBean
   private TenantRepository tenantRepository;
+  @MockBean
+  private ConsortiaConfigurationService configurationService;
   @MockBean
   private TenantService tenantService;
 
@@ -86,6 +89,7 @@ class SharingInstanceControllerIntegrationTests extends BaseIT {
   private void postAndVerifyResponseBody(String[][] instances) {
     for (String[] fields : instances) {
       // to skip the validation part
+      when(configurationService.getCentralTenantId(any())).thenReturn(TENANT);
       when(consortiumRepository.existsById(any())).thenReturn(true);
       when(tenantRepository.existsById(any())).thenReturn(true);
       when(tenantService.getCentralTenantId()).thenReturn(fields[2]);
