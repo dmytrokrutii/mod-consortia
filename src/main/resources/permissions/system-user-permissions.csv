@@ -34,6 +34,9 @@ inventory-storage.classification-types.item.delete
 inventory-storage.electronic-access-relationships.item.post
 inventory-storage.electronic-access-relationships.item.put
 inventory-storage.electronic-access-relationships.item.delete
+inventory-storage.holdings-note-types.item.post
+inventory-storage.holdings-note-types.item.put
+inventory-storage.holdings-note-types.item.delete
 inventory-storage.statistical-codes.item.post
 inventory-storage.statistical-codes.item.put
 inventory-storage.statistical-codes.item.delete
