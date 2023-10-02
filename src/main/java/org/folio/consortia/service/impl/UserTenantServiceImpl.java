@@ -209,13 +209,18 @@ public class UserTenantServiceImpl implements UserTenantService {
   }
 
   @Override
-  public void updateShadowUsersFirstAndLastNames(UUID userId) {
+  public void updateShadowUsersFirstAndLastNames(UUID userId, String originalTenantId) {
     List<UserTenantEntity> userTenantEntities = userTenantRepository.getByUserIdAndIsPrimaryFalse(userId);
     if (CollectionUtils.isNotEmpty(userTenantEntities)) {
-      User primaryUser = userService.getById(userId);
-      String firstName = primaryUser.getPersonal().getFirstName();
-      String lastName = primaryUser.getPersonal().getLastName();
-      List<String> tenantIds = userTenantEntities.stream().map(userTenantEntity -> userTenantEntity.getTenant().getId()).toList();
+      String firstName;
+      String lastName;
+      List<String> tenantIds;
+      try (var ignored = new FolioExecutionContextSetter(prepareContextForTenant(originalTenantId, folioModuleMetadata, folioExecutionContext))) {
+        User primaryUser = userService.getById(userId);
+        firstName = primaryUser.getPersonal().getFirstName();
+        lastName = primaryUser.getPersonal().getLastName();
+        tenantIds = userTenantEntities.stream().map(userTenantEntity -> userTenantEntity.getTenant().getId()).toList();
+      }
       log.info("Updating shadow users in all tenants exist in consortia for the user: {}", userId);
       tenantIds.forEach(tenantId -> {
         try (var ignored = new FolioExecutionContextSetter(prepareContextForTenant(tenantId, folioModuleMetadata, folioExecutionContext))) {
