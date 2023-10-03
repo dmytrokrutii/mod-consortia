@@ -44,13 +44,19 @@ public class SharingInstanceController implements InstancesApi {
 
   @Override
   public ResponseEntity<SharingInstance> getSharingInstanceById(UUID consortiumId, UUID actionId) {
-    return ResponseEntity.ok(sharingInstanceService.getById(consortiumId, actionId));
+    var centralTenantId = configurationService.getCentralTenantId(folioExecutionContext.getTenantId());
+    try (var ignored = new FolioExecutionContextSetter(prepareContextForTenant(centralTenantId, folioModuleMetadata, folioExecutionContext))) {
+      return ResponseEntity.ok(sharingInstanceService.getById(consortiumId, actionId));
+    }
   }
 
   @Override
   public ResponseEntity<SharingInstanceCollection> getSharingInstances(UUID consortiumId, UUID instanceIdentifier,
       String sourceTenantId, String targetTenantId, Status status, Integer offset, Integer limit) {
-    return ResponseEntity.ok(sharingInstanceService.getSharingInstances(consortiumId, instanceIdentifier, sourceTenantId,
-      targetTenantId, status, offset, limit));
+    var centralTenantId = configurationService.getCentralTenantId(folioExecutionContext.getTenantId());
+    try (var ignored = new FolioExecutionContextSetter(prepareContextForTenant(centralTenantId, folioModuleMetadata, folioExecutionContext))) {
+      return ResponseEntity.ok(sharingInstanceService.getSharingInstances(consortiumId, instanceIdentifier, sourceTenantId,
+        targetTenantId, status, offset, limit));
+    }
   }
 }

@@ -76,6 +76,7 @@ class SharingInstanceControllerIntegrationTests extends BaseIT {
   private void getAndVerifyTotalRecords(String params, String totalRecords) {
     // to skip validation for existence of consortium
     when(consortiumRepository.existsById(any())).thenReturn(true);
+    when(configurationService.getCentralTenantId(any())).thenReturn(TENANT);
 
     this.mockMvc.perform(
         get("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/sharing/instances" + params)

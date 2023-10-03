@@ -47,6 +47,7 @@ class SharingInstanceControllerTest extends BaseIT {
     headers.setContentType(MediaType.APPLICATION_JSON);
     SharingInstance sharingInstance = createSharingInstance(ACTION_ID, INSTANCE_ID, "college", "mobius");
 
+    when(configurationService.getCentralTenantId(any())).thenReturn(TENANT);
     when(sharingInstanceService.getById(any(), any())).thenReturn(sharingInstance);
 
     this.mockMvc.perform(
