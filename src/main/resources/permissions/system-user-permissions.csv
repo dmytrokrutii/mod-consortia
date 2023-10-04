@@ -28,6 +28,9 @@ inventory-storage.loan-types.item.delete
 inventory-storage.item-note-types.item.post
 inventory-storage.item-note-types.item.put
 inventory-storage.item-note-types.item.delete
+inventory-storage.call-number-types.item.post
+inventory-storage.call-number-types.item.put
+inventory-storage.call-number-types.item.delete
 inventory-storage.classification-types.item.post
 inventory-storage.classification-types.item.put
 inventory-storage.classification-types.item.delete
