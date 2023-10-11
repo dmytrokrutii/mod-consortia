@@ -46,7 +46,7 @@
     <sharing_settings.yaml.file>${project.basedir}/src/main/resources/swagger.api/sharing_settings.yaml</sharing_settings.yaml.file>
     <!-- runtime dependencies -->
     <folio-spring-base.version>7.2.0</folio-spring-base.version>
-    <folio-service-tools.version>3.1.0-SNAPSHOT</folio-service-tools.version>
+    <folio-service-tools.version>3.1.0</folio-service-tools.version>
     <openapi-generator.version>6.2.1</openapi-generator.version>
     <mapstruct.version>1.5.3.Final</mapstruct.version>
 
