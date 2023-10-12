@@ -63,7 +63,7 @@ folio:
       enabled: true
   system-user:
     username: consortia-system-user
-    password: ${SYSTEM_USER_PASSWORD:consortia-system-user}
+    password: ${SYSTEM_USER_PASSWORD}
     lastname: SystemConsortia
     permissionsFilePath: permissions/system-user-permissions.csv
   timer:
