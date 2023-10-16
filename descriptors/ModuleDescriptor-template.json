@@ -272,7 +272,17 @@
           ],
           "modulePermissions": [
             "inventory.instances.item.get",
-            "inventory.instances.item.post"
+            "inventory.instances.item.post",
+            "change-manager.jobexecutions.get",
+            "change-manager.jobexecutions.post",
+            "change-manager.jobexecutions.put",
+            "change-manager.records.post",
+            "instance-authority-links.instances.collection.get",
+            "instance-authority-links.instances.collection.put",
+            "instance-authority.linking-rules.collection.get",
+            "inventory-storage.authorities.collection.get",
+            "inventory-storage.instances.item.get",
+            "source-storage.records.delete"
           ]
         },
         {
@@ -482,7 +492,9 @@
       "displayName": "Inventory: Share local instance with consortium",
       "description": "Inventory: Share local instance with consortium",
       "subPermissions": [
-        "consortia.sharing-instances.item.post"
+        "consortia.sharing-instances.item.post",
+        "consortia.sharing-instances.item.get",
+        "consortia.sharing-instances.collection.get"
       ],
       "visible": true
     },
