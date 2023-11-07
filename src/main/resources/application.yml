@@ -62,7 +62,7 @@ folio:
     validation:
       enabled: true
   system-user:
-    username: consortia-system-user
+    username: ${SYSTEM_USER_NAME:consortia-system-user}
     password: ${SYSTEM_USER_PASSWORD}
     lastname: SystemConsortia
     permissionsFilePath: permissions/system-user-permissions.csv
