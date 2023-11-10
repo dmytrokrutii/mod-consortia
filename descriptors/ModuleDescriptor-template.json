@@ -282,7 +282,8 @@
             "instance-authority.linking-rules.collection.get",
             "inventory-storage.authorities.collection.get",
             "inventory-storage.instances.item.get",
-            "source-storage.records.delete"
+            "source-storage.records.delete",
+            "inventory-storage.instances.item.post"
           ]
         },
         {
@@ -495,7 +496,8 @@
       "subPermissions": [
         "consortia.sharing-instances.item.post",
         "consortia.sharing-instances.item.get",
-        "consortia.sharing-instances.collection.get"
+        "consortia.sharing-instances.collection.get",
+        "inventory-storage.authorities.collection.get"
       ],
       "visible": true
     },
