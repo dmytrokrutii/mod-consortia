@@ -88,18 +88,19 @@ requires and provides, the permissions, and the additional module metadata.
 
 ### Environment variables
 
-| Name                 |     Default value     | Description                                                                                                                                                 |
-|:---------------------|:---------------------:|:------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| DB_HOST              |       postgres        | Postgres hostname                                                                                                                                           |
-| DB_PORT              |         5432          | Postgres port                                                                                                                                               |
-| DB_USERNAME          |      folio_admin      | Postgres username                                                                                                                                           |
-| DB_PASSWORD          |           -           | Postgres username password                                                                                                                                  |
-| DB_DATABASE          |     okapi_modules     | Postgres database name                                                                                                                                      |
-| KAFKA_HOST           |         kafka         | Kafka broker hostname                                                                                                                                       |
-| KAFKA_PORT           |         9092          | Kafka broker port                                                                                                                                           |
-| ENV                  |         folio         | Logical name of the deployment, must be set if Kafka/Elasticsearch are shared for environments, `a-z (any case)`, `0-9`, `-`, `_` symbols only allowed      |
-| SYSTEM_USER_NAME     | consortia-system-user | Username of the system user                                                                                                                                 |
-| SYSTEM_USER_PASSWORD |           -           | Password of the system user                                                                                                                                 |
+| Name                 |     Default value     | Description                                                                                                                                            |
+|:---------------------|:---------------------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------|
+| DB_HOST              |       postgres        | Postgres hostname                                                                                                                                      |
+| DB_PORT              |         5432          | Postgres port                                                                                                                                          |
+| DB_USERNAME          |      folio_admin      | Postgres username                                                                                                                                      |
+| DB_PASSWORD          |           -           | Postgres username password                                                                                                                             |
+| DB_DATABASE          |     okapi_modules     | Postgres database name                                                                                                                                 |
+| KAFKA_HOST           |         kafka         | Kafka broker hostname                                                                                                                                  |
+| KAFKA_PORT           |         9092          | Kafka broker port                                                                                                                                      |
+| ENV                  |         folio         | Logical name of the deployment, must be set if Kafka/Elasticsearch are shared for environments, `a-z (any case)`, `0-9`, `-`, `_` symbols only allowed |
+| OKAPI_URL            |   http://okapi:9130   | Okapi url                                                                                                                                              |
+| SYSTEM_USER_NAME     | consortia-system-user | Username of the system user                                                                                                                            |
+| SYSTEM_USER_PASSWORD |           -           | Password of the system user                                                                                                                            |
 
 ## Additional information
 
