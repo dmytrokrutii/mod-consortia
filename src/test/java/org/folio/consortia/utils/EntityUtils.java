@@ -1,6 +1,10 @@
 package org.folio.consortia.utils;
 
+import static org.folio.spring.integration.XOkapiHeaders.TENANT;
+import static org.folio.spring.integration.XOkapiHeaders.TOKEN;
+
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +35,7 @@ import org.folio.consortia.domain.entity.SharingInstanceEntity;
 import org.folio.consortia.domain.entity.TenantDetailsEntity;
 import org.folio.consortia.domain.entity.TenantEntity;
 import org.folio.consortia.domain.entity.UserTenantEntity;
+import org.folio.spring.integration.XOkapiHeaders;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -315,5 +320,13 @@ public class EntityUtils {
     user.setPersonal(personal);
     user.setActive(true);
     return user;
+  }
+
+  public static Map<String, Collection<String>> createOkapiHeaders() {
+    Map<String, Collection<String>> map = new HashMap<>();
+    map.put(TENANT, List.of("diku"));
+    map.put(TOKEN, List.of(TOKEN));
+    map.put(XOkapiHeaders.USER_ID, List.of(UUID.randomUUID().toString()));
+    return map;
   }
 }

@@ -1,9 +1,9 @@
 package org.folio.consortia.service;
 
+import static org.folio.consortia.utils.EntityUtils.createOkapiHeaders;
 import static org.folio.consortia.utils.EntityUtils.createTenantEntity;
 import static org.folio.consortia.utils.InputOutputTestUtils.getMockDataAsString;
 import static org.folio.spring.integration.XOkapiHeaders.TENANT;
-import static org.folio.spring.integration.XOkapiHeaders.TOKEN;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -15,10 +15,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import org.folio.consortia.config.kafka.KafkaService;
@@ -28,7 +24,6 @@ import org.folio.consortia.repository.TenantRepository;
 import org.folio.consortia.service.impl.UserAffiliationServiceImpl;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.FolioModuleMetadata;
-import org.folio.spring.integration.XOkapiHeaders;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -259,15 +254,6 @@ class UserAffiliationServiceTest {
 
   private void mockOkapiHeaders() {
     when(folioExecutionContext.getTenantId()).thenReturn("diku");
-    Map<String, Collection<String>> okapiHeaders = createOkapiHeaders();
-    when(folioExecutionContext.getOkapiHeaders()).thenReturn(okapiHeaders);
-  }
-
-  private Map<String, Collection<String>> createOkapiHeaders() {
-    Map<String, Collection<String>> map = new HashMap<>();
-    map.put(TENANT, List.of(TENANT));
-    map.put(TOKEN, List.of(TOKEN));
-    map.put(XOkapiHeaders.USER_ID, List.of(UUID.randomUUID().toString()));
-    return map;
+    when(folioExecutionContext.getOkapiHeaders()).thenReturn(createOkapiHeaders());
   }
 }
