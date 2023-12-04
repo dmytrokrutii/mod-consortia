@@ -304,6 +304,7 @@ public class EntityUtils {
     user.setUsername("xyz");
     user.setPersonal(personal);
     user.setActive(Boolean.FALSE.equals(updateble));
+    user.setBarcode("0420690");
     return user;
   }
 

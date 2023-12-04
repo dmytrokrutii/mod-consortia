@@ -23,7 +23,7 @@ public interface UsersClient {
   UserCollection getUsersByQuery(@RequestParam("query") String query);
 
   @GetMapping(value = "/{userId}")
-  User getUsersByUserId(@PathVariable String userId);
+  User getUserById(@PathVariable String userId);
 
   @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
   void saveUser(@RequestBody User user);

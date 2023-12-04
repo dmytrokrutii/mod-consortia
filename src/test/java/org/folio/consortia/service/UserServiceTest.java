@@ -63,26 +63,28 @@ class UserServiceTest {
 
   @Test
   void shouldThrowNotFoundWhilePrepareShadowUser() {
-    when(usersClient.getUsersByUserId(any())).thenReturn(new User());
+    when(usersClient.getUserById(any())).thenReturn(new User());
     mockOkapiHeaders();
 
-    assertThrows(org.folio.consortia.exception.ResourceNotFoundException.class, () -> userService.prepareShadowUser(UUID.randomUUID(), ""));
+    assertThrows(org.folio.consortia.exception.ResourceNotFoundException.class,
+      () -> userService.prepareShadowUser(UUID.randomUUID(), ""));
   }
 
   @Test
   void shouldPrepareShadowUser() {
-    when(usersClient.getUsersByUserId(any())).thenReturn(createUserEntity(true));
+    when(usersClient.getUserById(any())).thenReturn(createUserEntity(true));
     mockOkapiHeaders();
 
-    User user = userService.prepareShadowUser(UUID.randomUUID(), "diku");
+    User shadow = userService.prepareShadowUser(UUID.randomUUID(), "diku");
 
-    assertEquals(UserType.SHADOW.getName(), user.getType());
-    assertEquals("diku", user.getCustomFields().get("originaltenantid"));
-    assertEquals(true, user.getActive());
-    assertEquals("testFirst", user.getPersonal().getFirstName());
-    assertEquals("testLast", user.getPersonal().getLastName());
-    assertEquals("Test@mail.com", user.getPersonal().getEmail());
-    assertEquals("email", user.getPersonal().getPreferredContactTypeId());
+    assertEquals(UserType.SHADOW.getName(), shadow.getType());
+    assertEquals("diku", shadow.getCustomFields().get("originaltenantid"));
+    assertEquals(true, shadow.getActive());
+    assertEquals("testFirst", shadow.getPersonal().getFirstName());
+    assertEquals("testLast", shadow.getPersonal().getLastName());
+    assertEquals("Test@mail.com", shadow.getPersonal().getEmail());
+    assertEquals("email", shadow.getPersonal().getPreferredContactTypeId());
+    assertEquals("0420690", shadow.getBarcode());
   }
 
   private void mockOkapiHeaders() {

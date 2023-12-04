@@ -57,7 +57,7 @@ class UserTenantControllerTest extends BaseIT {
 
   private static final String CONSORTIUM_ID = "7698e46-c3e3-11ed-afa1-0242ac120002";
   private static final String PERMISSION_EXCEPTION_MSG = "[403 Forbidden] during [GET] to " +
-    "[http://users/8c54ff1e-5954-4227-8402-9a5dd061a350] [UsersClient#getUsersByUserId(String)]: " +
+    "[http://users/8c54ff1e-5954-4227-8402-9a5dd061a350] [UsersClient#getUserById(String)]: " +
     "[Access for user 'ss_admin' (b82b46b6-9a6e-46f0-b986-5c643d9ba036) requires permission: users.item.get]";
   @Mock
   private UserTenantService userTenantService;
@@ -165,7 +165,7 @@ class UserTenantControllerTest extends BaseIT {
     when(userTenantRepository.findByUserIdAndTenantId(any(), any())).thenReturn(Optional.of(userTenantEntity));
     doNothing().when(userTenantRepository).deleteByUserIdAndTenantId(any(), any());
     doThrow(FeignException.Forbidden.errorStatus("getByUserId", createForbiddenResponse(PERMISSION_EXCEPTION_MSG)))
-      .when(usersClient).getUsersByUserId(any());
+      .when(usersClient).getUserById(any());
 
     this.mockMvc.perform(
         delete("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/user-tenants?userId=7698e46-c3e3-11ed-afa1-0242ac120001&tenantId=diku")
@@ -186,7 +186,7 @@ class UserTenantControllerTest extends BaseIT {
     when(tenantService.getCentralTenantId()).thenReturn(CENTRAL_TENANT_ID);
     doNothing().when(userTenantRepository).deleteByUserIdAndTenantId(any(), any());
     doThrow(FeignException.errorStatus("getByUserId", createUnknownResponse("network error")))
-      .when(usersClient).getUsersByUserId(any());
+      .when(usersClient).getUserById(any());
 
     this.mockMvc.perform(
         delete("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/user-tenants?userId=7698e46-c3e3-11ed-afa1-0242ac120001&tenantId=diku")

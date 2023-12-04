@@ -490,10 +490,11 @@ class UserTenantServiceTest {
 
     when(consortiumRepository.findById(UUID.fromString(CONSORTIUM_ID))).thenReturn(Optional.of(createConsortiumEntity()));
     when(userTenantRepository.findByUserIdAndIsPrimaryTrue(any())).thenReturn(Optional.empty());
-    when(usersClient.getUsersByUserId(any())).thenReturn(createUserEntity(false));
+    when(usersClient.getUserById(any())).thenReturn(createUserEntity(false));
     mockOkapiHeaders();
 
-    assertThrows(org.folio.consortia.exception.ResourceNotFoundException.class, () -> userTenantService.save(associationId, tenant, false));
+    assertThrows(org.folio.consortia.exception.ResourceNotFoundException.class,
+      () -> userTenantService.save(associationId, tenant, false));
   }
 
   /* Error Cases */
@@ -516,12 +517,13 @@ class UserTenantServiceTest {
     userTenant.setIsPrimary(true);
 
     when(consortiumRepository.existsById(UUID.fromString(CONSORTIUM_ID))).thenReturn(true);
-    when(usersClient.getUsersByUserId(any())).thenReturn(createUserEntity(true));
+    when(usersClient.getUserById(any())).thenReturn(createUserEntity(true));
     when(userTenantRepository.findByUserIdAndTenantId(userId, tenantId)).thenReturn(Optional.of(userTenant));
     doNothing().when(userTenantRepository).deleteByUserIdAndTenantId(userId, tenantId);
     mockOkapiHeaders();
 
-    assertThrows(UserAffiliationException.class, () -> userTenantService.deleteByUserIdAndTenantId(UUID.fromString(CONSORTIUM_ID), tenantId, userId),
+    assertThrows(UserAffiliationException.class,
+      () -> userTenantService.deleteByUserIdAndTenantId(UUID.fromString(CONSORTIUM_ID), tenantId, userId),
       String.format(USER_HAS_PRIMARY_AFFILIATION_WITH_TENANT, userId, tenantId));
   }
 
@@ -534,7 +536,8 @@ class UserTenantServiceTest {
       .thenReturn(Optional.of(createUserTenantEntity(UUID.randomUUID(), userId, "user", tenantId)));
     when(tenantService.getCentralTenantId()).thenReturn(tenantId);
 
-    assertThrows(UserAffiliationException.class, () -> userTenantService.deleteByUserIdAndTenantId(UUID.fromString(CONSORTIUM_ID), tenantId, userId),
+    assertThrows(UserAffiliationException.class,
+      () -> userTenantService.deleteByUserIdAndTenantId(UUID.fromString(CONSORTIUM_ID), tenantId, userId),
       String.format(AFFILIATION_FROM_CENTRAL_TENANT_CAN_NOT_BE_DELETED, userId, tenantId));
   }
 
@@ -592,7 +595,8 @@ class UserTenantServiceTest {
     when(userService.getById(any())).thenThrow(java.lang.IllegalStateException.class);
     mockOkapiHeaders();
 
-    assertThrows(java.lang.IllegalStateException.class, () -> userTenantService.save(UUID.fromString(CONSORTIUM_ID), tenant, false));
+    assertThrows(java.lang.IllegalStateException.class,
+      () -> userTenantService.save(UUID.fromString(CONSORTIUM_ID), tenant, false));
   }
 
   @Test

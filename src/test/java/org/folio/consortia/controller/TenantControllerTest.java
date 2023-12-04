@@ -165,7 +165,7 @@ class TenantControllerTest extends BaseIT {
     when(userService.prepareShadowUser(UUID.fromString(systemUser.getId()), TENANT)).thenReturn(systemUser);
     when(userService.getById(any())).thenReturn(adminUser);
     doReturn(folioExecutionContext).when(contextHelper).getSystemUserFolioExecutionContext(anyString());
-    doReturn(new User()).when(usersClient).getUsersByUserId(any());
+    doReturn(new User()).when(usersClient).getUserById(any());
     doReturn(permissionUserCollection).when(permissionsClient).get(anyString());
     doNothing().when(permissionsClient).addPermission(anyString(), any());
     when(consortiumRepository.existsById(any())).thenReturn(true);
@@ -249,7 +249,7 @@ class TenantControllerTest extends BaseIT {
     PermissionUserCollection permissionUserCollection = new PermissionUserCollection();
     permissionUserCollection.setPermissionUsers(List.of(permissionUser));
 
-    doReturn(new User()).when(usersClient).getUsersByUserId(any());
+    doReturn(new User()).when(usersClient).getUserById(any());
     doReturn(permissionUserCollection).when(permissionsClient).get(any());
     when(tenantRepository.findCentralTenant()).thenReturn(Optional.of(centralTenant));
     doNothing().when(configurationClient).saveConfiguration(createConsortiaConfiguration(CENTRAL_TENANT_ID));
@@ -289,7 +289,7 @@ class TenantControllerTest extends BaseIT {
     PermissionUserCollection permissionUserCollection = new PermissionUserCollection();
     permissionUserCollection.setPermissionUsers(List.of(permissionUser));
 
-    doReturn(new User()).when(usersClient).getUsersByUserId(any());
+    doReturn(new User()).when(usersClient).getUserById(any());
     doReturn(permissionUserCollection).when(permissionsClient).get(any());
     when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
     when(tenantRepository.existsById(any(String.class))).thenReturn(false);
@@ -327,7 +327,7 @@ class TenantControllerTest extends BaseIT {
     PermissionUserCollection permissionUserCollection = new PermissionUserCollection();
     permissionUserCollection.setPermissionUsers(List.of(permissionUser));
 
-    doReturn(new User()).when(usersClient).getUsersByUserId(any());
+    doReturn(new User()).when(usersClient).getUserById(any());
     doReturn(permissionUserCollection).when(permissionsClient).get(any());
     when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
     when(tenantRepository.existsById(any(String.class))).thenReturn(true);
