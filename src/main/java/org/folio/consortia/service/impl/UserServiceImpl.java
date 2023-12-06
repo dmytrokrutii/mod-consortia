@@ -97,7 +97,6 @@ public class UserServiceImpl implements UserService {
       shadowUser.setUsername(String.format("%s_%s", realUser.getUsername(), HelperUtils.randomString(RANDOM_STRING_COUNT)));
       shadowUser.setType(UserType.SHADOW.getName());
       shadowUser.setActive(true);
-      shadowUser.barcode(realUser.getBarcode());
 
       if (Objects.nonNull(realUser.getPersonal())) {
         // these firstname, lastname fields needed to correctly build UI metadata objects

@@ -55,6 +55,10 @@ public class ConsortiaConfigurationServiceImpl implements ConsortiaConfiguration
     return configList.get(0);
   }
 
+  public boolean isCentralTenantConfigurationExists() {
+    return configurationRepository.count() > 0;
+  }
+
   private void checkAnyConsortiaConfigurationNotExistsOrThrow() {
     if (configurationRepository.count() > 0) {
       throw new ResourceAlreadyExistException(CONSORTIA_CONFIGURATION_EXIST_MSG_TEMPLATE);

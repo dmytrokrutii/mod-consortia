@@ -292,6 +292,10 @@ public class EntityUtils {
     return new User().id(UUID.randomUUID().toString()).username(username);
   }
 
+  public static User createUser(UUID id, String username) {
+    return new User().id(id.toString()).username(username);
+  }
+
   public static User createUserEntity(Boolean updateble) {
     User user = new User();
     Personal personal = new Personal();

@@ -4,6 +4,7 @@ import static org.folio.consortia.utils.EntityUtils.createOkapiHeaders;
 import static org.folio.consortia.utils.EntityUtils.createUserEntity;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -84,7 +85,7 @@ class UserServiceTest {
     assertEquals("testLast", shadow.getPersonal().getLastName());
     assertEquals("Test@mail.com", shadow.getPersonal().getEmail());
     assertEquals("email", shadow.getPersonal().getPreferredContactTypeId());
-    assertEquals("0420690", shadow.getBarcode());
+    assertNull(shadow.getBarcode());
   }
 
   private void mockOkapiHeaders() {
