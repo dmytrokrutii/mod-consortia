@@ -106,7 +106,7 @@ class UserTenantServiceTest {
     Page<UserTenantEntity> userTenantPage = new PageImpl<>(userTenantEntities, PageRequest.of(0, 10), userTenantEntities.size());
 
     when(consortiumRepository.findById(UUID.fromString(CONSORTIUM_ID))).thenReturn(Optional.of(createConsortiumEntity()));
-    when(userTenantRepository.findAll(PageRequest.of(0, 10))).thenReturn(userTenantPage);
+    when(userTenantRepository.getAll(PageRequest.of(0, 10))).thenReturn(userTenantPage);
 
     // when
     var result = userTenantService.get(UUID.fromString(CONSORTIUM_ID), 0, 10);

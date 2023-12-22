@@ -118,7 +118,7 @@ public class SyncPrimaryAffiliationServiceImpl implements SyncPrimaryAffiliation
       var user = userList.get(idx);
       try {
         log.info("createPrimaryUserAffiliations:: Processing users: {} of {}", idx + 1, userList.size());
-        Page<UserTenantEntity> userTenantPage = userTenantRepository.findByUserId(UUID.fromString(user.getId()), PageRequest.of(0, 1));
+        Page<UserTenantEntity> userTenantPage = userTenantRepository.findAnyByUserId(UUID.fromString(user.getId()), PageRequest.of(0, 1));
 
         if (userTenantPage.getTotalElements() > 0) {
           log.info("createPrimaryUserAffiliations:: Primary affiliation already exists for tenant/user: {}/{}",

@@ -59,6 +59,7 @@ class UserTenantControllerTest extends BaseIT {
   private static final String PERMISSION_EXCEPTION_MSG = "[403 Forbidden] during [GET] to " +
     "[http://users/8c54ff1e-5954-4227-8402-9a5dd061a350] [UsersClient#getUserById(String)]: " +
     "[Access for user 'ss_admin' (b82b46b6-9a6e-46f0-b986-5c643d9ba036) requires permission: users.item.get]";
+
   @Mock
   private UserTenantService userTenantService;
   @InjectMocks
@@ -122,7 +123,7 @@ class UserTenantControllerTest extends BaseIT {
     Page<UserTenantEntity> userTenantPage = new PageImpl<>(List.of(createUserTenantEntity(consortiumId)));
 
     when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
-    when(userTenantRepository.findAll(PageRequest.of(1, 2))).thenReturn(userTenantPage);
+    when(userTenantRepository.getAll(PageRequest.of(1, 2))).thenReturn(userTenantPage);
 
     this.mockMvc.perform(
         get("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/user-tenants?limit=2&offset=1")
@@ -223,6 +224,7 @@ class UserTenantControllerTest extends BaseIT {
       .request(request)
       .build();
   }
+
   private Response createUnknownResponse(String message) {
     Request request = Request.create(Request.HttpMethod.GET, "", Map.of(), null, Charset.defaultCharset(),
       new RequestTemplate());

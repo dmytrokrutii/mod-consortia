@@ -52,6 +52,7 @@ public class EntityUtils {
   public static final UUID ACTION_ID = UUID.fromString("dcfc317b-0d7c-4334-8656-596105fa6c99");
   public static final UUID INSTANCE_ID = UUID.fromString("111841e3-e6fb-4191-8fd8-5674a5107c33");
   public static final String CENTRAL_TENANT_ID = "consortium";
+  public  static final String TENANT_ID = "diku";
 
   public static ConsortiumEntity createConsortiumEntity(String id, String name) {
     ConsortiumEntity consortiumEntity = new ConsortiumEntity();
@@ -74,6 +75,7 @@ public class EntityUtils {
     tenantEntity.setName(name);
     tenantEntity.setIsCentral(isCentral);
     tenantEntity.setConsortiumId(UUID.randomUUID());
+    tenantEntity.setIsDeleted(false);
     return tenantEntity;
   }
 
@@ -84,6 +86,7 @@ public class EntityUtils {
     tenantEntity.setName("testtenant1");
     tenantEntity.setIsCentral(false);
     tenantEntity.setConsortiumId(UUID.randomUUID());
+    tenantEntity.setIsDeleted(false);
     return tenantEntity;
   }
 
@@ -93,6 +96,17 @@ public class EntityUtils {
     tenantEntity.setCode("ABC");
     tenantEntity.setName(name);
     tenantEntity.setIsCentral(false);
+    tenantEntity.setIsDeleted(false);
+    return tenantEntity;
+  }
+
+  public static TenantEntity createTenantEntity(String id) {
+    TenantEntity tenantEntity = new TenantEntity();
+    tenantEntity.setId(id);
+    tenantEntity.setCode("ABC");
+    tenantEntity.setName(id);
+    tenantEntity.setIsCentral(false);
+    tenantEntity.setIsDeleted(false);
     return tenantEntity;
   }
 
@@ -102,6 +116,7 @@ public class EntityUtils {
     tenantDetailsEntity.setCode("ABC");
     tenantDetailsEntity.setName("testtenant1");
     tenantDetailsEntity.setIsCentral(false);
+    tenantDetailsEntity.setIsDeleted(false);
     tenantDetailsEntity.setConsortiumId(UUID.randomUUID());
     tenantDetailsEntity.setSetupStatus(SetupStatusEnum.COMPLETED);
     return tenantDetailsEntity;
@@ -113,6 +128,7 @@ public class EntityUtils {
     tenantDetailsEntity.setCode("ABC");
     tenantDetailsEntity.setName(name);
     tenantDetailsEntity.setIsCentral(false);
+    tenantDetailsEntity.setIsDeleted(false);
     tenantDetailsEntity.setSetupStatus(SetupStatusEnum.IN_PROGRESS);
     return tenantDetailsEntity;
   }
@@ -123,6 +139,7 @@ public class EntityUtils {
     tenant.setName(name);
     tenant.setIsCentral(false);
     tenant.setCode("ABC");
+    tenant.setIsDeleted(false);
     return tenant;
   }
 
@@ -131,6 +148,7 @@ public class EntityUtils {
     tenant.setId(id);
     tenant.setName(name);
     tenant.setIsCentral(isCentral);
+    tenant.setIsDeleted(false);
     tenant.setCode("ABC");
     return tenant;
   }

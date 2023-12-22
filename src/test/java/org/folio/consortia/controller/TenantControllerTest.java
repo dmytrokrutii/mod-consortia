@@ -379,20 +379,23 @@ class TenantControllerTest extends BaseIT {
         jsonPath("$.errors[0].code", is("NOT_FOUND_ERROR")));
   }
 
-  @ParameterizedTest
-  @ValueSource(strings = {TENANT_REQUEST_BODY})
-  void shouldThrownHasActiveAffiliationExceptionWhileDeletingTenant(String contentString) throws Exception {
+  @Test
+  void shouldThrownExceptionWhenDeletingCentralTenant() throws Exception {
     var headers = defaultHeaders();
-    when(tenantRepository.existsById(any())).thenReturn(true);
+    String tenantId = "diku";
+    var centralTenant = createTenantEntity(tenantId);
+    centralTenant.setIsCentral(true);
+
+    when(tenantRepository.findById(any())).thenReturn(Optional.of(centralTenant));
     when(consortiumRepository.existsById(any())).thenReturn(true);
-    when(userTenantRepository.existsByTenantId("diku1234")).thenReturn(true);
 
     this.mockMvc.perform(
-        delete("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/tenants/diku1234")
-          .headers(headers).content(contentString))
+        delete("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/tenants/diku")
+          .headers(headers))
       .andExpectAll(
         status().is4xxClientError(),
-        jsonPath("$.errors[0].code", is("VALIDATION_ERROR")));
+        jsonPath("$.errors[0].code", is("VALIDATION_ERROR")),
+        jsonPath("$.errors[0].message", is("central tenant 'diku' cannot be deleted")));
   }
 
   @Test

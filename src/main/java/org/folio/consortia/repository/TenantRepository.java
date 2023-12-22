@@ -14,10 +14,13 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface TenantRepository extends JpaRepository<TenantEntity, String> {
 
+  @Query("SELECT t FROM TenantEntity t WHERE t.consortiumId = ?1 and (t.isDeleted IS NULL OR t.isDeleted = FALSE)")
   Page<TenantEntity> findByConsortiumId(UUID consortiumId, Pageable pageable);
+
+  @Query("SELECT t FROM TenantEntity t WHERE t.consortiumId = ?1 and (t.isDeleted IS NULL OR t.isDeleted = FALSE)")
   List<TenantEntity> findByConsortiumId(UUID consortiumId);
 
-  @Query("SELECT t FROM TenantEntity t where t.isCentral = true")
+  @Query("SELECT t FROM TenantEntity t WHERE t.isCentral = true")
   Optional<TenantEntity> findCentralTenant();
 
   boolean existsByIsCentralTrue();
