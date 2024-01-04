@@ -317,10 +317,10 @@ public class TenantServiceImpl implements TenantService {
   }
 
   private void validateCodeAndNameUniqueness(Tenant tenant) {
-    if (tenantRepository.existsByName(tenant.getName())) {
+    if (tenantRepository.existsByNameForOtherTenant(tenant.getName(), tenant.getId())) {
       throw new ResourceAlreadyExistException("name", tenant.getName());
     }
-    if (tenantRepository.existsByCode(tenant.getCode())) {
+    if (tenantRepository.existsByCodeForOtherTenant(tenant.getCode(), tenant.getId())) {
       throw new ResourceAlreadyExistException("code", tenant.getCode());
     }
   }

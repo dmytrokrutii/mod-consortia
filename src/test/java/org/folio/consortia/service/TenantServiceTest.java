@@ -377,7 +377,7 @@ class TenantServiceTest {
     when(consortiumRepository.existsById(any())).thenReturn(true);
     when(tenantRepository.existsById(any())).thenReturn(false);
     when(tenantRepository.save(any(TenantEntity.class))).thenReturn(tenantEntity1);
-    when(tenantRepository.existsByCode(anyString())).thenReturn(true);
+    when(tenantRepository.existsByCodeForOtherTenant(anyString(), anyString())).thenReturn(true);
     when(conversionService.convert(tenantEntity1, Tenant.class)).thenReturn(tenant);
 
     assertThrows(org.folio.consortia.exception.ResourceAlreadyExistException.class, () ->
