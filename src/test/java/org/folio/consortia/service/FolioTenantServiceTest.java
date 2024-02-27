@@ -70,6 +70,7 @@ class FolioTenantServiceTest {
     centralUserPermissionList.add("consortia.all");
     centralUserPermissionList.add("users.all");
     centralUserPermissionList.add("invoices.all");
+    centralUserPermissionList.add("invoices.all");
     ResultList<String> systemUserPermissionResultList = ResultList.of(3, centralUserPermissionList);
 
     mockOkapiHeaders();

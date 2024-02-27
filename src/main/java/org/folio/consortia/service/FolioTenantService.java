@@ -1,8 +1,9 @@
 package org.folio.consortia.service;
 
 import java.sql.ResultSet;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 import lombok.extern.log4j.Log4j2;
@@ -118,17 +119,21 @@ public class FolioTenantService extends TenantService {
 
     // Fetch system user and its permission lists from central tenant
     User centralSystemUser;
-    List<String> systemUserPermissionList;
+    Set<String> systemUserPermissionList;
     try (var ignored = new FolioExecutionContextSetter(contextHelper.getSystemUserFolioExecutionContext(centralTenantId))) {
       centralSystemUser = userService.getByUsername(systemUserUsername)
         .orElseThrow(() -> new ResourceNotFoundException("systemUserUsername", systemUserUsername));
-      systemUserPermissionList = permissionsClient.getUserPermissions(centralSystemUser.getId()).getResult();
+      systemUserPermissionList = new HashSet<>(permissionsClient.getUserPermissions(centralSystemUser.getId()).getResult());
+      log.info("updateLocalTenantShadowSystemUsers:: Retrieved permissions '{}' of centralSystemUser '{}' from centralTenantId={}",
+        systemUserPermissionList, centralSystemUser.getId(), centralTenantId);
     }
 
     try (var ignored = new FolioExecutionContextSetter(contextHelper.getSystemUserFolioExecutionContext(requestingTenant))) {
       var shadowCentralSystemUser = userService.getById(UUID.fromString(centralSystemUser.getId()));
       String shadowSystemUserId = shadowCentralSystemUser.getId();
-      var shadowSystemUserPermissionList = permissionsClient.getUserPermissions(shadowSystemUserId).getResult();
+      Set<String> shadowSystemUserPermissionList = new HashSet<>(permissionsClient.getUserPermissions(shadowSystemUserId).getResult());
+      log.info("updateLocalTenantShadowSystemUsers:: Retrieved permissions '{}' of shadowSystemUser '{}' from requestingTenant={}",
+        shadowSystemUserPermissionList, shadowSystemUserId, requestingTenant);
 
       shadowSystemUserPermissionList.forEach(systemUserPermissionList::remove);
       systemUserPermissionList.forEach(permission ->
