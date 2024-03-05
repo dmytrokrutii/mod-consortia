@@ -5,9 +5,12 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import com.github.tomakehurst.wiremock.common.ClasspathFileSource;
 import com.github.tomakehurst.wiremock.extension.responsetemplating.ResponseTemplateTransformer;
+import com.github.tomakehurst.wiremock.extension.responsetemplating.TemplateEngine;
 import org.folio.consortia.support.extension.EnableKafkaExtension;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.folio.tenant.domain.dto.TenantAttributes;
@@ -66,7 +69,7 @@ public abstract class BaseIT {
   static void beforeAll(@Autowired MockMvc mockMvc) {
     wireMockServer = new WireMockServer(wireMockConfig()
       .port(WIRE_MOCK_PORT)
-      .extensions(new ResponseTemplateTransformer(true)));
+      .extensions(new ResponseTemplateTransformer(TemplateEngine.defaultTemplateEngine(), true, new ClasspathFileSource("/"), new ArrayList<>())));
 
     wireMockServer.start();
 

@@ -83,7 +83,7 @@ class SharingInstanceServiceTest {
     SharingInstanceEntity savedSharingInstance = createSharingInstanceEntity(ACTION_ID, instanceIdentifier, "college", "mobius");
 
     when(consortiumRepository.existsById(any())).thenReturn(true);
-    when(conversionService.convert(any(), any())).thenReturn(toDto(savedSharingInstance));
+    when(conversionService.convert(any(), eq(SharingInstance.class))).thenReturn(toDto(savedSharingInstance));
     doNothing().when(tenantService).checkTenantExistsOrThrow(anyString());
     when(sharingInstanceRepository.findById(any())).thenReturn(Optional.of(savedSharingInstance));
 
@@ -101,7 +101,7 @@ class SharingInstanceServiceTest {
     String event = objectMapper.writeValueAsString(sharingInstance);
 
     when(consortiumRepository.existsById(any())).thenReturn(true);
-    when(conversionService.convert(any(), any())).thenReturn(toDto(savedSharingInstance));
+    when(conversionService.convert(any(), eq(SharingInstance.class))).thenReturn(toDto(savedSharingInstance));
     doNothing().when(tenantService).checkTenantExistsOrThrow(anyString());
     when(tenantService.getCentralTenantId()).thenReturn("mobius");
     when(sharingInstanceRepository.save(any())).thenReturn(savedSharingInstance);
@@ -129,7 +129,7 @@ class SharingInstanceServiceTest {
     when(folioExecutionContext.getOkapiHeaders()).thenReturn(headers);
 
     when(tenantService.getCentralTenantId()).thenReturn("mobius");
-    when(conversionService.convert(any(), any())).thenReturn(toDto(sharingInstanceEntity));
+    when(conversionService.convert(any(), eq(SharingInstance.class))).thenReturn(toDto(sharingInstanceEntity));
     when(sharingInstanceRepository.save(any())).thenReturn(sharingInstanceEntity);
 
     // throw exception when getting inventory instance
@@ -153,7 +153,7 @@ class SharingInstanceServiceTest {
     when(folioExecutionContext.getOkapiHeaders()).thenReturn(headers);
 
     when(tenantService.getCentralTenantId()).thenReturn("mobius");
-    when(conversionService.convert(any(), any())).thenReturn(toDto(sharingInstanceEntity));
+    when(conversionService.convert(any(), eq(SharingInstance.class))).thenReturn(toDto(sharingInstanceEntity));
     when(sharingInstanceRepository.save(any())).thenReturn(sharingInstanceEntity);
 
     // return instance as JsonNode when getting
@@ -183,7 +183,7 @@ class SharingInstanceServiceTest {
     when(folioExecutionContext.getOkapiHeaders()).thenReturn(headers);
 
     when(tenantService.getCentralTenantId()).thenReturn("mobius");
-    when(conversionService.convert(any(), any())).thenReturn(toDto(sharingInstanceEntity));
+    when(conversionService.convert(any(), eq(SharingInstance.class))).thenReturn(toDto(sharingInstanceEntity));
     when(sharingInstanceRepository.save(any())).thenReturn(sharingInstanceEntity);
 
     // return instance as JsonNode when getting
@@ -219,7 +219,7 @@ class SharingInstanceServiceTest {
     when(folioExecutionContext.getOkapiHeaders()).thenReturn(headers);
 
     when(tenantService.getCentralTenantId()).thenReturn("mobius");
-    when(conversionService.convert(any(), any())).thenReturn(toDto(sharingInstanceEntity));
+    when(conversionService.convert(any(), eq(SharingInstance.class))).thenReturn(toDto(sharingInstanceEntity));
     when(sharingInstanceRepository.findByInstanceAndTenantIds(instanceIdentifier, sourceTenantId, targetTenantId))
       .thenReturn(Optional.of(existingSharingInstanceEntity));
 

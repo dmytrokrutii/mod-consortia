@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
@@ -604,7 +605,7 @@ class UserTenantServiceTest {
     var utEntity = createUserTenantEntity(UUID.randomUUID(), UUID.randomUUID(), "username", "diku");
 
     doNothing().when(consortiumService).checkConsortiumExistsOrThrow(any());
-    when(conversionService.convert(any(), any())).thenReturn(toDto(utEntity));
+    when(conversionService.convert(any(), eq(UserTenant.class))).thenReturn(toDto(utEntity));
     when(userTenantRepository.findByUserIdAndIsPrimaryTrue(any())).thenReturn(Optional.of(utEntity));
 
     var result = userTenantService.checkUserIfHasPrimaryAffiliationByUserId(UUID.randomUUID(), String.valueOf(UUID.randomUUID()));
