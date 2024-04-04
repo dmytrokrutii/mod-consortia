@@ -56,6 +56,7 @@ import org.folio.consortia.repository.UserTenantRepository;
 import org.folio.consortia.service.impl.TenantServiceImpl;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.FolioModuleMetadata;
+import org.folio.spring.data.OffsetRequest;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -66,7 +67,6 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 
 @SpringBootTest
 @EnableAutoConfiguration(exclude = BatchAutoConfiguration.class)
@@ -136,8 +136,8 @@ class TenantServiceTest {
 
     when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
     when(tenantRepository.existsById(any())).thenReturn(true);
-    when(tenantRepository.findByConsortiumId(any(), any(PageRequest.of(offset, limit).getClass())))
-      .thenReturn(new PageImpl<>(tenantEntityList, PageRequest.of(offset, limit), tenantEntityList.size()));
+    when(tenantRepository.findByConsortiumId(any(), any(OffsetRequest.of(offset, limit).getClass())))
+      .thenReturn(new PageImpl<>(tenantEntityList, OffsetRequest.of(offset, limit), tenantEntityList.size()));
 
     var tenantCollection = tenantService.get(consortiumId, 0, 10);
     assertEquals(2, tenantCollection.getTotalRecords());

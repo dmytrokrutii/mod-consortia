@@ -22,8 +22,8 @@ import org.folio.consortia.service.PrimaryAffiliationService;
 import org.folio.consortia.service.SyncPrimaryAffiliationService;
 import org.folio.consortia.service.TenantService;
 import org.folio.consortia.service.UserService;
+import org.folio.spring.data.OffsetRequest;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -118,7 +118,7 @@ public class SyncPrimaryAffiliationServiceImpl implements SyncPrimaryAffiliation
       var user = userList.get(idx);
       try {
         log.info("createPrimaryUserAffiliations:: Processing users: {} of {}", idx + 1, userList.size());
-        Page<UserTenantEntity> userTenantPage = userTenantRepository.findAnyByUserId(UUID.fromString(user.getId()), PageRequest.of(0, 1));
+        Page<UserTenantEntity> userTenantPage = userTenantRepository.findAnyByUserId(UUID.fromString(user.getId()), OffsetRequest.of(0, 1));
 
         if (userTenantPage.getTotalElements() > 0) {
           log.info("createPrimaryUserAffiliations:: Primary affiliation already exists for tenant/user: {}/{}",

@@ -8,6 +8,15 @@ import static org.folio.consortia.utils.TenantContextUtils.prepareContextForTena
 import java.util.Objects;
 import java.util.UUID;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
+
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.ObjectUtils;
 import org.folio.consortia.client.InventoryClient;
 import org.folio.consortia.config.kafka.KafkaService;
@@ -23,20 +32,10 @@ import org.folio.consortia.service.SharingInstanceService;
 import org.folio.consortia.service.TenantService;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.FolioModuleMetadata;
+import org.folio.spring.data.OffsetRequest;
 import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.springframework.core.convert.ConversionService;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
-
-import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
-import lombok.extern.log4j.Log4j2;
 
 @Service
 @Log4j2
@@ -145,7 +144,7 @@ public class SharingInstanceServiceImpl implements SharingInstanceService {
     consortiumService.checkConsortiumExistsOrThrow(consortiumId);
     var specification = constructSpecification(instanceIdentifier, sourceTenantId, targetTenantId, status);
 
-    var sharingInstancePage = sharingInstanceRepository.findAll(specification, PageRequest.of(offset, limit));
+    var sharingInstancePage = sharingInstanceRepository.findAll(specification, OffsetRequest.of(offset, limit));
     var result = new SharingInstanceCollection();
     result.setSharingInstances(sharingInstancePage.stream().map(o -> converter.convert(o, SharingInstance.class)).toList());
     result.setTotalRecords((int) sharingInstancePage.getTotalElements());

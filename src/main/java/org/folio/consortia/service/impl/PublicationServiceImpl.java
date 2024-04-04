@@ -39,11 +39,11 @@ import org.folio.consortia.service.TenantService;
 import org.folio.consortia.service.UserTenantService;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.FolioModuleMetadata;
+import org.folio.spring.data.OffsetRequest;
 import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -99,7 +99,7 @@ public class PublicationServiceImpl implements PublicationService {
     var publicationStatusEntity = publicationStatusRepository.findById(publicationId)
       .orElseThrow(() -> new ResourceNotFoundException(PUBLICATION_ID_FIELD, String.valueOf(publicationId)));
 
-    var ptrEntities = publicationTenantRequestRepository.findByPcStateId(publicationId, PageRequest.of(0, Integer.MAX_VALUE));
+    var ptrEntities = publicationTenantRequestRepository.findByPcStateId(publicationId, OffsetRequest.of(0, Integer.MAX_VALUE));
     log.info("getPublicationDetails:: Found {} of {} expected tenant request records", ptrEntities.getTotalElements(), publicationStatusEntity.getTotalRecords());
 
     var errorList = buildErrorListFromPublicationTenantRequestEntities(ptrEntities);
@@ -305,7 +305,7 @@ public class PublicationServiceImpl implements PublicationService {
     var publicationStatusEntity = publicationStatusRepository.findById(publicationId)
       .orElseThrow(() -> new ResourceNotFoundException(PUBLICATION_ID_FIELD, String.valueOf(publicationId)));
 
-    var ptrEntities = publicationTenantRequestRepository.findByPcStateId(publicationId, PageRequest.of(0, Integer.MAX_VALUE));
+    var ptrEntities = publicationTenantRequestRepository.findByPcStateId(publicationId, OffsetRequest.of(0, Integer.MAX_VALUE));
     log.info("getPublicationResults:: Found {} of {} expected tenant request records for publication {}", ptrEntities.getTotalElements(), publicationStatusEntity.getTotalRecords(), publicationId);
 
     var resultList = ptrEntities.stream()

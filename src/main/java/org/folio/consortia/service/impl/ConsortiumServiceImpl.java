@@ -9,9 +9,9 @@ import org.folio.consortia.repository.ConsortiumRepository;
 import org.folio.consortia.exception.ResourceAlreadyExistException;
 import org.folio.consortia.exception.ResourceNotFoundException;
 import org.folio.consortia.service.ConsortiumService;
+import org.folio.spring.data.OffsetRequest;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -58,7 +58,7 @@ public class ConsortiumServiceImpl implements ConsortiumService {
   public ConsortiumCollection getAll() {
     var result = new ConsortiumCollection();
 
-    Page<ConsortiumEntity> consortiaPage = repository.findAll(PageRequest.of(0, 1));
+    Page<ConsortiumEntity> consortiaPage = repository.findAll(OffsetRequest.of(0, 1));
     result.setConsortia(consortiaPage.stream().map(o -> converter.convert(o, Consortium.class)).toList());
     result.setTotalRecords((int) consortiaPage.getTotalElements());
     return result;

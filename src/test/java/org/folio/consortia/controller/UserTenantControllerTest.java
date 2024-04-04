@@ -21,6 +21,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import feign.FeignException;
+import feign.Request;
+import feign.RequestTemplate;
+import feign.Response;
 import org.folio.consortia.client.UsersClient;
 import org.folio.consortia.domain.dto.UserTenant;
 import org.folio.consortia.domain.dto.UserTenantCollection;
@@ -31,6 +35,7 @@ import org.folio.consortia.repository.UserTenantRepository;
 import org.folio.consortia.service.TenantService;
 import org.folio.consortia.service.UserTenantService;
 import org.folio.consortia.support.BaseIT;
+import org.folio.spring.data.OffsetRequest;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -42,15 +47,9 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-
-import feign.FeignException;
-import feign.Request;
-import feign.RequestTemplate;
-import feign.Response;
 
 @EntityScan(basePackageClasses = UserTenantEntity.class)
 class UserTenantControllerTest extends BaseIT {
@@ -123,7 +122,7 @@ class UserTenantControllerTest extends BaseIT {
     Page<UserTenantEntity> userTenantPage = new PageImpl<>(List.of(createUserTenantEntity(consortiumId)));
 
     when(consortiumRepository.existsById(consortiumId)).thenReturn(true);
-    when(userTenantRepository.getAll(PageRequest.of(1, 2))).thenReturn(userTenantPage);
+    when(userTenantRepository.getAll(OffsetRequest.of(1, 2))).thenReturn(userTenantPage);
 
     this.mockMvc.perform(
         get("/consortia/7698e46-c3e3-11ed-afa1-0242ac120002/user-tenants?limit=2&offset=1")
