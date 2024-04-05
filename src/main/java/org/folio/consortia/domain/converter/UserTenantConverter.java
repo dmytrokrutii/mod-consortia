@@ -19,7 +19,6 @@ public class UserTenantConverter implements Converter<UserTenantEntity, UserTena
     userTenant.setIsPrimary(source.getIsPrimary());
     if (Objects.nonNull(source.getTenant())) {
       userTenant.setTenantId(source.getTenant().getId());
-      userTenant.setTenantName(source.getTenant().getName());
     }
     return userTenant;
   }

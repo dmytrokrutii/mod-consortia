@@ -310,7 +310,6 @@ public class UserTenantServiceImpl implements UserTenantService {
     UserTenantEntity entity = new UserTenantEntity();
     TenantEntity tenant = new TenantEntity();
     tenant.setId(userTenantDto.getTenantId());
-    tenant.setName(userTenantDto.getTenantName());
     tenant.setConsortiumId(consortiumId);
 
     if (Objects.nonNull(userTenantDto.getId())) {
