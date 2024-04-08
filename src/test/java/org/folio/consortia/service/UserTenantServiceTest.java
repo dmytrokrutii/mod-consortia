@@ -643,6 +643,7 @@ class UserTenantServiceTest {
   private UserTenant createUserTenantDtoEntity() {
     UserTenant tenant = new UserTenant();
     tenant.setTenantId("diku");
+    tenant.setTenantName("diku");
     tenant.setUserId(UUID.randomUUID());
     tenant.setId(UUID.randomUUID());
     tenant.setUsername("Test");
