@@ -2,7 +2,10 @@ package org.folio.consortia.service;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.folio.consortia.utils.EntityUtils.ACTION_ID;
+import static org.folio.consortia.utils.HelperUtils.CONSORTIUM_FOLIO_INSTANCE_SOURCE;
 import static org.folio.consortia.utils.EntityUtils.CONSORTIUM_ID;
+import static org.folio.consortia.utils.HelperUtils.CONSORTIUM_LINKED_DATA_INSTANCE_SOURCE;
+import static org.folio.consortia.utils.HelperUtils.CONSORTIUM_MARC_INSTANCE_SOURCE;
 import static org.folio.consortia.utils.EntityUtils.createSharingInstance;
 import static org.folio.consortia.utils.EntityUtils.createSharingInstanceEntity;
 import static org.mockito.ArgumentMatchers.any;
@@ -22,6 +25,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.fasterxml.jackson.databind.node.TextNode;
 import org.folio.consortia.config.kafka.KafkaService;
 import org.folio.consortia.domain.dto.SharingInstance;
 import org.folio.consortia.domain.dto.Status;
@@ -33,6 +37,8 @@ import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -277,6 +283,57 @@ class SharingInstanceServiceTest {
     assertThat(sharingInstanceEntity.getError()).isNotEmpty();
     assertThat(sharingInstanceEntity.getStatus()).isEqualTo(Status.ERROR);
     verify(sharingInstanceRepository, times(1)).save(any());
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "folio, " + CONSORTIUM_FOLIO_INSTANCE_SOURCE,
+    "marc, " + CONSORTIUM_MARC_INSTANCE_SOURCE,
+    "linked_data, " + CONSORTIUM_LINKED_DATA_INSTANCE_SOURCE
+  })
+  void shouldChangeInventoryRecordSourceToConsortium(String initial, String expected) {
+    var centralTenant = "mobius";
+    var targetTenant = "college";
+    var sharingInstanceEntity = new SharingInstanceEntity();
+
+    when(consortiumRepository.existsById(any())).thenReturn(true);
+    doNothing().when(tenantService).checkTenantExistsOrThrow(anyString());
+    when(folioExecutionContext.getOkapiHeaders()).thenReturn(headers);
+    when(tenantService.getCentralTenantId()).thenReturn(centralTenant);
+    when(conversionService.convert(any(), eq(SharingInstance.class))).thenReturn(toDto(sharingInstanceEntity));
+    when(sharingInstanceRepository.save(any())).thenReturn(sharingInstanceEntity);
+
+    var inventoryInstance = new ObjectMapper().createObjectNode().set("source", new TextNode(initial));
+    when(inventoryService.getById(any())).thenReturn(inventoryInstance);
+    doNothing().when(inventoryService).saveInstance(anyString());
+
+    sharingInstanceService.start(UUID.randomUUID(), createSharingInstance(instanceIdentifier, centralTenant, targetTenant));
+    assertThat(inventoryInstance.get("source").textValue()).isEqualTo(expected);
+  }
+
+  @Test
+  void shouldFailWhenSourceIsNotRecognized() {
+    var centralTenant = "mobius";
+    var targetTenant = "college";
+    var sharingInstance = createSharingInstance(instanceIdentifier, centralTenant, targetTenant);
+    var sharingInstanceEntity = new SharingInstanceEntity();
+
+    when(consortiumRepository.existsById(any())).thenReturn(true);
+    doNothing().when(tenantService).checkTenantExistsOrThrow(anyString());
+    when(folioExecutionContext.getOkapiHeaders()).thenReturn(headers);
+    when(tenantService.getCentralTenantId()).thenReturn(centralTenant);
+    when(conversionService.convert(any(), eq(SharingInstance.class))).thenReturn(toDto(sharingInstanceEntity));
+    when(sharingInstanceRepository.save(any())).thenReturn(sharingInstanceEntity);
+
+    var inventoryInstance = new ObjectMapper().createObjectNode().set("source", new TextNode("invalid_source"));
+    when(inventoryService.getById(any())).thenReturn(inventoryInstance);
+    sharingInstanceService.start(UUID.randomUUID(), sharingInstance);
+
+    assertThat(sharingInstance.getStatus()).isEqualTo(Status.ERROR);
+    assertThat(sharingInstance.getError()).contains("Failed to post inventory instance with reason");
+    verify(sharingInstanceRepository).findByInstanceAndTenantIds(
+      sharingInstance.getInstanceIdentifier(), centralTenant, targetTenant);
+    verify(sharingInstanceRepository).save(any());
   }
 
   /* Negative cases */

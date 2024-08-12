@@ -2,6 +2,7 @@ package org.folio.consortia.service.impl;
 
 import static org.folio.consortia.repository.SharingInstanceRepository.Specifications.constructSpecification;
 import static org.folio.consortia.utils.HelperUtils.CONSORTIUM_FOLIO_INSTANCE_SOURCE;
+import static org.folio.consortia.utils.HelperUtils.CONSORTIUM_LINKED_DATA_INSTANCE_SOURCE;
 import static org.folio.consortia.utils.HelperUtils.CONSORTIUM_MARC_INSTANCE_SOURCE;
 import static org.folio.consortia.utils.TenantContextUtils.prepareContextForTenant;
 
@@ -88,6 +89,7 @@ public class SharingInstanceServiceImpl implements SharingInstanceService {
         String source = switch (inventoryInstance.get("source").asText().toLowerCase()) {
           case "folio" -> CONSORTIUM_FOLIO_INSTANCE_SOURCE;
           case "marc" -> CONSORTIUM_MARC_INSTANCE_SOURCE;
+          case "linked_data" -> CONSORTIUM_LINKED_DATA_INSTANCE_SOURCE;
           default -> throw new IllegalStateException("source is not recognized");
         };
         var updatedInventoryInstance = ((ObjectNode) inventoryInstance).set("source", new TextNode(source));
