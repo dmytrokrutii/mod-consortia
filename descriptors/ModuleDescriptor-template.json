@@ -387,6 +387,7 @@
         "consortia.user-tenants.item.delete",
         "consortia.consortia-configuration.item.post",
         "consortia.inventory.share.local.instance",
+        "consortia.inventory.update.ownership",
         "consortia.sync-primary-affiliations.item.post",
         "consortia.create-primary-affiliations.item.post",
         "consortia.sharing-instances.item.post",
@@ -500,6 +501,12 @@
         "consortia.sharing-instances.collection.get",
         "inventory-storage.authorities.collection.get"
       ],
+      "visible": true
+    },
+    {
+      "permissionName": "consortia.inventory.update.ownership",
+      "displayName": "Inventory: Update ownership",
+      "description": "Inventory: Update ownership",
       "visible": true
     },
     {
