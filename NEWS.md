@@ -1,7 +1,7 @@
 ## 1.2.0 - Unreleased
 ### Stories
 * [MODLD-450](https://folio-org.atlassian.net/browse/MODLD-450) - ECS support for Linked Data
-* [MODINV-1079](https://folio-org.atlassian.net/browse/MODINV-1079) - Update module permissions in the ModuleDescriptor
+* [MODCON-156](https://folio-org.atlassian.net/browse/MODCON-156) - Update module permissions in the ModuleDescriptor
 
 ## 1.1.0 - Released (Quesnelia R1 2024)
 The focus of this release was to implement ECS tenant soft delete functionality and fix bugs
